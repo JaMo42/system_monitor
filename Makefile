@@ -14,7 +14,7 @@ build/list.o: list.c list.h
 build/sm.o: sm.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-build/curses_util.o: curses_util.c curses_util.h
+build/util.o: util.c util.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 build/canvas.o: canvas/canvas.c canvas/canvas.h
@@ -23,7 +23,10 @@ build/canvas.o: canvas/canvas.c canvas/canvas.h
 build/cpu.o: cpu.c cpu.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-sm: build/list.o build/sm.o build/curses_util.o build/canvas.o build/cpu.o
+build/memory.o: memory.c memory.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+sm: build/list.o build/sm.o build/util.o build/canvas.o build/cpu.o build/memory.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 clean:

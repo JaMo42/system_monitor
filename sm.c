@@ -1,11 +1,12 @@
 #include "stdafx.h"
-#include "curses_util.h"
+#include "util.h"
 #include "cpu.h"
+#include "memory.h"
 
 static int term_width, term_height;
 static WINDOW *cpu_win, *mem_win, *net_win, *proc_win;
 
-void ParseArgs ();
+void ParseArgs (int, char *const *);
 void CursesInit ();
 void CursesUpdate ();
 void CursesQuit ();
@@ -25,11 +26,13 @@ SigWinchHandler ()
 }
 
 int
-main (int argc, const char **argv)
+main (int argc, char *const *argv)
 {
   ParseArgs (argc, argv);
   CursesInit ();
   CpuInit ((term_width - 2) / cpu_graph_scale + 1);
+  MemoryInit ((term_width / 2 - 2) / mem_graph_scale + 2);
+  MemoryUpdate ();
 
   CursesUpdate ();
 
@@ -41,12 +44,13 @@ main (int argc, const char **argv)
       CursesUpdate ();
     }
 
+  MemoryQuit ();
   CpuQuit ();
   CursesQuit ();
 }
 
 void
-ParseArgs (int argc, const char **argv)
+ParseArgs (int argc, char *const *argv)
 {
   char opt;
   while ((opt = getopt (argc, argv, "a")) != -1)
@@ -84,7 +88,9 @@ CursesInit ()
   curs_set (0);
 
   cpu_canvas = CanvasCreate (
-    (getmaxx (cpu_win) - 2), getmaxy (cpu_win) - 2);
+    getmaxx (cpu_win) - 2, getmaxy (cpu_win) - 2);
+  mem_canvas = CanvasCreate (
+    getmaxx (mem_win) - 2, getmaxy (mem_win) - 2);
 }
 
 void
@@ -100,6 +106,7 @@ CursesUpdate ()
 void
 CursesQuit ()
 {
+  CanvasDelete (mem_canvas);
   CanvasDelete (cpu_canvas);
   delwin (cpu_win);
   endwin ();
@@ -157,10 +164,12 @@ void
 UpdateAll ()
 {
   CpuUpdate ();
+  MemoryUpdate ();
 }
 
 void
 DrawAll ()
 {
   CpuDraw (cpu_win);
+  MemoryDraw (mem_win);
 }

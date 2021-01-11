@@ -1,5 +1,5 @@
 #include "cpu.h"
-#include "curses_util.h"
+#include "util.h"
 
 // size = `cpu_count + 1' to account for average usage
 List **cpu_usages;
@@ -108,7 +108,10 @@ CpuDrawGraph (int id, short color,
 
       if (last_y >= 0.0)
         {
-          DrawLine (cpu_canvas, (last_x - cpu_graph_scale)*2.0, last_y*4.0, (x - cpu_graph_scale)*2.0, y*4.0, color);
+          DrawLine (cpu_canvas,
+                    (last_x - cpu_graph_scale)*2.0, last_y*4.0,
+                    (x - cpu_graph_scale)*2.0, y*4.0,
+                    color);
         }
       last_x = x;
       last_y = y;
@@ -138,7 +141,7 @@ CpuDraw (WINDOW *win)
       for (int i = cpu_count; i > 0; --i)
         {
           snprintf (label_buf, 16, "CPU%d %d%%", i - 1, (int)(cpu_usages[i]->back->f * 100.f));
-          CanvasSetText (cpu_canvas, 1, i, label_buf, COLOR (i - 1));
+          CanvasSetText (cpu_canvas, 2, i, label_buf, COLOR (i - 1));
         }
     }
 

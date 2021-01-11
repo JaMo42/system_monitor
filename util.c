@@ -1,9 +1,11 @@
-#include "curses_util.h"
+#include "util.h"
 
 const short C_BORDER = 214;
 const short C_TITLE = 251;
 const short C_ACCENT = 77;
 const short C_GRAPH_TABLE[8] = {5, 4, 3, 2, 6, 7, 8, 9};
+const short C_MEM_MAIN = 221;
+const short C_MEM_SWAP = 209;
 
 void
 DrawWindow (WINDOW *w, const char *title)
@@ -37,4 +39,20 @@ DrawWindowInfo (WINDOW *w, const char *info)
   wattron (w, COLOR_PAIR (C_TITLE));
   mvwaddstr (w, 0, width - 4 - len, info);
   wattroff (w, COLOR_PAIR (C_TITLE));
+}
+
+static const char *units[] = {"B", "KB", "MB", "GB", "TB", "PB"};
+
+void
+FormatSize (size_t size, WINDOW *win)
+{
+  int order = 0;
+  double s = size;
+  while (s >= 1000.0 && order < 5)
+    {
+      ++order;
+      s /= 1000.0;
+    }
+  wprintw (win, "%3.1lf", s);
+  waddstr (win, units[order]);
 }
