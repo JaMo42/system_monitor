@@ -3,6 +3,9 @@
 #include <string.h>
 #include <math.h>
 
+/* Apparenly this isn't included by <ncurses.h> */
+extern int waddnwstr(WINDOW *win, const wchar_t *wstr, int n);
+
 #define BRAILLE_MASK 0xFF
 #define TEXT_MASK 0xFF00
 
@@ -150,6 +153,9 @@ CanvasDrawLine (Canvas *c, double x1_, double y1_, double x2_, double y2_,
     }
 }
 
+#define CANVAS_MAX(a, b) (((a) > (b)) ? (a) : (b))
+#define CANVAS_MIN(a, b) (((a) < (b)) ? (a) : (b))
+
 void
 CanvasDrawLineFill (Canvas *c, double x1_, double y1_, double x2_, double y2_,
                     short color)
@@ -164,7 +170,7 @@ CanvasDrawLineFill (Canvas *c, double x1_, double y1_, double x2_, double y2_,
   const int xs = x1 <= x2 ? 1 : -1;
   const int ys = y1 <= y2 ? 1 : -1;
 
-  const double r = xd > yd ? xd : yd;
+  const double r = CANVAS_MAX (xd, yd);
 
   double x, y;
   for (size_t i = 0; i <= r; ++i)
@@ -180,4 +186,22 @@ CanvasDrawLineFill (Canvas *c, double x1_, double y1_, double x2_, double y2_,
       for (size_t yy = c->height * 4; yy >= (size_t)y; --yy)
         CanvasSet (c, x, yy, color);
     }
+}
+void
+CanvasDrawRect (Canvas *c, double x1_, double y1_, double x2_,
+                double y2_, short color)
+{
+  const size_t x1 = NORMALIZE (x1_);
+  const size_t y1 = NORMALIZE (y1_);
+  const size_t x2 = NORMALIZE (x2_);
+  const size_t y2 = NORMALIZE (y2_);
+
+  const size_t xs = CANVAS_MAX (CANVAS_MIN (x1, x2), 0);
+  const size_t xe = CANVAS_MIN (CANVAS_MAX (x1, x2), c->width*2);
+  const size_t ys = CANVAS_MAX (CANVAS_MIN (y1, y2), 0);
+  const size_t ye = CANVAS_MIN (CANVAS_MAX (y1, y2), c->height*4);
+
+  for (size_t y = ys; y <= ye; ++y)
+    for (size_t x = xs; x <= xe; ++x)
+      CanvasSet (c, x, y, color);
 }

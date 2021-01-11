@@ -29,3 +29,6 @@ void CanvasDrawLine (Canvas *c, double x1_, double y1_, double x2_, double y2_,
 /* Draw a line and fill the space below it */
 void CanvasDrawLineFill (Canvas *c, double x1_, double y1_, double x2_,
                          double y2_, short color);
+
+void CanvasDrawRect (Canvas *c, double x1_, double y1_, double x2_,
+                     double y2_, short color);
