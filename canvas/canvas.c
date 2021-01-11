@@ -177,7 +177,7 @@ CanvasDrawLineFill (Canvas *c, double x1_, double y1_, double x2_, double y2_,
       if (xd != 0)
         x += (double)(i * xd) / r * xs;
 
-      for (size_t yy = c->height * 4; yy >= NORMALIZE (y); --yy)
+      for (size_t yy = c->height * 4; yy >= (size_t)y; --yy)
         CanvasSet (c, x, yy, color);
     }
 }

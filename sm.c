@@ -5,6 +5,7 @@
 static int term_width, term_height;
 static WINDOW *cpu_win, *mem_win, *net_win, *proc_win;
 
+void ParseArgs ();
 void CursesInit ();
 void CursesUpdate ();
 void CursesQuit ();
@@ -24,11 +25,11 @@ SigWinchHandler ()
 }
 
 int
-main ()
+main (int argc, const char **argv)
 {
+  ParseArgs (argc, argv);
   CursesInit ();
   CpuInit ((term_width - 2) / cpu_graph_scale + 1);
-  cpu_show_avg = true;
 
   CursesUpdate ();
 
@@ -42,6 +43,21 @@ main ()
 
   CpuQuit ();
   CursesQuit ();
+}
+
+void
+ParseArgs (int argc, const char **argv)
+{
+  char opt;
+  while ((opt = getopt (argc, argv, "a")) != -1)
+    {
+      switch (opt)
+        {
+          case 'a':
+            cpu_show_avg = true;
+            break;
+        }
+    }
 }
 
 void

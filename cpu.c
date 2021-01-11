@@ -26,7 +26,7 @@ CpuInit (size_t max_samples)
   cpu_samples = 0;
   cpu_last_total_jiffies = calloc (cpu_count + 1, sizeof (size_t));
   cpu_last_work_jiffies = calloc (cpu_count + 1, sizeof (size_t));
-  cpu_show_avg = cpu_count > 8;
+  cpu_show_avg = cpu_show_avg || cpu_count > 8;
 }
 
 void
