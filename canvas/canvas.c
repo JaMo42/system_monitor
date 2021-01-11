@@ -55,7 +55,7 @@ CanvasResize (Canvas *c, size_t width, size_t height)
   /* No need to preserve old content. */
   free (c->chars);
   free (c->colors);
-  c->chars = calloc (width * height, sizeof (uint16_t));
+  c->chars = calloc (width * height, sizeof (uint8_t));
   c->colors = malloc (width * height * sizeof (short));
   for (size_t i = 0; i < width * height; ++i)
     c->colors[i] = -1;
@@ -64,7 +64,7 @@ CanvasResize (Canvas *c, size_t width, size_t height)
 }
 
 void
-CanvasSet (Canvas *c, double x_, double y_, uint16_t color)
+CanvasSet (Canvas *c, double x_, double y_, short color)
 {
   const size_t x = NORMALIZE (x_);
   const size_t y = NORMALIZE (y_);
@@ -74,24 +74,8 @@ CanvasSet (Canvas *c, double x_, double y_, uint16_t color)
     return;
   const size_t idx = (x / 2) + (y / 4) * c->width;
 
-  /* Don't set braille if cell is occupied by text. */
-  if (c->chars[idx] & TEXT_MASK)
-    return;
-
   c->chars[idx] |= pixel_map[y % 4][x % 2];
   c->colors[idx] = color;
-}
-
-void
-CanvasSetText (Canvas *c, size_t x, size_t y, const char *text, short color)
-{
-  const int len = strlen (text);
-
-  for (int i = 0; i < len; ++i)
-    {
-      c->chars[x + y * c->width + i] = (uint16_t)text[i] << 8;
-      c->colors[x + y * c->width + i] = color;
-    }
 }
 
 void
@@ -107,14 +91,7 @@ CanvasDraw (const Canvas *c, WINDOW *win)
       wmove (win, y + 1, 1);
       for (size_t x = 0; x < c->width; ++x)
         {
-          cell = c->chars[row_off + x];
-          if (cell == 0)
-            ch[0] = braille_char_offset;
-          else if (cell & TEXT_MASK)
-            ch[0] = (cell >> 8);
-          else
-            ch[0] = braille_char_offset + (cell & BRAILLE_MASK);
-
+          ch[0] = braille_char_offset + (c->chars[row_off + x] & BRAILLE_MASK);
           wattron (win, COLOR_PAIR (c->colors[row_off + x]));
           waddnwstr (win, ch, 1);
           wattroff (win, COLOR_PAIR (c->colors[row_off + x]));

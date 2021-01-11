@@ -118,7 +118,7 @@ CpuDrawGraph (int id, short color,
     }
 }
 
-#define COLOR(i) ((i) < 8 ? C_GRAPH_TABLE[i] : i + 10)
+#define COLOR(i) ((i) < 8 ? C_GRAPH_TABLE[i] : ((i + 10) % 256))
 
 void
 CpuDraw (WINDOW *win)
@@ -127,23 +127,29 @@ CpuDraw (WINDOW *win)
   static char label_buf[16];
 
   if (cpu_show_avg)
-    {
-      CpuDrawGraph (0, C_ACCENT, CanvasDrawLineFill);
-      snprintf (label_buf, 16, "AVRG %d%%", (int)(cpu_usages[0]->back->f * 100.f));
-      CanvasSetText (cpu_canvas, 1, 1, label_buf, C_ACCENT);
-    }
+    CpuDrawGraph (0, C_ACCENT, CanvasDrawLineFill);
   else
     {
       for (int i = cpu_count; i > 0; --i)
-        {
-          CpuDrawGraph (i - 1, COLOR (i - 1), CanvasDrawLine);
-        }
-      for (int i = cpu_count; i > 0; --i)
-        {
-          snprintf (label_buf, 16, "CPU%d %d%%", i - 1, (int)(cpu_usages[i]->back->f * 100.f));
-          CanvasSetText (cpu_canvas, 2, i, label_buf, COLOR (i - 1));
-        }
+        CpuDrawGraph (i - 1, COLOR (i - 1), CanvasDrawLine);
     }
 
   CanvasDraw (cpu_canvas, win);
+
+  if (cpu_show_avg)
+    {
+      wattron (win, COLOR_PAIR (C_ACCENT));
+      mvwprintw (win, 2, 3, "AVRG %d%%", (int)(cpu_usages[0]->back->f * 100.f));
+      wattroff (win, COLOR_PAIR (C_ACCENT));
+    }
+  else
+    {
+      for (int i = 0; i < cpu_count; ++i)
+        {
+          wattron (win, COLOR_PAIR (COLOR (i)));
+          mvwprintw (win, 2 + i, 3, "CPU%d %d%%", i,
+                     (int)(cpu_usages[i + 1]->back->f * 100.f));
+          wattroff (win, COLOR_PAIR (COLOR (i)));
+        }
+    }
 }

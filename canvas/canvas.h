@@ -5,7 +5,7 @@
 
 typedef struct Canvas
 {
-  uint16_t *chars;
+  uint8_t *chars;
   short *colors;
   size_t width;
   size_t height;
@@ -17,9 +17,7 @@ void CanvasDelete (Canvas *c);
 void CanvasClear (Canvas *c);
 void CanvasResize (Canvas *c, size_t width, size_t height);
 
-void CanvasSet (Canvas *c, double x_, double y_, uint16_t color);
-void CanvasSetText (Canvas *c, size_t x, size_t y, const char *text,
-                    short color);
+void CanvasSet (Canvas *c, double x_, double y_, short color);
 
 void CanvasDraw (const Canvas *c, WINDOW *win);
 
