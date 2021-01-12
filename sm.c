@@ -68,6 +68,8 @@ CursesInit ()
 {
   setlocale(LC_ALL, "");
   initscr ();
+  curs_set (0);
+  noecho ();
   start_color ();
   use_default_colors ();
 
@@ -83,8 +85,6 @@ CursesInit ()
 
   signal (SIGWINCH, SigWinchHandler);
   SigWinchHandler ();
-
-  curs_set (0);
 
   cpu_canvas = CanvasCreate (
     getmaxx (cpu_win) - 2, getmaxy (cpu_win) - 2);
