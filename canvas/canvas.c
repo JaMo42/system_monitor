@@ -66,10 +66,12 @@ CanvasResize (Canvas *c, size_t width, size_t height)
 void
 CanvasSet (Canvas *c, double x_, double y_, short color)
 {
-  if (x_ < 0.0 || x_ >= (c->width*4) || y_ < 0.0 || y_ >= (c->height*2))
+  const int x = NORMALIZE (x_);
+  const int y = NORMALIZE (y_);
+  const int col = x / 2;
+  const int row = y / 4;
+  if (col < 0 || col >= (int)c->width || row < 0 || row >= (int)c->height)
     return;
-  const size_t x = NORMALIZE (x_);
-  const size_t y = NORMALIZE (y_);
   const size_t idx = (x / 2) + (y / 4) * c->width;
 
   c->chars[idx] |= pixel_map[y % 4][x % 2];
