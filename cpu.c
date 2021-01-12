@@ -124,7 +124,6 @@ void
 CpuDraw (WINDOW *win)
 {
   CanvasClear (cpu_canvas);
-  static char label_buf[16];
 
   if (cpu_show_avg)
     CpuDrawGraph (0, C_ACCENT, CanvasDrawLineFill);

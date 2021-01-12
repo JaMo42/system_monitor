@@ -1,7 +1,17 @@
 CC = gcc
-CFLAGS = -O0 -g
+CFLAGS = -Wall -Wextra
 LDFLAGS = -lncurses -lfmt -lm
 VGFLAGS = --track-origins=yes --leak-check=full #--show-leak-kinds=all
+
+ifdef MANUAL
+	CFLAGS += -DMANUAL
+endif
+
+ifdef RELEASE
+	CFLAGS += -O3 -march=native -mtune-native
+else
+	CFLAGS += -O0 -g
+endif
 
 all: build/stdafx.h.gch sm
 

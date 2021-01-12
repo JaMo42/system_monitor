@@ -94,8 +94,6 @@ void
 MemoryDraw (WINDOW *win)
 {
   CanvasClear (mem_canvas);
-  static char label_buf[64];
-  size_t s;
 
   MemoryDrawGraph (mem_swap_usage, C_MEM_SWAP);
   MemoryDrawGraph (mem_main_usage, C_MEM_MAIN);

@@ -66,12 +66,10 @@ CanvasResize (Canvas *c, size_t width, size_t height)
 void
 CanvasSet (Canvas *c, double x_, double y_, short color)
 {
+  if (x_ < 0.0 || x_ >= (c->width*4) || y_ < 0.0 || y_ >= (c->height*2))
+    return;
   const size_t x = NORMALIZE (x_);
   const size_t y = NORMALIZE (y_);
-  const int col = x / 2;
-  const int row = y / 4;
-  if (col < 0 || col >= c->width || row < 0 || row >= c->height)
-    return;
   const size_t idx = (x / 2) + (y / 4) * c->width;
 
   c->chars[idx] |= pixel_map[y % 4][x % 2];
@@ -83,7 +81,6 @@ CanvasDraw (const Canvas *c, WINDOW *win)
 {
   size_t row_off;
   wchar_t ch[] = { 0, 0 };
-  uint16_t cell;
 
   for (size_t y = 0; y < c->height; ++y)
     {
@@ -103,13 +100,13 @@ void
 CanvasDrawLine (Canvas *c, double x1_, double y1_, double x2_, double y2_,
                 short color)
 {
-  const size_t x1 = NORMALIZE (x1_);
-  const size_t y1 = NORMALIZE (y1_);
-  const size_t x2 = NORMALIZE (x2_);
-  const size_t y2 = NORMALIZE (y2_);
+  const int x1 = NORMALIZE (x1_);
+  const int y1 = NORMALIZE (y1_);
+  const int x2 = NORMALIZE (x2_);
+  const int y2 = NORMALIZE (y2_);
 
-  const size_t xd = abs (x1 - x2);
-  const size_t yd = abs (y1 - y2);
+  const int xd = abs (x1 - x2);
+  const int yd = abs (y1 - y2);
   const int xs = x1 <= x2 ? 1 : -1;
   const int ys = y1 <= y2 ? 1 : -1;
 
@@ -137,13 +134,13 @@ void
 CanvasDrawLineFill (Canvas *c, double x1_, double y1_, double x2_, double y2_,
                     short color)
 {
-  const size_t x1 = NORMALIZE (x1_);
-  const size_t y1 = NORMALIZE (y1_);
-  const size_t x2 = NORMALIZE (x2_);
-  const size_t y2 = NORMALIZE (y2_);
+  const int x1 = NORMALIZE (x1_);
+  const int y1 = NORMALIZE (y1_);
+  const int x2 = NORMALIZE (x2_);
+  const int y2 = NORMALIZE (y2_);
 
-  const size_t xd = abs (x1 - x2);
-  const size_t yd = abs (y1 - y2);
+  const int xd = abs (x1 - x2);
+  const int yd = abs (y1 - y2);
   const int xs = x1 <= x2 ? 1 : -1;
   const int ys = y1 <= y2 ? 1 : -1;
 

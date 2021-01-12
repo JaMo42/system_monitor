@@ -17,7 +17,6 @@ void DrawAll ();
 static void
 SigWinchHandler ()
 {
-  puts ("SigWinchHandler ()");
   struct winsize w;
   ioctl (STDOUT_FILENO, TIOCGWINSZ, &w);
   term_width = w.ws_col;
@@ -116,6 +115,11 @@ CursesQuit ()
 void
 CursesResize ()
 {
+  wclear (stdscr);
+  wclear (cpu_win);
+  wclear (mem_win);
+  wclear (net_win);
+  wclear (proc_win);
 #if 0
   const int term_height_2 = term_height / 2;
   const int term_height_4 = term_height_2 / 2;
@@ -144,10 +148,14 @@ CursesResize ()
   mvwin (cpu_win, 0, 0);
   wresize (cpu_win, term_height_3, term_width);
   DrawWindow (cpu_win, "CPU");
+  if (cpu_canvas)
+    CanvasResize (cpu_canvas, getmaxx (cpu_win) - 2, getmaxy (cpu_win) - 2);
 
   mvwin (mem_win, term_height_3, 0);
   wresize (mem_win, term_height_3, term_width_2);
   DrawWindow (mem_win, "Memory");
+  if (mem_canvas)
+    CanvasResize (mem_canvas, getmaxx (mem_win) - 2, getmaxy (mem_win) - 2);
 
   mvwin (net_win, term_height_3 * 2, 0);
   wresize (net_win, term_height_3, term_width_2);
