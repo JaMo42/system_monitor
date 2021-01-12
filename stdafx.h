@@ -9,6 +9,7 @@
 #include <string.h>
 #include <math.h>
 #include <locale.h>
+#include <time.h>
 
 #include <sys/sysinfo.h>
 #include <unistd.h>

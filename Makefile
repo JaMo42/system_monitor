@@ -8,7 +8,7 @@ ifdef MANUAL
 endif
 
 ifdef RELEASE
-	CFLAGS += -O3 -march=native -mtune-native
+	CFLAGS += -O3 -march=native -mtune=native
 else
 	CFLAGS += -O0 -g
 endif

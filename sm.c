@@ -5,12 +5,14 @@
 
 static int term_width, term_height;
 static WINDOW *cpu_win, *mem_win, *net_win, *proc_win;
+static struct timespec interval = { .tv_sec = 0, .tv_nsec = 500000000L };
 
 void ParseArgs (int, char *const *);
 void CursesInit ();
 void CursesUpdate ();
 void CursesQuit ();
 void CursesResize ();
+
 void UpdateAll ();
 void DrawAll ();
 
@@ -41,6 +43,9 @@ main (int argc, char *const *argv)
       UpdateAll ();
       DrawAll ();
       CursesUpdate ();
+#ifndef MANUAL
+      nanosleep (&interval, NULL);
+#endif
     }
 
   MemoryQuit ();
@@ -52,12 +57,18 @@ void
 ParseArgs (int argc, char *const *argv)
 {
   char opt;
-  while ((opt = getopt (argc, argv, "a")) != -1)
+  unsigned long n;
+  while ((opt = getopt (argc, argv, "ar:")) != -1)
     {
       switch (opt)
         {
           case 'a':
             cpu_show_avg = true;
+            break;
+          case 'r':
+            n = strtoull (optarg, NULL, 10);
+            interval.tv_sec = n / 1000L;
+            interval.tv_nsec = ((n % 1000L) * 1000000L);
             break;
         }
     }
@@ -70,6 +81,10 @@ CursesInit ()
   initscr ();
   curs_set (0);
   noecho ();
+#ifndef MANUAL
+  cbreak ();
+  nodelay (stdscr, TRUE);
+#endif
   start_color ();
   use_default_colors ();
 
