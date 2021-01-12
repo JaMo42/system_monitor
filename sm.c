@@ -7,14 +7,13 @@ static int term_width, term_height;
 static WINDOW *cpu_win, *mem_win, *net_win, *proc_win;
 static struct timespec interval = { .tv_sec = 0, .tv_nsec = 500000000L };
 
-void ParseArgs (int, char *const *);
 void CursesInit ();
 void CursesUpdate ();
 void CursesQuit ();
 void CursesResize ();
-
 void UpdateAll ();
 void DrawAll ();
+void ParseArgs (int, char *const *);
 
 static void
 SigWinchHandler ()
@@ -51,27 +50,6 @@ main (int argc, char *const *argv)
   MemoryQuit ();
   CpuQuit ();
   CursesQuit ();
-}
-
-void
-ParseArgs (int argc, char *const *argv)
-{
-  char opt;
-  unsigned long n;
-  while ((opt = getopt (argc, argv, "ar:")) != -1)
-    {
-      switch (opt)
-        {
-          case 'a':
-            cpu_show_avg = true;
-            break;
-          case 'r':
-            n = strtoull (optarg, NULL, 10);
-            interval.tv_sec = n / 1000L;
-            interval.tv_nsec = ((n % 1000L) * 1000000L);
-            break;
-        }
-    }
 }
 
 void
@@ -195,4 +173,40 @@ DrawAll ()
 {
   CpuDraw (cpu_win);
   MemoryDraw (mem_win);
+}
+
+void
+Usage (FILE *stream)
+{
+  fputs ("sm [-a] [-r millis]\n", stream);
+  fputs ("Options:\n", stream);
+  fputs ("  -a         Show average CPU usage\n", stream);
+  fputs ("  -r millis  Update interval in milliseconds\n", stream);
+  fputs ("  -h         Show help message\n", stream);
+}
+
+void
+ParseArgs (int argc, char *const *argv)
+{
+  char opt;
+  unsigned long n;
+  while ((opt = getopt (argc, argv, "ar:h")) != -1)
+    {
+      switch (opt)
+        {
+          case 'a':
+            cpu_show_avg = true;
+            break;
+          case 'r':
+            n = strtoull (optarg, NULL, 10);
+            interval.tv_sec = n / 1000L;
+            interval.tv_nsec = ((n % 1000L) * 1000000L);
+            break;
+          case 'h':
+          case '?':
+          default:
+            Usage (stderr);
+            exit (1);
+        }
+    }
 }
