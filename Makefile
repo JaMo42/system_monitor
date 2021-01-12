@@ -15,25 +15,25 @@ endif
 
 all: build/stdafx.h.gch sm
 
-build/stdafx.h.gch: stdafx.h
+build/stdafx.h.gch: src/stdafx.h
 	$(CC) -o $@ $<
 
-build/list.o: list.c list.h
+build/list.o: src/list.c src/list.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-build/sm.o: sm.c
+build/sm.o: src/sm.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-build/util.o: util.c util.h
+build/util.o: src/util.c src/util.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-build/canvas.o: canvas/canvas.c canvas/canvas.h
+build/canvas.o: src/canvas/canvas.c src/canvas/canvas.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-build/cpu.o: cpu.c cpu.h
+build/cpu.o: src/cpu.c src/cpu.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-build/memory.o: memory.c memory.h
+build/memory.o: src/memory.c src/memory.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 sm: build/list.o build/sm.o build/util.o build/canvas.o build/cpu.o build/memory.o
