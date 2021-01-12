@@ -104,13 +104,13 @@ CpuDrawGraph (int id, short color,
   list_for_each (cpu_usages[id], u)
     {
       x += cpu_graph_scale;
-      y = cpu_canvas->height - 1 - ((cpu_canvas->height - 1) * u->f);
+      y = (double)cpu_canvas->height - (((double)cpu_canvas->height - 0.25) * u->f);
 
       if (last_y >= 0.0)
         {
           DrawLine (cpu_canvas,
-                    (last_x - cpu_graph_scale)*2.0, last_y*4.0,
-                    (x - cpu_graph_scale)*2.0, y*4.0,
+                    (last_x - cpu_graph_scale)*2.0, last_y*4.0 - 1,
+                    (x - cpu_graph_scale)*2.0, y*4.0 - 1,
                     color);
         }
       last_x = x;

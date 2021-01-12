@@ -76,13 +76,13 @@ MemoryDrawGraph (List *l, short color)
   list_for_each (l, u)
     {
       x += mem_graph_scale;
-      y = mem_canvas->height - 1 - ((mem_canvas->height - 1) * u->f);
+      y = (double)mem_canvas->height - (((double)mem_canvas->height - 0.25) * u->f);
 
       if (last_y >= 0.0)
         {
           CanvasDrawLine (mem_canvas,
-                          (last_x - mem_graph_scale)*2.0, last_y*4.0,
-                          (x - mem_graph_scale)*2.0, y*4.0,
+                          (last_x - mem_graph_scale)*2.0, last_y*4.0 - 1,
+                          (x - mem_graph_scale)*2.0, y*4.0 - 1,
                           color);
         }
       last_x = x;

@@ -200,7 +200,7 @@ ParseArgs (int argc, char *const *argv)
           case 'r':
             n = strtoull (optarg, NULL, 10);
             interval.tv_sec = n / 1000L;
-            interval.tv_nsec = ((n % 1000L) * 1000000L);
+            interval.tv_nsec = (n % 1000L) * 1000000L;
             break;
           case 'h':
           case '?':
