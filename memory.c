@@ -54,8 +54,10 @@ MemoryUpdate ()
   unsigned long swap_used = mem_sysinfo.totalswap - mem_sysinfo.freeswap;
 
   if (shift)
-    list_pop_front (mem_main_usage);
-    list_pop_front (mem_swap_usage);
+    {
+      list_pop_front (mem_main_usage);
+      list_pop_front (mem_swap_usage);
+    }
   list_push_back (mem_main_usage)->f = (double)main_used / (double)mem_main_total;
   list_push_back (mem_swap_usage)->f = (double)swap_used / (double)mem_swap_total;
 
