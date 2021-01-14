@@ -2,10 +2,11 @@
 #include "util.h"
 #include "cpu.h"
 #include "memory.h"
+#include "network.h"
 
 static int term_width, term_height;
 static WINDOW *cpu_win, *mem_win, *net_win, *proc_win;
-static struct timespec interval = { .tv_sec = 0, .tv_nsec = 500000000L };
+struct timespec interval = { .tv_sec = 0, .tv_nsec = 500000000L };
 
 void CursesInit ();
 void CursesUpdate ();
@@ -33,6 +34,8 @@ main (int argc, char *const *argv)
   CpuInit ((term_width - 2) / cpu_graph_scale + 1);
   MemoryInit ((term_width / 2 - 2) / mem_graph_scale + 2);
   MemoryUpdate ();
+  NetworkInit ((term_width / 2 - 2) / net_graph_scale + 1);
+  NetworkUpdate ();
 
   CursesUpdate ();
 
@@ -83,6 +86,8 @@ CursesInit ()
     getmaxx (cpu_win) - 2, getmaxy (cpu_win) - 2);
   mem_canvas = CanvasCreate (
     getmaxx (mem_win) - 2, getmaxy (mem_win) - 2);
+  net_canvas = CanvasCreate (
+    getmaxx (net_win) - 2, getmaxy (net_win) - 2);
 }
 
 void
@@ -98,6 +103,7 @@ CursesUpdate ()
 void
 CursesQuit ()
 {
+  CanvasDelete (net_canvas);
   CanvasDelete (mem_canvas);
   CanvasDelete (cpu_canvas);
   delwin (cpu_win);
@@ -153,7 +159,8 @@ CursesResize ()
   mvwin (net_win, term_height_3 * 2, 0);
   wresize (net_win, term_height_3, term_width_2);
   DrawWindow (net_win, "Network");
-
+  if (net_canvas)
+    CanvasResize (net_canvas, getmaxx (net_win) - 2, getmaxy (net_win) - 2);
   mvwin (proc_win, term_height_3, term_width_2);
   wresize (proc_win, term_height_3 * 2, term_width_2);
   DrawWindow (proc_win, "Processes");
@@ -166,6 +173,7 @@ UpdateAll ()
 {
   CpuUpdate ();
   MemoryUpdate ();
+  NetworkUpdate ();
 }
 
 void
@@ -173,6 +181,7 @@ DrawAll ()
 {
   CpuDraw (cpu_win);
   MemoryDraw (mem_win);
+  NetworkDraw (net_win);
 }
 
 void

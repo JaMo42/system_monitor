@@ -9,6 +9,8 @@ extern const short C_ACCENT;
 extern const short C_GRAPH_TABLE[8];
 extern const short C_MEM_MAIN;
 extern const short C_MEM_SWAP;
+extern const short C_NET_RECIEVE;
+extern const short C_NET_TRANSMIT;
 
 /* Draw a window border and title:
    +-< title >-----+
@@ -22,4 +24,4 @@ void DrawWindow (WINDOW *w, const char *title);
    +------------------------+ */
 void DrawWindowInfo (WINDOW *w, const char *info);
 
-void FormatSize (size_t size, WINDOW *win);
+void FormatSize (WINDOW *win, size_t size, bool pad);

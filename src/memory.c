@@ -106,16 +106,16 @@ MemoryDraw (WINDOW *win)
   wattron (win, COLOR_PAIR (C_MEM_MAIN));
   wmove (win, 2, 3);
   wprintw (win, "Main %3d%% ", (int)(mem_main_usage->back->f * 100.0));
-  FormatSize (main_use, win);
+  FormatSize (win, main_use, true);
   waddch (win, '/');
-  FormatSize (mem_main_total, win);
+  FormatSize (win, mem_main_total, false);
   wattroff (win, COLOR_PAIR (C_MEM_MAIN));
 
   wattron (win, COLOR_PAIR (C_MEM_SWAP));
   wmove (win, 3, 3);
   wprintw (win, "Swap %3d%% ", (int)(mem_swap_usage->back->f * 100.0));
-  FormatSize (swap_use, win);
+  FormatSize (win, swap_use, true);
   waddch (win, '/');
-  FormatSize (mem_swap_total, win);
+  FormatSize (win, mem_swap_total, false);
   wattroff (win, COLOR_PAIR (C_MEM_SWAP));
 }

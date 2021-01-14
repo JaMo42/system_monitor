@@ -6,6 +6,8 @@ const short C_ACCENT = 77;
 const short C_GRAPH_TABLE[8] = {5, 4, 3, 2, 6, 7, 8, 9};
 const short C_MEM_MAIN = 221;
 const short C_MEM_SWAP = 209;
+const short C_NET_RECIEVE = 2; //26;
+const short C_NET_TRANSMIT = 5; //161;
 
 void
 DrawWindow (WINDOW *w, const char *title)
@@ -41,10 +43,10 @@ DrawWindowInfo (WINDOW *w, const char *info)
   wattroff (w, COLOR_PAIR (C_TITLE));
 }
 
-static const char *units[] = {"B", "KB", "MB", "GB", "TB", "PB"};
+static const char *units[] = {" B", "KB", "MB", "GB", "TB", "PB"};
 
 void
-FormatSize (size_t size, WINDOW *win)
+FormatSize (WINDOW *win, size_t size, bool pad)
 {
   int order = 0;
   double s = size;
@@ -53,6 +55,7 @@ FormatSize (size_t size, WINDOW *win)
       ++order;
       s /= 1000.0;
     }
-  wprintw (win, "%3.1lf", s);
+  wprintw (win, pad ? "% 6.1lf" : "%.1lf", s);
   waddstr (win, units[order]);
 }
+

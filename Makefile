@@ -36,7 +36,10 @@ build/cpu.o: src/cpu.c src/cpu.h
 build/memory.o: src/memory.c src/memory.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-sm: build/list.o build/sm.o build/util.o build/canvas.o build/cpu.o build/memory.o
+build/network.o: src/network.c src/network.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+sm: build/list.o build/sm.o build/util.o build/canvas.o build/cpu.o build/memory.o build/network.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 vgclean:
