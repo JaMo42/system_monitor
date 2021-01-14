@@ -39,8 +39,11 @@ build/memory.o: src/memory.c src/memory.h
 sm: build/list.o build/sm.o build/util.o build/canvas.o build/cpu.o build/memory.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
-clean:
-	rm -f build/*.o sm vgcore.*
+vgclean:
+	rm -f vgcore.*
+
+clean: vgclean
+	rm -f build/*.o sm
 
 vg: sm
 	valgrind $(VGFLAGS) ./sm
