@@ -3,6 +3,8 @@
 #include <string.h>
 #include <math.h>
 
+#include <fmt/fmt.h>
+
 /* Apparenly this isn't included by <ncurses.h> */
 extern int waddnwstr(WINDOW *win, const wchar_t *wstr, int n);
 
@@ -178,6 +180,10 @@ CanvasDrawRect (Canvas *c, double x1_, double y1_, double x2_,
   const size_t ye = CANVAS_MIN (CANVAS_MAX (y1, y2), c->height*4);
 
   for (size_t y = ys; y <= ye; ++y)
-    for (size_t x = xs; x <= xe; ++x)
-      CanvasSet (c, x, y, color);
+    {
+      for (size_t x = xs; x <= xe; ++x)
+        {
+          CanvasSet (c, x, y, color);
+        }
+    }
 }

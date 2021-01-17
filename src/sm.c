@@ -35,7 +35,6 @@ main (int argc, char *const *argv)
   MemoryInit ((term_width / 2 - 2) / mem_graph_scale + 2);
   MemoryUpdate ();
   NetworkInit ((term_width / 2 - 2) / net_graph_scale + 1);
-  NetworkUpdate ();
 
   CursesUpdate ();
 

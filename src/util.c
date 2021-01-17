@@ -6,8 +6,8 @@ const short C_ACCENT = 77;
 const short C_GRAPH_TABLE[8] = {5, 4, 3, 2, 6, 7, 8, 9};
 const short C_MEM_MAIN = 221;
 const short C_MEM_SWAP = 209;
-const short C_NET_RECIEVE = 2; //26;
-const short C_NET_TRANSMIT = 5; //161;
+const short C_NET_RECIEVE = 5;
+const short C_NET_TRANSMIT = 2;
 
 void
 DrawWindow (WINDOW *w, const char *title)

@@ -19,6 +19,8 @@ static struct {
 } *net_interfaces;
 static unsigned net_interface_count;
 static double net_period;
+static uintmax_t net_recieve_max;
+static uintmax_t net_transmit_max;
 
 static void
 NetworkGetInterfaces ()
@@ -68,6 +70,9 @@ NetworkInit (unsigned max_samples)
   net_samples = 0;
   NetworkGetInterfaces ();
   net_period = (double)interval.tv_sec + interval.tv_nsec / 1.0e9;
+  NetworkUpdate ();
+  net_recieve_max = 0;
+  net_transmit_max = 0;
 }
 
 void
@@ -90,6 +95,24 @@ NetworkGetBytes (FILE *f)
   char buf[128];
   fgets (buf, 128, f);
   return strtoul (buf, NULL, 10);
+}
+
+static inline void
+NetworkAddValue (List *l, uintmax_t v, bool shift, uintmax_t *m)
+{
+  if (shift)
+    {
+      list_pop_front (l);
+      *m = 0;
+      list_for_each (l, i)
+        {
+          if (i->u > *m)
+            *m = i->u;
+        }
+    }
+  if (v > *m)
+    *m = v;
+  list_push_back (l)->u = v;
 }
 
 void
@@ -119,38 +142,67 @@ NetworkUpdate ()
   double recieve_period = net_recieve_total - prev_recieve;
   double transmit_period = net_transmit_total - prev_transmit;
 
-  if (shift)
+  NetworkAddValue (net_recieve, recieve_period * net_period, shift,
+                   &net_recieve_max);
+  NetworkAddValue (net_transmit, transmit_period * net_period, shift,
+                   &net_transmit_max);
+
+  if (!shift)
+    ++net_samples;
+}
+
+static void
+NetworkDrawGraph (List *values, uintmax_t max, unsigned y_off,
+                  unsigned height, short color)
+{
+  double x = (net_max_samples - net_samples) * net_graph_scale;
+  double y;
+  const double scale = 1.0 / max * height;
+
+  list_for_each (values, v)
     {
-      list_pop_front (net_recieve);
-      list_pop_front (net_transmit);
+      x += net_graph_scale;
+      y = y_off - (double)v->u * scale;
+
+      if (y >= 0.0)
+        {
+          CanvasDrawRect (net_canvas, x * 2.0, y_off * 4,
+                          (x - net_graph_scale) * 2.0, y * 4.0, color);
+        }
     }
-  list_push_back (net_recieve)->u = (uintmax_t)(recieve_period * net_period);
-  list_push_back (net_transmit)->u = (uintmax_t)(transmit_period * net_period);
 }
 
 void
 NetworkDraw (WINDOW *win)
 {
+  CanvasClear (net_canvas);
+
+  NetworkDrawGraph (net_recieve, net_recieve_max, net_canvas->height / 2,
+                    net_canvas->height / 4, C_NET_RECIEVE);
+  NetworkDrawGraph (net_transmit, net_transmit_max, net_canvas->height,
+                    net_canvas->height / 4, C_NET_TRANSMIT);
+
+  CanvasDraw (net_canvas, win);
+
   wmove (win, 2, 3);
   waddstr (win, "Total RX:");
   wattron (win, COLOR_PAIR (C_NET_RECIEVE));
   FormatSize (win, net_recieve_total, true);
   wattroff (win, COLOR_PAIR (C_NET_RECIEVE));
-
-  waddstr (win, "  Total TX:");
-  wattron (win, COLOR_PAIR (C_NET_TRANSMIT));
-  FormatSize (win, net_transmit_total, true);
-  wattroff (win, COLOR_PAIR (C_NET_TRANSMIT));
-
   wmove (win, 3, 3);
-  waddstr (win, "RX/s:");
+  waddstr (win, "RX/s:    ");
   wattron (win, COLOR_PAIR (C_NET_RECIEVE));
   FormatSize (win, net_recieve->back->u, true);
   waddstr (win, "/s");
   wattroff (win, COLOR_PAIR (C_NET_RECIEVE));
 
-  wmove (win, 3, 22);
-  waddstr (win, "TX/s:");
+  wmove (win, getmaxy (win) / 2 + 2, 3);
+  waddstr (win, "Total TX:");
+  wattron (win, COLOR_PAIR (C_NET_TRANSMIT));
+  FormatSize (win, net_transmit_total, true);
+  wattroff (win, COLOR_PAIR (C_NET_TRANSMIT));
+  wmove (win, getmaxy (win) / 2 + 3, 3);
+  waddstr (win, "TX/s:    ");
   wattron (win, COLOR_PAIR (C_NET_TRANSMIT));
   FormatSize (win, net_transmit->back->u, true);
   waddstr (win, "/s  ");
