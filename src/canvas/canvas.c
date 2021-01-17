@@ -8,9 +8,6 @@
 /* Apparenly this isn't included by <ncurses.h> */
 extern int waddnwstr(WINDOW *win, const wchar_t *wstr, int n);
 
-#define BRAILLE_MASK 0xFF
-#define TEXT_MASK 0xFF00
-
 #define NORMALIZE(x) (size_t)round ((double)(x))
 
 static const uint16_t pixel_map[4][2] = {
@@ -92,7 +89,7 @@ CanvasDraw (const Canvas *c, WINDOW *win)
       wmove (win, y + 1, 1);
       for (size_t x = 0; x < c->width; ++x)
         {
-          ch[0] = braille_char_offset + (c->chars[row_off + x] & BRAILLE_MASK);
+          ch[0] = braille_char_offset + c->chars[row_off + x];
           wattron (win, COLOR_PAIR (c->colors[row_off + x]));
           waddnwstr (win, ch, 1);
           wattroff (win, COLOR_PAIR (c->colors[row_off + x]));
