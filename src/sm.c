@@ -186,10 +186,11 @@ DrawAll ()
 void
 Usage (FILE *stream)
 {
-  fputs ("Usage: sm [-a] [-r millis]\n", stream);
+  fputs ("Usage: sm [-a] [-r millis] [-s scale]\n", stream);
   fputs ("Options:\n", stream);
   fputs ("  -a         Show average CPU usage\n", stream);
   fputs ("  -r millis  Update interval in milliseconds\n", stream);
+  fputs ("  -s scale   Graph scale\n", stream);
   fputs ("  -h         Show help message\n", stream);
 }
 
