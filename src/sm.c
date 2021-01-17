@@ -198,7 +198,7 @@ ParseArgs (int argc, char *const *argv)
 {
   char opt;
   unsigned long n;
-  while ((opt = getopt (argc, argv, "ar:h")) != -1)
+  while ((opt = getopt (argc, argv, "ar:hs:")) != -1)
     {
       switch (opt)
         {
@@ -209,6 +209,12 @@ ParseArgs (int argc, char *const *argv)
             n = strtoull (optarg, NULL, 10);
             interval.tv_sec = n / 1000L;
             interval.tv_nsec = (n % 1000L) * 1000000L;
+            break;
+          case 's':
+            n = strtoull (optarg, NULL, 10);
+            cpu_graph_scale = n;
+            mem_graph_scale = n;
+            net_graph_scale = n;
             break;
           case 'h':
           case '?':
