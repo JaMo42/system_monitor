@@ -15,7 +15,7 @@ Canvas * CanvasCreate (WINDOW *win);
 void CanvasDelete (Canvas *c);
 
 void CanvasClear (Canvas *c);
-void CanvasResize (Canvas *c, size_t width, size_t height);
+void CanvasResize (Canvas *c, WINDOW *win);
 
 void CanvasSet (Canvas *c, double x_, double y_, short color);
 

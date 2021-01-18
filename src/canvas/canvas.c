@@ -49,8 +49,10 @@ CanvasClear (Canvas *c)
 }
 
 void
-CanvasResize (Canvas *c, size_t width, size_t height)
+CanvasResize (Canvas *c, WINDOW *win)
 {
+  const unsigned width = getmaxx (win);
+  const unsigned height = getmaxy (win);
   /* No need to preserve old content. */
   free (c->chars);
   free (c->colors);
