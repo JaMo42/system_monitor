@@ -1,7 +1,10 @@
 #include "network.h"
 #include "util.h"
+#include "canvas/canvas.h"
 
 extern struct timespec interval;
+
+Widget net_widget = WIDGET(Network);
 
 List *net_recieve;
 List *net_transmit;
@@ -60,19 +63,22 @@ NetworkGetInterfaces ()
 }
 
 void
-NetworkInit (unsigned max_samples)
+NetworkInit (WINDOW *win, unsigned graph_scale)
 {
   net_recieve = list_create ();
   net_transmit = list_create ();
   net_recieve_total = 0;
   net_transmit_total = 0;
-  net_max_samples = max_samples;
+  net_max_samples = MAX_SAMPLES (win, graph_scale);
   net_samples = 0;
   NetworkGetInterfaces ();
   net_period = (double)interval.tv_sec + interval.tv_nsec / 1.0e9;
   NetworkUpdate ();
   net_recieve_max = 0;
   net_transmit_max = 0;
+  net_graph_scale = graph_scale;
+  DrawWindow (win, "Network");
+  net_canvas = CanvasCreate (win);
 }
 
 void
@@ -81,12 +87,7 @@ NetworkQuit ()
   list_delete (net_recieve);
   list_delete (net_transmit);
   free (net_interfaces);
-}
-
-void
-NetworkSetMaxSamples (unsigned s)
-{
-  net_max_samples = s;
+  CanvasDelete (net_canvas);
 }
 
 static inline unsigned long
@@ -207,5 +208,17 @@ NetworkDraw (WINDOW *win)
   FormatSize (win, net_transmit->back->u, true);
   waddstr (win, "/s  ");
   wattroff (win, COLOR_PAIR (C_NET_TRANSMIT));
+}
+
+void
+NetworkResize (WINDOW *win)
+{
+  wclear (win);
+
+  CanvasResize (net_canvas, win);
+
+  net_max_samples = MAX_SAMPLES (win, net_max_samples);
+  list_clear (net_recieve);
+  list_clear (net_transmit);
 }
 

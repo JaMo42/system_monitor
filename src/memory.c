@@ -1,15 +1,18 @@
 #include "memory.h"
 #include "util.h"
+#include "canvas/canvas.h"
 
-List *mem_main_usage;
-List *mem_swap_usage;
-unsigned long mem_main_total;
-unsigned long mem_swap_total;
-size_t mem_max_samples;
-size_t mem_samples;
+Widget mem_widget = WIDGET(Memory);
 
-Canvas *mem_canvas;
-int mem_graph_scale = 5;
+static List *mem_main_usage;
+static List *mem_swap_usage;
+static unsigned long mem_main_total;
+static unsigned long mem_swap_total;
+static unsigned mem_max_samples;
+static unsigned mem_samples;
+
+static Canvas *mem_canvas;
+static int mem_graph_scale = 5;
 
 static struct sysinfo mem_sysinfo;
 
@@ -22,13 +25,16 @@ MemoryGetTotal ()
 }
 
 void
-MemoryInit (size_t max_samples)
+MemoryInit (WINDOW *win, unsigned graph_scale)
 {
   mem_main_usage = list_create ();
   mem_swap_usage = list_create ();
-  mem_max_samples = max_samples;
+  mem_max_samples = MAX_SAMPLES (win, graph_scale);
   mem_samples = 0;
   MemoryGetTotal ();
+  mem_graph_scale = graph_scale;
+  DrawWindow (win, "Memory");
+  mem_canvas = CanvasCreate (win);
 }
 
 void
@@ -36,12 +42,7 @@ MemoryQuit ()
 {
   list_delete (mem_main_usage);
   list_delete (mem_swap_usage);
-}
-
-void
-MemorySetMaxSamples (size_t s)
-{
-  mem_max_samples = s;
+  CanvasDelete (mem_canvas);
 }
 
 void
@@ -119,3 +120,17 @@ MemoryDraw (WINDOW *win)
   FormatSize (win, mem_swap_total, false);
   wattroff (win, COLOR_PAIR (C_MEM_SWAP));
 }
+
+void
+MemoryResize (WINDOW *win)
+{
+  wclear (win);
+  DrawWindow (win, "Memory");
+
+  CanvasResize (mem_canvas, win);
+
+  mem_max_samples = MAX_SAMPLES (win, mem_graph_scale);
+  list_clear (mem_main_usage);
+  list_clear (mem_swap_usage);
+}
+

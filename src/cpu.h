@@ -1,18 +1,14 @@
 #pragma once
 #include "stdafx.h"
-#include "canvas/canvas.h"
-
-extern List **cpu_usages;
-extern int cpu_count;
-extern size_t cpu_max_samples;
-extern size_t cpu_samples;
+#include "widget.h"
 
 extern bool cpu_show_avg;
-extern Canvas *cpu_canvas;
-extern int cpu_graph_scale;
 
-void CpuInit (size_t max_samples);
+void CpuInit (WINDOW *win, unsigned graph_scale);
 void CpuQuit ();
-void CpuSetMaxSamples (size_t s);
 void CpuUpdate ();
-void CpuDraw (WINDOW *);
+void CpuDraw (WINDOW *win);
+void CpuResize (WINDOW *win);
+
+extern Widget cpu_widget;
+

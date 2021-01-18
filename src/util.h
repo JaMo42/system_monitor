@@ -2,6 +2,8 @@
 #include "stdafx.h"
 #include "canvas/canvas.h"
 
+#define MAX_SAMPLES(win, scale) ((getmaxx (win) - 2) / scale + 2)
+
 /* Colors */
 extern const short C_BORDER;
 extern const short C_TITLE;
@@ -25,3 +27,4 @@ void DrawWindow (WINDOW *w, const char *title);
 void DrawWindowInfo (WINDOW *w, const char *info);
 
 void FormatSize (WINDOW *win, size_t size, bool pad);
+

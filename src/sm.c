@@ -1,19 +1,26 @@
 #include "stdafx.h"
 #include "util.h"
+#include "ui.h"
 #include "cpu.h"
 #include "memory.h"
 #include "network.h"
+#include "proc.h"
 
 static int term_width, term_height;
-static WINDOW *cpu_win, *mem_win, *net_win, *proc_win;
 struct timespec interval = { .tv_sec = 0, .tv_nsec = 500000000L };
+static unsigned graph_scale = 8;
 
 void CursesInit ();
 void CursesUpdate ();
 void CursesQuit ();
 void CursesResize ();
-void UpdateAll ();
-void DrawAll ();
+
+void InitWidgets ();
+void UpdateWidgets ();
+void DrawWidgets ();
+void ResizeWidgets ();
+void QuitWidgets ();
+
 void ParseArgs (int, char *const *);
 
 static void
@@ -24,33 +31,44 @@ SigWinchHandler ()
   term_width = w.ws_col;
   term_height = w.ws_row;
   CursesResize ();
+  ResizeWidgets ();
 }
 
 int
 main (int argc, char *const *argv)
 {
+  /* @TODO: only widgets for now
+  //UI *ui;
+  Layout *r1 = LayoutCreate (LAYOUT_ROWS);
+  LayoutAddWidget (r1, &cpu_widget);
+  Layout *c1 = LayoutAddLayout (r1, LAYOUT_COLS);
+  Layout *r2 = LayoutAddLayout (c1, LAYOUT_ROWS);
+  LayoutAddWidget (c1, &proc_widget);
+  LayoutAddWidget (r2, &mem_widget);
+  LayoutAddWidget (r2, &net_widget);
+
+  //LayoutDelete (r1);
+
+  //ui = UICreate (r1);
+  */
+
   ParseArgs (argc, argv);
   CursesInit ();
-  CpuInit ((term_width - 2) / cpu_graph_scale + 1);
-  MemoryInit ((term_width / 2 - 2) / mem_graph_scale + 2);
-  MemoryUpdate ();
-  NetworkInit ((term_width / 2 - 2) / net_graph_scale + 1);
-
+  InitWidgets ();
   CursesUpdate ();
 
   char ch = 0;
   while ((ch = getch ()) != 'q')
     {
-      UpdateAll ();
-      DrawAll ();
+      UpdateWidgets ();
+      DrawWidgets ();
       CursesUpdate ();
 #ifndef MANUAL
       nanosleep (&interval, NULL);
 #endif
     }
 
-  MemoryQuit ();
-  CpuQuit ();
+  QuitWidgets ();
   CursesQuit ();
 }
 
@@ -73,39 +91,45 @@ CursesInit ()
 
  /* Actual window positions and dimensions will be set through the initial
     `SigWinchHandler' call below. */
-  cpu_win = newwin (1, 1, 0, 0);
-  mem_win = newwin (1, 1, 0, 0);
-  net_win = newwin (1, 1, 0, 0);
-  proc_win = newwin (1, 1, 0, 0);
+  cpu_widget.win = newwin (1, 1, 0, 0);
+  mem_widget.win = newwin (1, 1, 0, 0);
+  net_widget.win = newwin (1, 1, 0, 0);
+  proc_widget.win = newwin (1, 1, 0, 0);
+  struct winsize w;
+  ioctl (STDOUT_FILENO, TIOCGWINSZ, &w);
+  term_width = w.ws_col;
+  term_height = w.ws_row;
+  const int term_height_3 = term_height / 3;
+  const int term_width_2 = term_width / 2;
+  mvwin (cpu_widget.win, 0, 0);
+  wresize (cpu_widget.win, term_height_3, term_width);
+  mvwin (mem_widget.win, term_height_3, 0);
+  wresize (mem_widget.win, term_height_3, term_width_2);
+  mvwin (net_widget.win, term_height_3 * 2, 0);
+  wresize (net_widget.win, term_height_3, term_width_2);
+  mvwin (proc_widget.win, term_height_3, term_width_2);
+  wresize (proc_widget.win, term_height_3 * 2, term_width_2);
 
   signal (SIGWINCH, SigWinchHandler);
-  SigWinchHandler ();
-
-  cpu_canvas = CanvasCreate (
-    getmaxx (cpu_win) - 2, getmaxy (cpu_win) - 2);
-  mem_canvas = CanvasCreate (
-    getmaxx (mem_win) - 2, getmaxy (mem_win) - 2);
-  net_canvas = CanvasCreate (
-    getmaxx (net_win) - 2, getmaxy (net_win) - 2);
 }
 
 void
 CursesUpdate ()
 {
   refresh ();
-  wrefresh (cpu_win);
-  wrefresh (mem_win);
-  wrefresh (net_win);
-  wrefresh (proc_win);
+  wrefresh (cpu_widget.win);
+  wrefresh (mem_widget.win);
+  wrefresh (net_widget.win);
+  wrefresh (proc_widget.win);
 }
 
 void
 CursesQuit ()
 {
-  CanvasDelete (net_canvas);
-  CanvasDelete (mem_canvas);
-  CanvasDelete (cpu_canvas);
-  delwin (cpu_win);
+  delwin (cpu_widget.win);
+  delwin (mem_widget.win);
+  delwin (net_widget.win);
+  delwin (proc_widget.win);
   endwin ();
   //_nc_free_and_exit ();
 }
@@ -113,74 +137,92 @@ CursesQuit ()
 void
 CursesResize ()
 {
-  wclear (stdscr);
-  wclear (cpu_win);
-  wclear (mem_win);
-  wclear (net_win);
-  wclear (proc_win);
 #if 0
   const int term_height_2 = term_height / 2;
   const int term_height_4 = term_height_2 / 2;
   const int term_width_2 = term_width / 2;
 
-  mvwin (cpu_win, 0, 0);
-  wresize (cpu_win, term_height_2, term_width);
-  DrawWindow (cpu_win, "CPU");
+  mvwin (cpu_widget.win, 0, 0);
+  wresize (cpu_widget.win, term_height_2, term_width);
+  DrawWindow (cpu_widget.win, "CPU");
 
-  mvwin (mem_win, term_height_2, 0);
-  wresize (mem_win, term_height_4, term_width_2);
-  DrawWindow (mem_win, "Memory");
+  mvwin (mem_widget.win, term_height_2, 0);
+  wresize (mem_widget.win, term_height_4, term_width_2);
+  DrawWindow (mem_widget.win, "Memory");
 
-  mvwin (net_win, term_height_2 + term_height_4, 0);
-  wresize (net_win, term_height_4, term_width_2);
-  DrawWindow (net_win, "Network");
+  mvwin (net_widget.win, term_height_2 + term_height_4, 0);
+  wresize (net_widget.win, term_height_4, term_width_2);
+  DrawWindow (net_widget.win, "Network");
 
-  mvwin (proc_win, term_height_2, term_width_2);
-  wresize (proc_win, term_height_2, term_width_2);
-  DrawWindow (proc_win, "Processes");
-  DrawWindowInfo (proc_win, "? - ? of ?");
+  mvwin (proc_widget.win, term_height_2, term_width_2);
+  wresize (proc_widget.win, term_height_2, term_width_2);
+  DrawWindow (proc_widget.win, "Processes");
+  DrawWindowInfo (proc_widget.win, "? - ? of ?");
 #else
   const int term_height_3 = term_height / 3;
   const int term_width_2 = term_width / 2;
 
-  mvwin (cpu_win, 0, 0);
-  wresize (cpu_win, term_height_3, term_width);
-  DrawWindow (cpu_win, "CPU");
-  if (cpu_canvas)
-    CanvasResize (cpu_canvas, getmaxx (cpu_win) - 2, getmaxy (cpu_win) - 2);
+  mvwin (cpu_widget.win, 0, 0);
+  wresize (cpu_widget.win, term_height_3, term_width);
+  cpu_widget.Resize (cpu_widget.win);
 
-  mvwin (mem_win, term_height_3, 0);
-  wresize (mem_win, term_height_3, term_width_2);
-  DrawWindow (mem_win, "Memory");
-  if (mem_canvas)
-    CanvasResize (mem_canvas, getmaxx (mem_win) - 2, getmaxy (mem_win) - 2);
+  mvwin (mem_widget.win, term_height_3, 0);
+  wresize (mem_widget.win, term_height_3, term_width_2);
+  mem_widget.Resize (mem_widget.win);
 
-  mvwin (net_win, term_height_3 * 2, 0);
-  wresize (net_win, term_height_3, term_width_2);
-  DrawWindow (net_win, "Network");
-  if (net_canvas)
-    CanvasResize (net_canvas, getmaxx (net_win) - 2, getmaxy (net_win) - 2);
-  mvwin (proc_win, term_height_3, term_width_2);
-  wresize (proc_win, term_height_3 * 2, term_width_2);
-  DrawWindow (proc_win, "Processes");
-  DrawWindowInfo (proc_win, "? - ? of ?");
+  mvwin (net_widget.win, term_height_3 * 2, 0);
+  wresize (net_widget.win, term_height_3, term_width_2);
+  net_widget.Resize (net_widget.win);
+
+  mvwin (proc_widget.win, term_height_3, term_width_2);
+  wresize (proc_widget.win, term_height_3 * 2, term_width_2);
+  proc_widget.Resize (proc_widget.win);
 #endif
 }
 
 void
-UpdateAll ()
+InitWidgets ()
 {
-  CpuUpdate ();
-  MemoryUpdate ();
-  NetworkUpdate ();
+  cpu_widget.Init (cpu_widget.win, graph_scale);
+  mem_widget.Init (mem_widget.win, graph_scale);
+  net_widget.Init (net_widget.win, graph_scale);
+  proc_widget.Init (proc_widget.win, graph_scale);
 }
 
 void
-DrawAll ()
+UpdateWidgets ()
 {
-  CpuDraw (cpu_win);
-  MemoryDraw (mem_win);
-  NetworkDraw (net_win);
+  cpu_widget.Update ();
+  mem_widget.Update ();
+  net_widget.Update ();
+  proc_widget.Update ();
+}
+
+void
+DrawWidgets ()
+{
+  cpu_widget.Draw (cpu_widget.win);
+  mem_widget.Draw (mem_widget.win);
+  net_widget.Draw (net_widget.win);
+  proc_widget.Draw (proc_widget.win);
+}
+
+void
+ResizeWidgets ()
+{
+  cpu_widget.Resize (cpu_widget.win);
+  mem_widget.Resize (mem_widget.win);
+  net_widget.Resize (net_widget.win);
+  proc_widget.Resize (proc_widget.win);
+}
+
+void
+QuitWidgets ()
+{
+  cpu_widget.Quit ();
+  mem_widget.Quit ();
+  net_widget.Quit ();
+  proc_widget.Quit ();
 }
 
 void
@@ -212,10 +254,7 @@ ParseArgs (int argc, char *const *argv)
             interval.tv_nsec = (n % 1000L) * 1000000L;
             break;
           case 's':
-            n = strtoull (optarg, NULL, 10);
-            cpu_graph_scale = n;
-            mem_graph_scale = n;
-            net_graph_scale = n;
+            graph_scale = (unsigned)strtoull (optarg, NULL, 10);
             break;
           case 'h':
           case '?':

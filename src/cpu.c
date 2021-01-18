@@ -1,32 +1,36 @@
 #include "cpu.h"
 #include "util.h"
+#include "canvas/canvas.h"
 
-// size = `cpu_count + 1' to account for average usage
-List **cpu_usages;
-size_t cpu_max_samples;
-size_t cpu_samples;
-int cpu_count;
+Widget cpu_widget = WIDGET(Cpu);
+
+static List **cpu_usages;
+static unsigned cpu_max_samples;
+static unsigned cpu_samples;
+static int cpu_count;
 
 bool cpu_show_avg;
-Canvas *cpu_canvas;
-int cpu_graph_scale = 5;
+static Canvas *cpu_canvas;
+static int cpu_graph_scale = 5;
 
-// Total and work jiffies of the last snapshot for each processor + the average.
 static size_t *cpu_last_total_jiffies;
 static size_t *cpu_last_work_jiffies;
 
 void
-CpuInit (size_t max_samples)
+CpuInit (WINDOW *win, unsigned graph_scale)
 {
   cpu_count = get_nprocs_conf ();
   cpu_usages = (List **)malloc (sizeof (List *) * (cpu_count + 1));
   for (int i= 0; i <= cpu_count; ++i)
     cpu_usages[i] = list_create ();
-  cpu_max_samples = max_samples;
+  cpu_max_samples = MAX_SAMPLES (win, graph_scale);
   cpu_samples = 0;
   cpu_last_total_jiffies = calloc (cpu_count + 1, sizeof (size_t));
   cpu_last_work_jiffies = calloc (cpu_count + 1, sizeof (size_t));
   cpu_show_avg = cpu_show_avg || cpu_count > 8;
+  cpu_graph_scale = graph_scale;
+  DrawWindow (win, "CPU");
+  cpu_canvas = CanvasCreate (win);
 }
 
 void
@@ -37,12 +41,7 @@ CpuQuit ()
   free (cpu_usages);
   free (cpu_last_total_jiffies);
   free (cpu_last_work_jiffies);
-}
-
-void
-CpuSetMaxSamples (size_t s)
-{
-  cpu_max_samples = s;
+  CanvasDelete (cpu_canvas);
 }
 
 static double
@@ -152,3 +151,20 @@ CpuDraw (WINDOW *win)
         }
     }
 }
+
+void
+CpuResize (WINDOW *win)
+{
+    wclear (win);
+    DrawWindow (win, "CPU");
+
+    CanvasResize (cpu_canvas, win);
+
+    cpu_max_samples = MAX_SAMPLES (win, cpu_graph_scale);
+    for (int i = 0; i <= cpu_count; ++i)
+      {
+        // @TODO: only remove excess
+        list_clear (cpu_usages[i]);
+      }
+}
+
