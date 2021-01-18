@@ -11,7 +11,7 @@ typedef struct Canvas
   size_t height;
 } Canvas;
 
-Canvas * CanvasCreate (size_t width, size_t height);
+Canvas * CanvasCreate (WINDOW *win);
 void CanvasDelete (Canvas *c);
 
 void CanvasClear (Canvas *c);
