@@ -25,7 +25,7 @@ CanvasCreate (WINDOW *win)
   Canvas *c = (Canvas *)malloc (sizeof (Canvas));
   c->chars = NULL;
   c->colors = NULL;
-  CanvasResize (c, getmaxx (win) - 2, getmaxy (win) - 2);
+  CanvasResize (c, win);
   return c;
 }
 
