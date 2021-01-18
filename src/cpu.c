@@ -166,5 +166,6 @@ CpuResize (WINDOW *win)
         // @TODO: only remove excess
         list_clear (cpu_usages[i]);
       }
+    cpu_samples = 0;
 }
 

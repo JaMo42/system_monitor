@@ -137,6 +137,8 @@ CursesQuit ()
 void
 CursesResize ()
 {
+  clear ();
+  refresh ();
 #if 0
   const int term_height_2 = term_height / 2;
   const int term_height_4 = term_height_2 / 2;

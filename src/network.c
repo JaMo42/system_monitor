@@ -86,6 +86,10 @@ NetworkQuit ()
 {
   list_delete (net_recieve);
   list_delete (net_transmit);
+  for (unsigned i = 0; i < net_interface_count; ++i)
+    {
+      free (net_interfaces[i].name);
+    }
   free (net_interfaces);
   CanvasDelete (net_canvas);
 }
@@ -214,11 +218,13 @@ void
 NetworkResize (WINDOW *win)
 {
   wclear (win);
+  DrawWindow (win, "Network");
 
   CanvasResize (net_canvas, win);
 
   net_max_samples = MAX_SAMPLES (win, net_max_samples);
   list_clear (net_recieve);
   list_clear (net_transmit);
+  net_samples = 0;
 }
 

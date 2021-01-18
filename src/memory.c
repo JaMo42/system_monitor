@@ -132,5 +132,6 @@ MemoryResize (WINDOW *win)
   mem_max_samples = MAX_SAMPLES (win, mem_graph_scale);
   list_clear (mem_main_usage);
   list_clear (mem_swap_usage);
+  mem_samples = 0;
 }
 
