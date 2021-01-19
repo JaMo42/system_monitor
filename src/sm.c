@@ -6,9 +6,9 @@
 #include "network.h"
 #include "proc.h"
 
-static int term_width, term_height;
 struct timespec interval = { .tv_sec = 0, .tv_nsec = 500000000L };
 static unsigned graph_scale = 8;
+static Layout *ui;
 
 void CursesInit ();
 void CursesUpdate ();
@@ -18,8 +18,6 @@ void CursesResize ();
 void InitWidgets ();
 void UpdateWidgets ();
 void DrawWidgets ();
-void ResizeWidgets ();
-void QuitWidgets ();
 
 void ParseArgs (int, char *const *);
 
@@ -28,32 +26,26 @@ SigWinchHandler ()
 {
   struct winsize w;
   ioctl (STDOUT_FILENO, TIOCGWINSZ, &w);
-  term_width = w.ws_col;
-  term_height = w.ws_row;
   CursesResize ();
-  ResizeWidgets ();
+  UIResize (ui, w.ws_col, w.ws_row);
 }
 
 int
 main (int argc, char *const *argv)
 {
-  /* @TODO: only widgets for now
-  //UI *ui;
-  Layout *r1 = LayoutCreate (LAYOUT_ROWS);
-  LayoutAddWidget (r1, &cpu_widget);
-  Layout *c1 = LayoutAddLayout (r1, LAYOUT_COLS);
-  Layout *r2 = LayoutAddLayout (c1, LAYOUT_ROWS);
-  LayoutAddWidget (c1, &proc_widget);
-  LayoutAddWidget (r2, &mem_widget);
-  LayoutAddWidget (r2, &net_widget);
-
-  //LayoutDelete (r1);
-
-  //ui = UICreate (r1);
-  */
+  /*r1*/ui = UICreateLayout (2, UI_ROWS);
+  Layout *c1 = UICreateLayout (2, UI_COLS);
+  Layout *r2 = UICreateLayout (2, UI_ROWS);
+  UIAddWidget (ui, &cpu_widget, 0, 0.333f);
+  UIAddLayout (ui, c1, 1, 0.666f);
+  UIAddLayout (c1, r2, 0, 0.5f);
+  UIAddWidget (r2, &mem_widget, 0, 0.5f);
+  UIAddWidget (r2, &net_widget, 1, 0.5f);
+  UIAddWidget (c1, &proc_widget, 1, 0.5f);
 
   ParseArgs (argc, argv);
   CursesInit ();
+  UIConstruct (ui);
   InitWidgets ();
   CursesUpdate ();
 
@@ -68,7 +60,7 @@ main (int argc, char *const *argv)
 #endif
     }
 
-  QuitWidgets ();
+  UIDeleteLayout (ui);
   CursesQuit ();
 }
 
@@ -89,27 +81,6 @@ CursesInit ()
   for (int i = 0; i < COLORS; ++i)
     init_pair (i + 1, i, -1);
 
- /* Actual window positions and dimensions will be set through the initial
-    `SigWinchHandler' call below. */
-  cpu_widget.win = newwin (1, 1, 0, 0);
-  mem_widget.win = newwin (1, 1, 0, 0);
-  net_widget.win = newwin (1, 1, 0, 0);
-  proc_widget.win = newwin (1, 1, 0, 0);
-  struct winsize w;
-  ioctl (STDOUT_FILENO, TIOCGWINSZ, &w);
-  term_width = w.ws_col;
-  term_height = w.ws_row;
-  const int term_height_3 = term_height / 3;
-  const int term_width_2 = term_width / 2;
-  mvwin (cpu_widget.win, 0, 0);
-  wresize (cpu_widget.win, term_height_3, term_width);
-  mvwin (mem_widget.win, term_height_3, 0);
-  wresize (mem_widget.win, term_height_3, term_width_2);
-  mvwin (net_widget.win, term_height_3 * 2, 0);
-  wresize (net_widget.win, term_height_3, term_width_2);
-  mvwin (proc_widget.win, term_height_3, term_width_2);
-  wresize (proc_widget.win, term_height_3 * 2, term_width_2);
-
   signal (SIGWINCH, SigWinchHandler);
 }
 
@@ -126,10 +97,6 @@ CursesUpdate ()
 void
 CursesQuit ()
 {
-  delwin (cpu_widget.win);
-  delwin (mem_widget.win);
-  delwin (net_widget.win);
-  delwin (proc_widget.win);
   endwin ();
   //_nc_free_and_exit ();
 }
@@ -139,47 +106,6 @@ CursesResize ()
 {
   clear ();
   refresh ();
-#if 0
-  const int term_height_2 = term_height / 2;
-  const int term_height_4 = term_height_2 / 2;
-  const int term_width_2 = term_width / 2;
-
-  mvwin (cpu_widget.win, 0, 0);
-  wresize (cpu_widget.win, term_height_2, term_width);
-  DrawWindow (cpu_widget.win, "CPU");
-
-  mvwin (mem_widget.win, term_height_2, 0);
-  wresize (mem_widget.win, term_height_4, term_width_2);
-  DrawWindow (mem_widget.win, "Memory");
-
-  mvwin (net_widget.win, term_height_2 + term_height_4, 0);
-  wresize (net_widget.win, term_height_4, term_width_2);
-  DrawWindow (net_widget.win, "Network");
-
-  mvwin (proc_widget.win, term_height_2, term_width_2);
-  wresize (proc_widget.win, term_height_2, term_width_2);
-  DrawWindow (proc_widget.win, "Processes");
-  DrawWindowInfo (proc_widget.win, "? - ? of ?");
-#else
-  const int term_height_3 = term_height / 3;
-  const int term_width_2 = term_width / 2;
-
-  mvwin (cpu_widget.win, 0, 0);
-  wresize (cpu_widget.win, term_height_3, term_width);
-  cpu_widget.Resize (cpu_widget.win);
-
-  mvwin (mem_widget.win, term_height_3, 0);
-  wresize (mem_widget.win, term_height_3, term_width_2);
-  mem_widget.Resize (mem_widget.win);
-
-  mvwin (net_widget.win, term_height_3 * 2, 0);
-  wresize (net_widget.win, term_height_3, term_width_2);
-  net_widget.Resize (net_widget.win);
-
-  mvwin (proc_widget.win, term_height_3, term_width_2);
-  wresize (proc_widget.win, term_height_3 * 2, term_width_2);
-  proc_widget.Resize (proc_widget.win);
-#endif
 }
 
 void
@@ -207,24 +133,6 @@ DrawWidgets ()
   mem_widget.Draw (mem_widget.win);
   net_widget.Draw (net_widget.win);
   proc_widget.Draw (proc_widget.win);
-}
-
-void
-ResizeWidgets ()
-{
-  cpu_widget.Resize (cpu_widget.win);
-  mem_widget.Resize (mem_widget.win);
-  net_widget.Resize (net_widget.win);
-  proc_widget.Resize (proc_widget.win);
-}
-
-void
-QuitWidgets ()
-{
-  cpu_widget.Quit ();
-  mem_widget.Quit ();
-  net_widget.Quit ();
-  proc_widget.Quit ();
 }
 
 void
