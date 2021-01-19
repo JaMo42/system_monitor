@@ -201,12 +201,12 @@ NetworkDraw (WINDOW *win)
   waddstr (win, "/s");
   wattroff (win, COLOR_PAIR (C_NET_RECIEVE));
 
-  wmove (win, getmaxy (win) / 2 + 2, 3);
+  wmove (win, getmaxy (win) / 2 + 1, 3);
   waddstr (win, "Total TX:");
   wattron (win, COLOR_PAIR (C_NET_TRANSMIT));
   FormatSize (win, net_transmit_total, true);
   wattroff (win, COLOR_PAIR (C_NET_TRANSMIT));
-  wmove (win, getmaxy (win) / 2 + 3, 3);
+  wmove (win, getmaxy (win) / 2 + 2, 3);
   waddstr (win, "TX/s:    ");
   wattron (win, COLOR_PAIR (C_NET_TRANSMIT));
   FormatSize (win, net_transmit->back->u, true);
