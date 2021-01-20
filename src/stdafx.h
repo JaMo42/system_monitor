@@ -23,4 +23,6 @@
 
 #include "list.h"
 
+#define sm_clamp(x, low, high) (((x) < (low)) ? (low) : (((x) > (high)) ? (high) : (x)))
+
 #endif /* !STDAFX_H */

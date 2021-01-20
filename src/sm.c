@@ -54,17 +54,35 @@ main (int argc, char *const *argv)
     {
       switch (ch)
         {
+        case KEY_UP:
+        case 'k':
+key_up:
+          ProcCursorUp ();
+          break;
+        case KEY_DOWN:
+        case 'j':
+key_down:
+          ProcCursorDown ();
+          break;
+        case 27:
+          (void)getch ();  /* Consume '[' */
+          ch = getch ();
+          if (ch == 'A')
+            goto key_up;
+          else if (ch == 'B')
+            goto key_down;
+          break;
         case 'p':
-          proc_sort = PROC_SORT_PID;
+          ProcSetSort (PROC_SORT_PID);
           break;
         case 'P':
-          proc_sort = PROC_SORT_INVPID;
+          ProcSetSort (PROC_SORT_INVPID);
           break;
         case 'c':
-          proc_sort = PROC_SORT_CPU;
+          ProcSetSort (PROC_SORT_CPU);
           break;
         case 'm':
-          proc_sort = PROC_SORT_MEM;
+          ProcSetSort (PROC_SORT_MEM);
           break;
         }
       UpdateWidgets ();

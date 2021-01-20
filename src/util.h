@@ -31,3 +31,5 @@ void DrawWindowInfo (WINDOW *w, const char *info);
 
 void FormatSize (WINDOW *win, size_t size, bool pad);
 
+void PrintN (WINDOW *win, int ch, unsigned n);
+

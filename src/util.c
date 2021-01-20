@@ -62,3 +62,10 @@ FormatSize (WINDOW *win, size_t size, bool pad)
   waddstr (win, units[order]);
 }
 
+void
+PrintN (WINDOW *win, int ch, unsigned n)
+{
+  while (--n)
+    waddch (win, ch);
+}
+

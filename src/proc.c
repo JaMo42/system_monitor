@@ -5,7 +5,6 @@
 
 Widget proc_widget = WIDGET(Proc);
 
-const char *proc_sort = PROC_SORT_CPU;
 
 extern struct timespec interval;
 static unsigned long proc_time_passed;
@@ -17,15 +16,37 @@ static struct Process
   double mem;
 } proc_processes[PROC_MAX_COUNT];
 static size_t proc_count;
+static const char *proc_sort = PROC_SORT_CPU;
+static unsigned proc_cursor;
+static pid_t proc_cursor_pid;
 
-void ProcInit (WINDOW *win, unsigned graph_scale) {
+static void ProcUpdateProcesses ();
+
+void
+ProcInit (WINDOW *win, unsigned graph_scale) {
   (void)graph_scale;
-  proc_time_passed = 3141;
+  proc_time_passed = 0;
   DrawWindow (win, "Processes");
+  ProcUpdateProcesses ();
+  proc_cursor_pid = proc_processes[0].pid;
 }
 
-void ProcQuit ()
+void
+ProcQuit ()
 {}
+
+static inline unsigned
+ProcPIDLen (pid_t pid)
+{
+  if (pid < 10) return 1;
+  if (pid < 100) return 2;
+  if (pid < 1000) return 3;
+  if (pid < 10000) return 4;
+  if (pid < 100000) return 5;
+  if (pid < 1000000) return 6;
+  if (pid < 10000000) return 7;
+  return 8;
+}
 
 static void
 ProcUpdateProcesses ()
@@ -34,7 +55,6 @@ ProcUpdateProcesses ()
   strcat (ps_cmd, proc_sort);
   FILE *ps = popen (ps_cmd, "r");
   char line[256];
-
   pid_t pid;
   char cmd[64];
   int cpu_i;
@@ -59,6 +79,9 @@ ProcUpdateProcesses ()
       proc_processes[proc_count].cmd[len] = '\0';
       proc_processes[proc_count].cpu = cpu;
       proc_processes[proc_count].mem = mem;
+      if (pid == proc_cursor_pid)
+        proc_cursor = proc_count;
+
       ++proc_count;
       if (proc_count == PROC_MAX_COUNT)
         break;
@@ -67,7 +90,8 @@ ProcUpdateProcesses ()
   pclose (ps);
 }
 
-void ProcUpdate () {
+void
+ProcUpdate () {
   proc_time_passed += interval.tv_sec * 1000 + interval.tv_nsec / 1000000;
   if (proc_time_passed >= 2000)
     {
@@ -76,42 +100,81 @@ void ProcUpdate () {
     }
 }
 
-void ProcDraw (WINDOW *win)
+void
+ProcDraw (WINDOW *win)
 {
   const unsigned disp_count = (proc_count < (unsigned)(getmaxy (win) - 3))
     ? proc_count
     : (unsigned)(getmaxy (win) - 3);
   const unsigned cpu_mem_off = getmaxx (win) - 12;
-  char info[32];
+  const int max_off = proc_count - (getmaxy (win) - 2);
+  int off = proc_cursor - getmaxy (win) + 4;
+  off = sm_clamp (off, 0, max_off);
 
+  char info[32];
   DrawWindow (win, "Processes");
   snprintf (info, 32, "%u of %zu", disp_count, proc_count);
   DrawWindowInfo (win, info);
 
   wattron (win, A_BOLD | COLOR_PAIR (C_PROC_HEADER));
   wmove (win, 1, 1);
-  waddstr (win, " PID    Command");
+  waddstr (win, " PID      Command");
   wmove (win, 1, cpu_mem_off);
   waddstr (win, "CPU%  Mem%");
   wattroff (win, A_BOLD | COLOR_PAIR (C_PROC_HEADER));
 
-  struct Process *P = proc_processes;
+  struct Process *P = proc_processes + off;
   for (size_t i = 0; i < disp_count; ++i, ++P)
     {
-      wattron (win, COLOR_PAIR (C_PROC_PROCESSES));
+      if (off + i == proc_cursor)
+        {
+          wattron (win, A_BOLD | COLOR_PAIR (C_PROC_CURSOR));
+          wmove (win, 2 + i, 1);
+          PrintN (win, ' ', getmaxx (win) - 2);
+        }
+      else
+        wattron (win, COLOR_PAIR (C_PROC_PROCESSES));
       wmove (win, 2 + i, 1);
       for (unsigned c = 0; c < cpu_mem_off; ++c)
         waddch (win, ' ');
       wmove (win, 2 + i, 1);
-      wprintw (win, " %-5d  %s", P->pid, P->cmd);
+      wprintw (win, " %-7d  %s", P->pid, P->cmd);
       wmove (win, 2 + i, cpu_mem_off);
       wprintw (win, "%4.1f  %4.1f", P->cpu, P->mem);
-      wattroff (win, COLOR_PAIR (C_PROC_PROCESSES));
+      if (off + i == proc_cursor)
+        wattroff (win, A_BOLD | COLOR_PAIR (C_PROC_CURSOR));
+      else
+        wattroff (win, COLOR_PAIR (C_PROC_PROCESSES));
     }
 }
 
-void ProcResize (WINDOW *win) {
+void
+ProcResize (WINDOW *win) {
   wclear (win);
   DrawWindow (win, "Processes");
+}
+
+void
+ProcCursorUp ()
+{
+  if (proc_cursor > 0)
+    --proc_cursor;
+  proc_cursor_pid = proc_processes[proc_cursor].pid;
+}
+
+void
+ProcCursorDown ()
+{
+  if (proc_cursor < proc_count)
+    ++proc_cursor;
+  proc_cursor_pid = proc_processes[proc_cursor].pid;
+}
+
+void
+ProcSetSort (const char *mode)
+{
+  proc_sort = mode;
+  proc_cursor_pid = 0;
+  proc_cursor = 0;
 }
 

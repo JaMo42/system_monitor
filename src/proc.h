@@ -7,14 +7,15 @@
 #define PROC_SORT_PID "pid"  // low -> high
 #define PROC_SORT_INVPID "-pid"  // high -> low
 
-extern const char *proc_sort;
-extern int proc_cursor;
-
 void ProcInit (WINDOW *win, unsigned graph_scale);
 void ProcQuit ();
 void ProcUpdate ();
 void ProcDraw (WINDOW *win);
 void ProcResize (WINDOW *win);
+
+void ProcCursorUp ();
+void ProcCursorDown ();
+void ProcSetSort (const char *mode);
 
 extern Widget proc_widget;
 
