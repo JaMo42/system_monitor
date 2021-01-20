@@ -67,7 +67,7 @@ main (int argc, char *const *argv)
 void
 CursesInit ()
 {
-  setlocale(LC_ALL, "");
+  setlocale (LC_ALL, "");
   initscr ();
   curs_set (0);
   noecho ();
