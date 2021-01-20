@@ -84,7 +84,6 @@ void ProcDraw (WINDOW *win)
   const unsigned cpu_mem_off = getmaxx (win) - 15;
   char info[32];
 
-  wclear (win);
   DrawWindow (win, "Processes");
   snprintf (info, 32, "%u of %zu", disp_count, proc_count);
   DrawWindowInfo (win, info);
@@ -100,6 +99,9 @@ void ProcDraw (WINDOW *win)
   for (size_t i = 0; i < disp_count; ++i, ++P)
     {
       wattron (win, COLOR_PAIR (C_PROC_PROCESSES));
+      wmove (win, 2 + i, 1);
+      for (unsigned c = 0; c < cpu_mem_off; ++c)
+        waddch (win, ' ');
       wmove (win, 2 + i, 1);
       wprintw (win, " %-5d  %s", P->pid, P->cmd);
       wmove (win, 2 + i, cpu_mem_off);
