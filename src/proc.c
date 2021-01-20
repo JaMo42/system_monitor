@@ -128,7 +128,7 @@ ProcDraw (WINDOW *win)
     {
       if (off + i == proc_cursor)
         {
-          wattron (win, A_BOLD | COLOR_PAIR (C_PROC_CURSOR));
+          wattron (win, COLOR_PAIR (C_PROC_CURSOR));
           wmove (win, 2 + i, 1);
           PrintN (win, ' ', getmaxx (win) - 2);
         }
@@ -142,7 +142,7 @@ ProcDraw (WINDOW *win)
       wmove (win, 2 + i, cpu_mem_off);
       wprintw (win, "%4.1f  %4.1f", P->cpu, P->mem);
       if (off + i == proc_cursor)
-        wattroff (win, A_BOLD | COLOR_PAIR (C_PROC_CURSOR));
+        wattroff (win, COLOR_PAIR (C_PROC_CURSOR));
       else
         wattroff (win, COLOR_PAIR (C_PROC_PROCESSES));
     }
