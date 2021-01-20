@@ -89,12 +89,12 @@ void ProcDraw (WINDOW *win)
   snprintf (info, 32, "%u of %zu", disp_count, proc_count);
   DrawWindowInfo (win, info);
 
-  wattron (win, COLOR_PAIR (C_PROC_HEADER));
+  wattron (win, A_BOLD | COLOR_PAIR (C_PROC_HEADER));
   wmove (win, 1, 1);
   waddstr (win, " PID    Command");
   wmove (win, 1, cpu_mem_off);
   waddstr (win, "CPU%  Mem%");
-  wattroff (win, COLOR_PAIR (C_PROC_HEADER));
+  wattroff (win, A_BOLD | COLOR_PAIR (C_PROC_HEADER));
 
   struct Process *P = proc_processes;
   for (size_t i = 0; i < disp_count; ++i, ++P)
