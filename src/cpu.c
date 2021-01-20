@@ -117,7 +117,7 @@ CpuDrawGraph (int id, short color,
     }
 }
 
-#define COLOR(i) ((i) < 8 ? C_GRAPH_TABLE[i] : ((i + 10) % 256))
+#define COLOR(i) ((i) < 8 ? C_CPU_GRAPHS[i] : ((i + 10) % 256))
 
 void
 CpuDraw (WINDOW *win)
@@ -125,7 +125,7 @@ CpuDraw (WINDOW *win)
   CanvasClear (cpu_canvas);
 
   if (cpu_show_avg)
-    CpuDrawGraph (0, C_ACCENT, CanvasDrawLineFill);
+    CpuDrawGraph (0, C_CPU_AVG, CanvasDrawLineFill);
   else
     {
       for (int i = cpu_count; i > 0; --i)
@@ -136,9 +136,9 @@ CpuDraw (WINDOW *win)
 
   if (cpu_show_avg)
     {
-      wattron (win, COLOR_PAIR (C_ACCENT));
+      wattron (win, COLOR_PAIR (C_CPU_AVG));
       mvwprintw (win, 2, 3, "AVRG %d%%", (int)(cpu_usages[0]->back->f * 100.f));
-      wattroff (win, COLOR_PAIR (C_ACCENT));
+      wattroff (win, COLOR_PAIR (C_CPU_AVG));
     }
   else
     {

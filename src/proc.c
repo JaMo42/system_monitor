@@ -1,11 +1,11 @@
 #include "proc.h"
 #include "util.h"
 
-#define PROC_MAX_COUNT 128
+#define PROC_MAX_COUNT 512
 
 Widget proc_widget = WIDGET(Proc);
 
-const char *proc_sort = "-pcpu";
+const char *proc_sort = PROC_SORT_CPU;
 
 extern struct timespec interval;
 static unsigned long proc_time_passed;
@@ -22,7 +22,6 @@ void ProcInit (WINDOW *win, unsigned graph_scale) {
   (void)graph_scale;
   proc_time_passed = 3141;
   DrawWindow (win, "Processes");
-  DrawWindowInfo (win, "? - ? of ?");
 }
 
 void ProcQuit ()
@@ -77,31 +76,40 @@ void ProcUpdate () {
     }
 }
 
-void ProcDraw (WINDOW *win) {
-    const unsigned disp_count = (proc_count < (unsigned)(getmaxy (win) - 3))
-      ? proc_count
-      : (unsigned)(getmaxy (win) - 3);
-  const ptrdiff_t off = 0;//proc_count - disp_count;
+void ProcDraw (WINDOW *win)
+{
+  const unsigned disp_count = (proc_count < (unsigned)(getmaxy (win) - 3))
+    ? proc_count
+    : (unsigned)(getmaxy (win) - 3);
   const unsigned cpu_mem_off = getmaxx (win) - 15;
+  char info[32];
 
+  wclear (win);
+  DrawWindow (win, "Processes");
+  snprintf (info, 32, "%u of %zu", disp_count, proc_count);
+  DrawWindowInfo (win, info);
+
+  wattron (win, COLOR_PAIR (C_PROC_HEADER));
   wmove (win, 1, 1);
   waddstr (win, " PID    Command");
   wmove (win, 1, cpu_mem_off);
   waddstr (win, "CPU%  Mem%");
+  wattroff (win, COLOR_PAIR (C_PROC_HEADER));
 
-  struct Process *P = proc_processes + off;
+  struct Process *P = proc_processes;
   for (size_t i = 0; i < disp_count; ++i, ++P)
     {
+      wattron (win, COLOR_PAIR (C_PROC_PROCESSES));
       wmove (win, 2 + i, 1);
       wprintw (win, " %-5d  %s", P->pid, P->cmd);
       wmove (win, 2 + i, cpu_mem_off);
-      //fmt_fprint (stderr, "Proc::Draw: [{d}] cpu={f:.1}% mem={f:.1}%\n", P->pid, P->cpu, P->mem);
       wprintw (win, "%4.1f  %4.1f", P->cpu, P->mem);
+      wattroff (win, COLOR_PAIR (C_PROC_PROCESSES));
     }
 }
 
 void ProcResize (WINDOW *win) {
+  wclear (win);
   DrawWindow (win, "Processes");
-  DrawWindowInfo (win, "? - ? of ?");
 }
 

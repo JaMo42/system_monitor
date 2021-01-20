@@ -49,9 +49,24 @@ main (int argc, char *const *argv)
   InitWidgets ();
   CursesUpdate ();
 
-  char ch = 0;
+  int ch = 0;
   while ((ch = getch ()) != 'q')
     {
+      switch (ch)
+        {
+        case 'p':
+          proc_sort = PROC_SORT_PID;
+          break;
+        case 'P':
+          proc_sort = PROC_SORT_INVPID;
+          break;
+        case 'c':
+          proc_sort = PROC_SORT_CPU;
+          break;
+        case 'm':
+          proc_sort = PROC_SORT_MEM;
+          break;
+        }
       UpdateWidgets ();
       DrawWidgets ();
       CursesUpdate ();
@@ -71,15 +86,14 @@ CursesInit ()
   initscr ();
   curs_set (0);
   noecho ();
-#ifndef MANUAL
   cbreak ();
   nodelay (stdscr, TRUE);
-#endif
   start_color ();
   use_default_colors ();
 
   for (int i = 0; i < COLORS; ++i)
     init_pair (i + 1, i, -1);
+  init_pair (C_PROC_CURSOR, 0, 76);
 
   signal (SIGWINCH, SigWinchHandler);
 }

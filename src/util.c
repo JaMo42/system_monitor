@@ -2,12 +2,15 @@
 
 const short C_BORDER = 214;
 const short C_TITLE = 251;
-const short C_ACCENT = 77;
-const short C_GRAPH_TABLE[8] = {5, 4, 3, 2, 6, 7, 8, 9};
+const short C_CPU_AVG = 77;
+const short C_CPU_GRAPHS[8] = {5, 4, 3, 2, 6, 7, 8, 9};
 const short C_MEM_MAIN = 221;
 const short C_MEM_SWAP = 209;
 const short C_NET_RECIEVE = 5;
 const short C_NET_TRANSMIT = 2;
+const short C_PROC_HEADER = 16;
+const short C_PROC_PROCESSES = 8;
+const short C_PROC_CURSOR = 254;
 
 void
 DrawWindow (WINDOW *w, const char *title)
