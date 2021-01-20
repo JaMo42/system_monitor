@@ -81,7 +81,7 @@ void ProcDraw (WINDOW *win)
   const unsigned disp_count = (proc_count < (unsigned)(getmaxy (win) - 3))
     ? proc_count
     : (unsigned)(getmaxy (win) - 3);
-  const unsigned cpu_mem_off = getmaxx (win) - 15;
+  const unsigned cpu_mem_off = getmaxx (win) - 12;
   char info[32];
 
   DrawWindow (win, "Processes");
