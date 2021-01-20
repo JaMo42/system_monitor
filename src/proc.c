@@ -113,7 +113,7 @@ ProcDraw (WINDOW *win)
 
   char info[32];
   DrawWindow (win, "Processes");
-  snprintf (info, 32, "%u of %zu", disp_count, proc_count);
+  snprintf (info, 32, "%d - %d of %zu", off, off + disp_count, proc_count);
   DrawWindowInfo (win, info);
 
   wattron (win, A_BOLD | COLOR_PAIR (C_PROC_HEADER));
