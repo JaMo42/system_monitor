@@ -3,14 +3,15 @@ CFLAGS = -Wall -Wextra
 LDFLAGS = -lncurses -lfmt -lm
 VGFLAGS = --track-origins=yes --leak-check=full #--show-leak-kinds=all
 
-ifdef MANUAL
-	CFLAGS += -DMANUAL
-endif
-
 ifdef RELEASE
 	CFLAGS += -O3 -march=native -mtune=native
 else
 	CFLAGS += -O0 -g
+endif
+
+ifdef PROFILE
+	CFLAGS += -pg
+	LDFLAGS += -pg
 endif
 
 all: build/stdafx.h.gch sm
@@ -51,10 +52,16 @@ sm: build/list.o build/sm.o build/util.o build/canvas.o build/ui.o build/cpu.o b
 vgclean:
 	rm -f vgcore.*
 
-clean: vgclean
+cgclean:
+	rm -f callgrind.out.*
+
+clean: vgclean cgclean
 	rm -f build/*.o sm
 
 vg: sm
 	valgrind $(VGFLAGS) ./sm
+
+cg: sm
+	valgrind --tool=callgrind -v ./sm -r 100
 
 .PHONY: clean vg

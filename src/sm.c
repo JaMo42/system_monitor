@@ -88,9 +88,7 @@ key_down:
       UpdateWidgets ();
       DrawWidgets ();
       CursesUpdate ();
-#ifndef MANUAL
       nanosleep (&interval, NULL);
-#endif
     }
 
   UIDeleteLayout (ui);
