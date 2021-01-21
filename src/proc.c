@@ -122,8 +122,7 @@ ProcDraw (WINDOW *win)
       else
         wattron (win, COLOR_PAIR (C_PROC_PROCESSES));
       wmove (win, 2 + i, 1);
-      for (unsigned c = 0; c < cpu_mem_off; ++c)
-        waddch (win, ' ');
+      PrintN (win, ' ', cpu_mem_off);
       wmove (win, 2 + i, 1);
       wprintw (win, " %-7d  %s", P->pid, P->cmd);
       wmove (win, 2 + i, cpu_mem_off);
