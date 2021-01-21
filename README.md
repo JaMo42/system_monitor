@@ -32,7 +32,7 @@ make
   - `g`: jump to top
   - `G`: jump to bottom
 - Process sorting
-  - `c` sort by CPU usage (default)
-  - `m` sort by memory usahe
-  - `p` sort by PID (ascending)
-  - `P` sort by PID (descending)
+  - `c`: sort by CPU usage (default)
+  - `m`: sort by memory usage
+  - `p`: sort by PID (ascending)
+  - `P`: sort by PID (descending)
