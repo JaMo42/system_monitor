@@ -57,12 +57,12 @@ main (int argc, char *const *argv)
         case KEY_UP:
         case 'k':
 key_up:
-          ProcCursorUp ();
+          ProcCursorUp (1);
           break;
         case KEY_DOWN:
         case 'j':
 key_down:
-          ProcCursorDown ();
+          ProcCursorDown (1);
           break;
         case 27:
           (void)getch ();  /* Consume '[' */
@@ -71,6 +71,12 @@ key_down:
             goto key_up;
           else if (ch == 'B')
             goto key_down;
+          break;
+        case 'K':
+          ProcCursorUp (5);
+          break;
+        case 'J':
+          ProcCursorDown (5);
           break;
         case 'p':
           ProcSetSort (PROC_SORT_PID);

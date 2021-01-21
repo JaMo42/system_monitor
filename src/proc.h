@@ -13,8 +13,8 @@ void ProcUpdate ();
 void ProcDraw (WINDOW *win);
 void ProcResize (WINDOW *win);
 
-void ProcCursorUp ();
-void ProcCursorDown ();
+void ProcCursorUp (int by);
+void ProcCursorDown (int by);
 void ProcSetSort (const char *mode);
 
 extern Widget proc_widget;

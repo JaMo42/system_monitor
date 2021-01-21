@@ -142,18 +142,18 @@ ProcResize (WINDOW *win) {
 }
 
 void
-ProcCursorUp ()
+ProcCursorUp (int by)
 {
-  if (proc_cursor > 0)
-    --proc_cursor;
+  if (((int)proc_cursor - by) >= 0)
+    proc_cursor -= by;
   proc_cursor_pid = proc_processes[proc_cursor].pid;
 }
 
 void
-ProcCursorDown ()
+ProcCursorDown (int by)
 {
-  if (proc_cursor < proc_count)
-    ++proc_cursor;
+  if ((proc_cursor + by) <= proc_count)
+    proc_cursor += by;
   proc_cursor_pid = proc_processes[proc_cursor].pid;
 }
 
