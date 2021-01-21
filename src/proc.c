@@ -95,7 +95,7 @@ ProcDraw (WINDOW *win)
     : (unsigned)(getmaxy (win) - 3);
   const unsigned cpu_mem_off = getmaxx (win) - 12;
   const int max_off = proc_count - (getmaxy (win) - 2);
-  int off = proc_cursor - getmaxy (win) + 4;
+  int off = proc_cursor - getmaxy (win) + 5;
   off = sm_clamp (off, 0, max_off);
 
   char info[32];
@@ -154,6 +154,20 @@ ProcCursorDown (int by)
 {
   if ((proc_cursor + by) <= proc_count)
     proc_cursor += by;
+  proc_cursor_pid = proc_processes[proc_cursor].pid;
+}
+
+void
+ProcCursorTop ()
+{
+  proc_cursor = 0;
+  proc_cursor_pid = proc_processes[0].pid;
+}
+
+void
+ProcCursorBottom ()
+{
+  proc_cursor = proc_count - 1;
   proc_cursor_pid = proc_processes[proc_cursor].pid;
 }
 

@@ -15,6 +15,8 @@ void ProcResize (WINDOW *win);
 
 void ProcCursorUp (int by);
 void ProcCursorDown (int by);
+void ProcCursorTop ();
+void ProcCursorBottom ();
 void ProcSetSort (const char *mode);
 
 extern Widget proc_widget;

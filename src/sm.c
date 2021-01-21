@@ -78,6 +78,12 @@ key_down:
         case 'J':
           ProcCursorDown (5);
           break;
+        case 'g':
+          ProcCursorTop ();
+          break;
+        case 'G':
+          ProcCursorBottom ();
+          break;
         case 'p':
           ProcSetSort (PROC_SORT_PID);
           break;
