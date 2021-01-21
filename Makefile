@@ -3,10 +3,10 @@ CFLAGS = -Wall -Wextra
 LDFLAGS = -lncurses -lm
 VGFLAGS = --track-origins=yes --leak-check=full #--show-leak-kinds=all
 
-ifdef RELEASE
-	CFLAGS += -O3 -march=native -mtune=native
-else
+ifdef DEBUG
 	CFLAGS += -O0 -g
+else
+	CFLAGS += -O3 -march=native -mtune=native
 endif
 
 ifdef PROFILE
