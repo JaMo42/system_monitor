@@ -3,8 +3,6 @@
 #include <string.h>
 #include <math.h>
 
-#include <fmt/fmt.h>
-
 /* Apparenly this isn't included by <ncurses.h> */
 extern int waddnwstr(WINDOW *win, const wchar_t *wstr, int n);
 

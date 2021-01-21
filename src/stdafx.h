@@ -19,7 +19,6 @@
 #include <ifaddrs.h>
 
 #include <ncurses.h>
-#include <fmt/fmt.h>
 
 #include "list.h"
 
