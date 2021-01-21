@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra
-LDFLAGS = -lncurses -lfmt -lm
+LDFLAGS = -lncurses -lm
 VGFLAGS = --track-origins=yes --leak-check=full #--show-leak-kinds=all
 
 ifdef RELEASE
