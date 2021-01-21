@@ -94,7 +94,7 @@ ProcDraw (WINDOW *win)
     ? proc_count
     : (unsigned)(getmaxy (win) - 3);
   const unsigned cpu_mem_off = getmaxx (win) - 12;
-  const int max_off = proc_count - (getmaxy (win) - 2);
+  const int max_off = proc_count - getmaxy (win) + 3;
   int off = proc_cursor - getmaxy (win) + 5;
   off = sm_clamp (off, 0, max_off);
 
@@ -152,7 +152,7 @@ ProcCursorUp (int by)
 void
 ProcCursorDown (int by)
 {
-  if ((proc_cursor + by) <= proc_count)
+  if ((proc_cursor + by) < proc_count)
     proc_cursor += by;
   proc_cursor_pid = proc_processes[proc_cursor].pid;
 }
