@@ -54,7 +54,7 @@ MemoryUpdate ()
                              - mem_sysinfo.bufferram - mem_sysinfo.sharedram);
   unsigned long swap_used = mem_sysinfo.totalswap - mem_sysinfo.freeswap;
 
-  if (shift)
+  if (likely (shift))
     {
       list_pop_front (mem_main_usage);
       list_pop_front (mem_swap_usage);
@@ -62,7 +62,7 @@ MemoryUpdate ()
   list_push_back (mem_main_usage)->f = (double)main_used / (double)mem_main_total;
   list_push_back (mem_swap_usage)->f = (double)swap_used / (double)mem_swap_total;
 
-  if (!shift)
+  if (unlikely (!shift))
     ++mem_samples;
 }
 
@@ -79,7 +79,7 @@ MemoryDrawGraph (List *l, short color)
       x += mem_graph_scale;
       y = (double)mem_canvas->height - (((double)mem_canvas->height - 0.25) * u->f);
 
-      if (last_y >= 0.0)
+      if (likely (last_y >= 0.0))
         {
           CanvasDrawLine (mem_canvas,
                           (last_x - mem_graph_scale)*2.0, last_y*4.0 - 1,

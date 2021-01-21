@@ -35,19 +35,6 @@ void
 ProcQuit ()
 {}
 
-static inline unsigned
-ProcPIDLen (pid_t pid)
-{
-  if (pid < 10) return 1;
-  if (pid < 100) return 2;
-  if (pid < 1000) return 3;
-  if (pid < 10000) return 4;
-  if (pid < 100000) return 5;
-  if (pid < 1000000) return 6;
-  if (pid < 10000000) return 7;
-  return 8;
-}
-
 static void
 ProcUpdateProcesses ()
 {
@@ -126,7 +113,7 @@ ProcDraw (WINDOW *win)
   struct Process *P = proc_processes + off;
   for (size_t i = 0; i < disp_count; ++i, ++P)
     {
-      if (off + i == proc_cursor)
+      if (unlikely (off + i == proc_cursor))
         {
           wattron (win, COLOR_PAIR (C_PROC_CURSOR));
           wmove (win, 2 + i, 1);
@@ -141,7 +128,7 @@ ProcDraw (WINDOW *win)
       wprintw (win, " %-7d  %s", P->pid, P->cmd);
       wmove (win, 2 + i, cpu_mem_off);
       wprintw (win, "%4.1f  %4.1f", P->cpu, P->mem);
-      if (off + i == proc_cursor)
+      if (unlikely (off + i == proc_cursor))
         wattroff (win, COLOR_PAIR (C_PROC_CURSOR));
       else
         wattroff (win, COLOR_PAIR (C_PROC_PROCESSES));

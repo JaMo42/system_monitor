@@ -105,7 +105,7 @@ NetworkGetBytes (FILE *f)
 static inline void
 NetworkAddValue (List *l, uintmax_t v, bool shift, uintmax_t *m)
 {
-  if (shift)
+  if (likely (shift))
     {
       list_pop_front (l);
       *m = 0;
@@ -152,7 +152,7 @@ NetworkUpdate ()
   NetworkAddValue (net_transmit, transmit_period * net_period, shift,
                    &net_transmit_max);
 
-  if (!shift)
+  if (unlikely (!shift))
     ++net_samples;
 }
 
@@ -169,7 +169,7 @@ NetworkDrawGraph (List *values, uintmax_t max, unsigned y_off,
       x += net_graph_scale;
       y = y_off - (double)v->u * scale;
 
-      if (y >= 0.0)
+      if (likely (y >= 0.0))
         {
           CanvasDrawRect (net_canvas, x * 2.0, y_off * 4,
                           (x - net_graph_scale) * 2.0, y * 4.0, color);

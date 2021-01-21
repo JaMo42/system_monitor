@@ -52,7 +52,7 @@ CpuPollUsage (int id, FILE *stat)
   size_t idle = 0, iowait = 0, irq = 0, softirq = 0;
   size_t steal = 0, guest = 0, guest_nice = 0;
 
-  if (id == 0)
+  if (unlikely (id == 0))
     fscanf (stat, "cpu  %zu %zu %zu %zu %zu %zu %zu %zu %zu %zu\n",
             &user, &nice, &system, &idle, &iowait, &irq, &softirq,
             &steal, &guest, &guest_nice);
@@ -82,11 +82,11 @@ CpuUpdate ()
 
   for (int i = 0; i <= cpu_count; ++i)
     {
-      if (shift)
+      if (likely (shift))
         list_pop_front (cpu_usages[i]);
       list_push_back (cpu_usages[i])->f = CpuPollUsage (i, stat);
     }
-  if (!shift)
+  if (unlikely (!shift))
     ++cpu_samples;
   fclose (stat);
 }
@@ -105,7 +105,7 @@ CpuDrawGraph (int id, short color,
       x += cpu_graph_scale;
       y = (double)cpu_canvas->height - (((double)cpu_canvas->height - 0.25) * u->f);
 
-      if (last_y >= 0.0)
+      if (likely (last_y >= 0.0))
         {
           DrawLine (cpu_canvas,
                     (last_x - cpu_graph_scale)*2.0, last_y*4.0 - 1,
