@@ -1,7 +1,9 @@
 CC = gcc
 CFLAGS = -Wall -Wextra
-LDFLAGS = -lncurses -lm
+LDFLAGS = -lncurses -lm -pthread
 VGFLAGS = --track-origins=yes --leak-check=full #--show-leak-kinds=all
+
+PREFIX ?= ~/.local/bin
 
 ifdef DEBUG
 	CFLAGS += -O0 -g
@@ -63,5 +65,8 @@ vg: sm
 
 cg: sm
 	valgrind --tool=callgrind -v ./sm -r 100
+
+install: sm
+	cp sm $(PREFIX)/sm
 
 .PHONY: clean vg

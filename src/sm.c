@@ -30,25 +30,9 @@ SigWinchHandler ()
   UIResize (ui, w.ws_col, w.ws_row);
 }
 
-int
-main (int argc, char *const *argv)
+static void *
+InputThread (void *arg)
 {
-  /*r1*/ui = UICreateLayout (2, UI_ROWS);
-  Layout *c1 = UICreateLayout (2, UI_COLS);
-  Layout *r2 = UICreateLayout (2, UI_ROWS);
-  UIAddWidget (ui, &cpu_widget, 0, 0.333f);
-  UIAddLayout (ui, c1, 1, 0.666f);
-  UIAddLayout (c1, r2, 0, 0.5f);
-  UIAddWidget (r2, &mem_widget, 0, 0.5f);
-  UIAddWidget (r2, &net_widget, 1, 0.5f);
-  UIAddWidget (c1, &proc_widget, 1, 0.5f);
-
-  ParseArgs (argc, argv);
-  CursesInit ();
-  UIConstruct (ui);
-  InitWidgets ();
-  CursesUpdate ();
-
   int ch = 0;
   while ((ch = getch ()) != 'q')
     {
@@ -97,12 +81,43 @@ key_down:
           ProcSetSort (PROC_SORT_MEM);
           break;
         }
+      ProcDraw (proc_widget.win);
+      wrefresh (proc_widget.win);
+    }
+  *(bool *)arg = false;
+  return NULL;
+}
+
+int
+main (int argc, char *const *argv)
+{
+  /*r1*/ui = UICreateLayout (2, UI_ROWS);
+  Layout *c1 = UICreateLayout (2, UI_COLS);
+  Layout *r2 = UICreateLayout (2, UI_ROWS);
+  UIAddWidget (ui, &cpu_widget, 0, 0.333f);
+  UIAddLayout (ui, c1, 1, 0.666f);
+  UIAddLayout (c1, r2, 0, 0.5f);
+  UIAddWidget (r2, &mem_widget, 0, 0.5f);
+  UIAddWidget (r2, &net_widget, 1, 0.5f);
+  UIAddWidget (c1, &proc_widget, 1, 0.5f);
+
+  ParseArgs (argc, argv);
+  CursesInit ();
+  UIConstruct (ui);
+  InitWidgets ();
+  CursesUpdate ();
+
+  bool running = true;
+  pthread_t input_thread;
+  pthread_create (&input_thread, NULL, InputThread, &running);
+  while (running)
+    {
       UpdateWidgets ();
       DrawWidgets ();
       CursesUpdate ();
       nanosleep (&interval, NULL);
     }
-
+  pthread_join (input_thread, NULL);
   UIDeleteLayout (ui);
   CursesQuit ();
 }
@@ -115,7 +130,7 @@ CursesInit ()
   curs_set (0);
   noecho ();
   cbreak ();
-  nodelay (stdscr, TRUE);
+  nodelay (stdscr, FALSE);
   start_color ();
   use_default_colors ();
 

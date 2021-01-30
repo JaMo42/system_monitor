@@ -5,7 +5,6 @@
 
 Widget proc_widget = WIDGET(Proc);
 
-
 extern struct timespec interval;
 static unsigned long proc_time_passed;
 static struct Process
@@ -19,6 +18,7 @@ static size_t proc_count;
 static const char *proc_sort = PROC_SORT_CPU;
 static unsigned proc_cursor;
 static pid_t proc_cursor_pid;
+static pthread_mutex_t proc_data_mutex;
 
 static void ProcUpdateProcesses ();
 
@@ -27,13 +27,16 @@ ProcInit (WINDOW *win, unsigned graph_scale) {
   (void)graph_scale;
   proc_time_passed = 0;
   DrawWindow (win, "Processes");
+  pthread_mutex_init (&proc_data_mutex, NULL);
   ProcUpdateProcesses ();
   proc_cursor_pid = proc_processes[0].pid;
 }
 
 void
 ProcQuit ()
-{}
+{
+  pthread_mutex_destroy (&proc_data_mutex);
+}
 
 static void
 ProcUpdateProcesses ()
@@ -83,7 +86,9 @@ ProcUpdate () {
   if (proc_time_passed >= 2000)
     {
       proc_time_passed = 0;
+      pthread_mutex_lock (&proc_data_mutex);
       ProcUpdateProcesses ();
+      pthread_mutex_unlock (&proc_data_mutex);
     }
 }
 
@@ -110,6 +115,7 @@ ProcDraw (WINDOW *win)
   waddstr (win, "CPU%  Mem%");
   wattroff (win, A_BOLD | COLOR_PAIR (C_PROC_HEADER));
 
+  pthread_mutex_lock (&proc_data_mutex);
   struct Process *P = proc_processes + off;
   for (size_t i = 0; i < disp_count; ++i, ++P)
     {
@@ -132,6 +138,7 @@ ProcDraw (WINDOW *win)
       else
         wattroff (win, COLOR_PAIR (C_PROC_PROCESSES));
     }
+  pthread_mutex_unlock (&proc_data_mutex);
 }
 
 void
@@ -176,5 +183,6 @@ ProcSetSort (const char *mode)
   proc_sort = mode;
   proc_cursor_pid = 0;
   proc_cursor = 0;
+  proc_time_passed = 2000;
 }
 

@@ -17,6 +17,7 @@
 #include <sys/ioctl.h>
 #include <signal.h>
 #include <ifaddrs.h>
+#include <pthread.h>
 
 #include <ncurses.h>
 
