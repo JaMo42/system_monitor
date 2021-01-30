@@ -142,11 +142,12 @@ CpuDraw (WINDOW *win)
     }
   else
     {
+      const int rows = getmaxy (win) - 4;
       for (int i = 0; i < cpu_count; ++i)
         {
           wattron (win, COLOR_PAIR (COLOR (i)));
-          mvwprintw (win, 2 + i, 3, "CPU%d %d%%", i,
-                     (int)(cpu_usages[i + 1]->back->f * 100.f));
+          mvwprintw (win, 2 + i % rows, 3 + i / rows * 10, "CPU%d %d%%", i,
+                      (int)(cpu_usages[i + 1]->back->f * 100.f));
           wattroff (win, COLOR_PAIR (COLOR (i)));
         }
     }
@@ -168,4 +169,3 @@ CpuResize (WINDOW *win)
       }
     cpu_samples = 0;
 }
-
