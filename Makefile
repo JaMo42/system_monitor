@@ -61,7 +61,7 @@ clean: vgclean cgclean
 	rm -f build/*.o sm
 
 vg: sm
-	valgrind $(VGFLAGS) ./sm
+	valgrind $(VGFLAGS) ./sm 2> err
 
 cg: sm
 	valgrind --tool=callgrind -v ./sm -r 100

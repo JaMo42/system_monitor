@@ -129,7 +129,7 @@ CpuDraw (WINDOW *win)
   else
     {
       for (int i = cpu_count; i > 0; --i)
-        CpuDrawGraph (i - 1, COLOR (i - 1), CanvasDrawLine);
+        CpuDrawGraph (i, COLOR (i - 1), CanvasDrawLine);
     }
 
   CanvasDraw (cpu_canvas, win);
@@ -147,7 +147,7 @@ CpuDraw (WINDOW *win)
         {
           wattron (win, COLOR_PAIR (COLOR (i)));
           mvwprintw (win, 2 + i % rows, 3 + i / rows * 10, "CPU%d %d%%", i,
-                      (int)(cpu_usages[i + 1]->back->f * 100.f));
+                     (int)(cpu_usages[i + 1]->back->f * 100.f));
           wattroff (win, COLOR_PAIR (COLOR (i)));
         }
     }
@@ -156,16 +156,16 @@ CpuDraw (WINDOW *win)
 void
 CpuResize (WINDOW *win)
 {
-    wclear (win);
-    DrawWindow (win, "CPU");
+  wclear (win);
+  DrawWindow (win, "CPU");
 
-    CanvasResize (cpu_canvas, win);
+  CanvasResize (cpu_canvas, win);
 
-    cpu_max_samples = MAX_SAMPLES (win, cpu_graph_scale);
-    for (int i = 0; i <= cpu_count; ++i)
-      {
-        // @TODO: only remove excess
-        list_clear (cpu_usages[i]);
-      }
-    cpu_samples = 0;
+  cpu_max_samples = MAX_SAMPLES (win, cpu_graph_scale);
+  for (int i = 0; i <= cpu_count; ++i)
+    {
+      // @TODO: only remove excess
+      list_clear (cpu_usages[i]);
+    }
+  cpu_samples = 0;
 }
