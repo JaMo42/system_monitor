@@ -9,6 +9,7 @@
 struct timespec interval = { .tv_sec = 0, .tv_nsec = 500000000L };
 static unsigned graph_scale = 8;
 static Layout *ui;
+static pthread_mutex_t draw_mutex;
 
 void CursesInit ();
 void CursesUpdate ();
@@ -21,22 +22,49 @@ void DrawWidgets ();
 
 void ParseArgs (int, char *const *);
 
-static void
-SigWinchHandler ()
+static void *
+UpdateThread (void *arg)
 {
-  struct winsize w;
-  ioctl (STDOUT_FILENO, TIOCGWINSZ, &w);
-  CursesResize ();
-  UIResize (ui, w.ws_col, w.ws_row);
+  bool *running = arg;
+  while (*running)
+    {
+      UpdateWidgets ();
+      pthread_mutex_lock (&draw_mutex);
+      DrawWidgets ();
+      pthread_mutex_unlock (&draw_mutex);
+      CursesUpdate ();
+      nanosleep (&interval, NULL);
+    }
+  return NULL;
 }
 
-static void *
-InputThread (void *arg)
+int
+main (int argc, char *const *argv)
 {
-  int ch = 0;
-  while ((ch = getch ()) != 'q')
+  /*r1*/ui = UICreateLayout (2, UI_ROWS);
+  Layout *c1 = UICreateLayout (2, UI_COLS);
+  Layout *r2 = UICreateLayout (2, UI_ROWS);
+  UIAddWidget (ui, &cpu_widget, 0, 0.333f);
+  UIAddLayout (ui, c1, 1, 0.666f);
+  UIAddLayout (c1, r2, 0, 0.5f);
+  UIAddWidget (r2, &mem_widget, 0, 0.5f);
+  UIAddWidget (r2, &net_widget, 1, 0.5f);
+  UIAddWidget (c1, &proc_widget, 1, 0.5f);
+
+  ParseArgs (argc, argv);
+  CursesInit ();
+  UIConstruct (ui);
+  InitWidgets ();
+  CursesUpdate ();
+
+  bool running = true;
+  int ch;
+  pthread_t update_thread;
+  pthread_mutex_init (&draw_mutex, NULL);
+  pthread_create (&update_thread, NULL, UpdateThread, &running);
+  while (running)
     {
-      switch (ch)
+      switch (ch = getch ())
         {
         case KEY_UP:
         case 'k':
@@ -80,44 +108,21 @@ key_down:
         case 'm':
           ProcSetSort (PROC_SORT_MEM);
           break;
+        case 'q':
+          running = false;
+          break;
+        case KEY_RESIZE:
+          UIResize (ui, COLS, LINES);
+          CursesResize ();
+          break;
         }
+      pthread_mutex_lock (&draw_mutex);
       ProcDraw (proc_widget.win);
       wrefresh (proc_widget.win);
+      pthread_mutex_unlock (&draw_mutex);
     }
-  *(bool *)arg = false;
-  return NULL;
-}
-
-int
-main (int argc, char *const *argv)
-{
-  /*r1*/ui = UICreateLayout (2, UI_ROWS);
-  Layout *c1 = UICreateLayout (2, UI_COLS);
-  Layout *r2 = UICreateLayout (2, UI_ROWS);
-  UIAddWidget (ui, &cpu_widget, 0, 0.333f);
-  UIAddLayout (ui, c1, 1, 0.666f);
-  UIAddLayout (c1, r2, 0, 0.5f);
-  UIAddWidget (r2, &mem_widget, 0, 0.5f);
-  UIAddWidget (r2, &net_widget, 1, 0.5f);
-  UIAddWidget (c1, &proc_widget, 1, 0.5f);
-
-  ParseArgs (argc, argv);
-  CursesInit ();
-  UIConstruct (ui);
-  InitWidgets ();
-  CursesUpdate ();
-
-  bool running = true;
-  pthread_t input_thread;
-  pthread_create (&input_thread, NULL, InputThread, &running);
-  while (running)
-    {
-      UpdateWidgets ();
-      DrawWidgets ();
-      CursesUpdate ();
-      nanosleep (&interval, NULL);
-    }
-  pthread_join (input_thread, NULL);
+  pthread_join (update_thread, NULL);
+  pthread_mutex_destroy (&draw_mutex);
   UIDeleteLayout (ui);
   CursesQuit ();
 }
@@ -137,8 +142,6 @@ CursesInit ()
   for (int i = 0; i < COLORS; ++i)
     init_pair (i + 1, i, -1);
   init_pair (C_PROC_CURSOR, 0, 76);
-
-  signal (SIGWINCH, SigWinchHandler);
 }
 
 void

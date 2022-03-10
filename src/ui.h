@@ -9,7 +9,6 @@ typedef enum
   UI_WIDGET
 } LayoutType;
 
-/* Is actually a layout or a widget but don't tell anyone. */
 typedef struct Layout
 {
   LayoutType type;
@@ -29,7 +28,4 @@ void    UIAddWidget (Layout *l, Widget *w, unsigned i, float size);
 
 void UIConstruct (Layout *l);
 void UIResize (Layout *l, unsigned width, unsigned height);
-
-/*void UIUpdate (Layout *l);
-void UIDraw (Layout *l);*/
 

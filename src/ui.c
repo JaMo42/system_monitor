@@ -106,7 +106,7 @@ UIConstruct (Layout *l)
   if (l->type == UI_ROWS)
     UIResizeWindowsR (l, 0, 0, w.ws_col, w.ws_row);
   else
-    UIResizeWindowsR (l, 0, 0, w.ws_col, w.ws_row);
+    UIResizeWindowsC (l, 0, 0, w.ws_col, w.ws_row);
 }
 
 static void
