@@ -95,19 +95,40 @@ ProcUpdate () {
 void
 ProcDraw (WINDOW *win)
 {
-  const unsigned disp_count = (proc_count < (unsigned)(getmaxy (win) - 3))
-    ? proc_count
-    : (unsigned)(getmaxy (win) - 3);
+  pthread_mutex_lock (&proc_data_mutex);
+  const unsigned rows = (unsigned)getmaxy (win) - 3;
+  const unsigned rows_2 = rows / 2;
   const unsigned cpu_mem_off = getmaxx (win) - 12;
-  const int max_off = proc_count - getmaxy (win) + 3;
-  int off = proc_cursor - getmaxy (win) + 5;
-  off = sm_clamp (off, 0, max_off);
+  unsigned first, last;
 
+  if (proc_count <= rows)
+    {
+      first = 0;
+      last = proc_count - 1;
+    }
+  else if (proc_cursor < rows_2)
+    {
+      first = 0;
+      last = rows - 1;
+    }
+  else if (proc_cursor >= (proc_count - rows_2))
+    {
+      first = proc_count - rows;
+      last = proc_count - 1;
+    }
+  else
+    {
+      first = proc_cursor - rows_2;
+      last = proc_cursor + (rows - rows_2) - 1;
+    }
+
+  /* Window */
   char info[32];
   DrawWindow (win, "Processes");
-  snprintf (info, 32, "%d - %d of %zu", off, off + disp_count, proc_count);
+  snprintf (info, 32, "%d - %d of %zu", first, last, proc_count);
   DrawWindowInfo (win, info);
 
+  /* Header */
   wattron (win, A_BOLD | COLOR_PAIR (C_PROC_HEADER));
   wmove (win, 1, 1);
   waddstr (win, " PID      Command");
@@ -115,25 +136,25 @@ ProcDraw (WINDOW *win)
   waddstr (win, "CPU%  Mem%");
   wattroff (win, A_BOLD | COLOR_PAIR (C_PROC_HEADER));
 
-  pthread_mutex_lock (&proc_data_mutex);
-  struct Process *P = proc_processes + off;
-  for (size_t i = 0; i < disp_count; ++i, ++P)
+  /* Processes */
+  unsigned row = 2;
+  for (; first <= last; ++first, ++row)
     {
-      if (unlikely (off + i == proc_cursor))
-        {
-          wattron (win, COLOR_PAIR (C_PROC_CURSOR));
-          wmove (win, 2 + i, 1);
-          PrintN (win, ' ', getmaxx (win) - 2);
-        }
+      if (unlikely (first == proc_cursor))
+        wattron (win, COLOR_PAIR (C_PROC_CURSOR));
       else
         wattron (win, COLOR_PAIR (C_PROC_PROCESSES));
-      wmove (win, 2 + i, 1);
-      PrintN (win, ' ', cpu_mem_off);
-      wmove (win, 2 + i, 1);
-      wprintw (win, " %-7d  %s", P->pid, P->cmd);
-      wmove (win, 2 + i, cpu_mem_off);
-      wprintw (win, "%4.1f  %4.1f", P->cpu, P->mem);
-      if (unlikely (off + i == proc_cursor))
+      /* Content */
+      wmove (win, row, 1);
+      PrintN (win, ' ', getmaxx (win) - 2);
+      wmove (win, row, 2);
+      wprintw (win, "%-7d  %s",
+               proc_processes[first].pid, proc_processes[first].cmd);
+      wmove (win, row, cpu_mem_off);
+      wprintw (win, "%4.1f  %4.1f",
+               proc_processes[first].cpu, proc_processes[first].mem);
+      /*====*/
+      if (unlikely (first == proc_cursor))
         wattroff (win, COLOR_PAIR (C_PROC_CURSOR));
       else
         wattroff (win, COLOR_PAIR (C_PROC_PROCESSES));

@@ -31,8 +31,8 @@ UpdateThread (void *arg)
       UpdateWidgets ();
       pthread_mutex_lock (&draw_mutex);
       DrawWidgets ();
-      pthread_mutex_unlock (&draw_mutex);
       CursesUpdate ();
+      pthread_mutex_unlock (&draw_mutex);
       nanosleep (&interval, NULL);
     }
   return NULL;
