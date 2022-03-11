@@ -19,6 +19,7 @@ static const char *proc_sort = PROC_SORT_CPU;
 static unsigned proc_cursor;
 static pid_t proc_cursor_pid;
 static pthread_mutex_t proc_data_mutex;
+unsigned proc_page_move_amount;
 
 static void ProcUpdateProcesses ();
 
@@ -30,6 +31,7 @@ ProcInit (WINDOW *win, unsigned graph_scale) {
   pthread_mutex_init (&proc_data_mutex, NULL);
   ProcUpdateProcesses ();
   proc_cursor_pid = proc_processes[0].pid;
+  proc_page_move_amount = (getmaxy (win) - 3) / 2;
 }
 
 void
@@ -166,21 +168,42 @@ void
 ProcResize (WINDOW *win) {
   wclear (win);
   DrawWindow (win, "Processes");
+  proc_page_move_amount = (getmaxy (win) - 3) / 2;
 }
 
 void
-ProcCursorUp (int by)
+ProcCursorUp ()
 {
-  if (((int)proc_cursor - by) >= 0)
-    proc_cursor -= by;
+  if (proc_cursor)
+    --proc_cursor;
   proc_cursor_pid = proc_processes[proc_cursor].pid;
 }
 
 void
-ProcCursorDown (int by)
+ProcCursorDown ()
 {
-  if ((proc_cursor + by) < proc_count)
-    proc_cursor += by;
+  if ((proc_cursor + 1) < proc_count)
+    ++proc_cursor;
+  proc_cursor_pid = proc_processes[proc_cursor].pid;
+}
+
+void
+ProcCursorPageUp ()
+{
+  if (proc_cursor >= proc_page_move_amount)
+    proc_cursor -= proc_page_move_amount;
+  else
+    proc_cursor = 0;
+  proc_cursor_pid = proc_processes[proc_cursor].pid;
+}
+
+void
+ProcCursorPageDown ()
+{
+  if ((proc_cursor + proc_page_move_amount) < proc_count)
+    proc_cursor += proc_page_move_amount;
+  else
+    proc_cursor = proc_count - 1;
   proc_cursor_pid = proc_processes[proc_cursor].pid;
 }
 

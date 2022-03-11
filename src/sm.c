@@ -69,12 +69,12 @@ main (int argc, char *const *argv)
         case KEY_UP:
         case 'k':
 key_up:
-          ProcCursorUp (1);
+          ProcCursorUp ();
           break;
         case KEY_DOWN:
         case 'j':
 key_down:
-          ProcCursorDown (1);
+          ProcCursorDown ();
           break;
         case 27:
           (void)getch ();  /* Consume '[' */
@@ -85,10 +85,10 @@ key_down:
             goto key_down;
           break;
         case 'K':
-          ProcCursorUp (5);
+          ProcCursorPageUp ();
           break;
         case 'J':
-          ProcCursorDown (5);
+          ProcCursorPageDown ();
           break;
         case 'g':
           ProcCursorTop ();

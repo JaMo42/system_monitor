@@ -13,8 +13,10 @@ void ProcUpdate ();
 void ProcDraw (WINDOW *win);
 void ProcResize (WINDOW *win);
 
-void ProcCursorUp (int by);
-void ProcCursorDown (int by);
+void ProcCursorUp ();
+void ProcCursorDown ();
+void ProcCursorPageUp ();
+void ProcCursorPageDown ();
 void ProcCursorTop ();
 void ProcCursorBottom ();
 void ProcSetSort (const char *mode);
