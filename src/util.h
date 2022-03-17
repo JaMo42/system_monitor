@@ -29,6 +29,12 @@ void DrawWindow (WINDOW *w, const char *title);
    +------------------------+ */
 void DrawWindowInfo (WINDOW *w, const char *info);
 
+/* Draw extra information onto bottom window border:
+   +-< title >-----+
+   |               |
+   +------< info >-+ */
+void DrawWindowInfo2 (WINDOW *w, const char *info);
+
 void FormatSize (WINDOW *win, size_t size, bool pad);
 
 void PrintN (WINDOW *win, int ch, unsigned n);

@@ -5,11 +5,26 @@
 #include "memory.h"
 #include "network.h"
 #include "proc.h"
+#include "nc-help/help.h"
 
 struct timespec interval = { .tv_sec = 0, .tv_nsec = 500000000L };
 static unsigned graph_scale = 8;
 static Layout *ui;
 static pthread_mutex_t draw_mutex;
+
+static help_text_type help_text = {
+      {"k/↑", "Move cursor up"},
+      {"j/↓", "Move cursor down"},
+      {"K/PgUp", "Move cursor up multiple items"},
+      {"J/PgDn", "Move cursor down multiple items"},
+      {"g/Home", "Jump to top"},
+      {"G/End", "Jump to bottom"},
+      {"c", "Sort by CPU usage"},
+      {"m", "Sort by memort usage"},
+      {"p", "Sort by PID (ascending)"},
+      {"P", "Sort by PID (descending)"},
+};
+static help_type help;
 
 void CursesInit ();
 void CursesUpdate ();
@@ -21,6 +36,8 @@ void UpdateWidgets ();
 void DrawWidgets ();
 
 void ParseArgs (int, char *const *);
+
+void HelpShow ();
 
 static int
 my_getch ()
@@ -87,6 +104,7 @@ main (int argc, char *const *argv)
   UIConstruct (ui);
   InitWidgets ();
   CursesUpdate ();
+  help_init (&help, help_text);
 
   bool running = true;
   int ch;
@@ -136,9 +154,20 @@ main (int argc, char *const *argv)
         case 'q':
           running = false;
           break;
+        case '?':
+          pthread_mutex_lock (&draw_mutex);
+          HelpShow ();
+          DrawWindow (cpu_widget.win, "CPU");
+          DrawWindow (mem_widget.win, "Memory");
+          DrawWindow (net_widget.win, "Network");
+          CursesUpdate ();
+          pthread_mutex_unlock (&draw_mutex);
+          break;
         case KEY_RESIZE:
+          pthread_mutex_lock (&draw_mutex);
           UIResize (ui, COLS, LINES);
           CursesResize ();
+          pthread_mutex_unlock (&draw_mutex);
           break;
         }
       pthread_mutex_lock (&draw_mutex);
@@ -148,6 +177,7 @@ main (int argc, char *const *argv)
     }
   pthread_join (update_thread, NULL);
   pthread_mutex_destroy (&draw_mutex);
+  help_free (&help);
   UIDeleteLayout (ui);
   CursesQuit ();
 }
@@ -259,3 +289,58 @@ ParseArgs (int argc, char *const *argv)
         }
     }
 }
+
+void
+HelpShow ()
+{
+  int ch;
+  bool running = true;
+  help_resize_offset (&help, stdscr, 2, 2);
+  help_draw (&help);
+  DrawWindow (help.window, "Help");
+  refresh ();
+  wrefresh (help.window);
+
+  if (help.max_cursor == 0)
+    {
+      my_getch ();
+      return;
+    }
+
+  while (running)
+    {
+      switch (ch = my_getch ())
+        {
+        case 'j':
+        case KEY_UP:
+          help_move_cursor (&help, -1);
+          break;
+        case 'k':
+        case KEY_DOWN:
+          help_move_cursor (&help, 1);
+          break;
+        case 'g':
+        case KEY_HOME:
+          help_set_cursor (&help, 0);
+          break;
+        case 'G':
+        case KEY_END:
+          help_set_cursor (&help, (unsigned)-1);
+          break;
+        case KEY_RESIZE:
+        case ' ':
+        case '\n':
+        case 'q':
+          running = false;
+          break;
+        }
+      if (running)
+        {
+          help_draw (&help);
+          DrawWindow (help.window, "Help");
+          refresh ();
+          wrefresh (help.window);
+        }
+    }
+}
+

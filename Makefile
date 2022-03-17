@@ -48,7 +48,11 @@ build/network.o: src/network.c src/network.h
 build/proc.o: src/proc.c src/proc.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-sm: build/list.o build/sm.o build/util.o build/canvas.o build/ui.o build/cpu.o build/memory.o build/network.o build/proc.o
+build/help.o: src/nc-help/help.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+sm: build/list.o build/sm.o build/util.o build/canvas.o build/ui.o build/cpu.o \
+	  build/memory.o build/network.o build/proc.o build/help.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 vgclean:

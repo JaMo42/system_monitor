@@ -38,11 +38,29 @@ DrawWindowInfo (WINDOW *w, const char *info)
   waddch (w, ' ');
   mvwaddch (w, 0, width - 4, ' ');
   waddch (w, '>');
-
   wattroff (w, COLOR_PAIR (C_BORDER));
 
   wattron (w, COLOR_PAIR (C_TITLE));
   mvwaddstr (w, 0, width - 4 - len, info);
+  wattroff (w, COLOR_PAIR (C_TITLE));
+}
+
+void
+DrawWindowInfo2 (WINDOW *w, const char *info)
+{
+  const int len = strlen (info);
+  const int width = getmaxx (w);
+  const int row = getmaxy (w) - 1;
+
+  wattron (w, COLOR_PAIR (C_BORDER));
+  mvwaddch (w, row, width - 6 - len, '<');
+  waddch (w, ' ');
+  mvwaddch (w, row, width - 4, ' ');
+  waddch (w, '>');
+  wattroff (w, COLOR_PAIR (C_TITLE));
+
+  wattron (w, COLOR_PAIR (C_TITLE));
+  mvwaddstr (w, row, width - 4 - len, info);
   wattroff (w, COLOR_PAIR (C_TITLE));
 }
 

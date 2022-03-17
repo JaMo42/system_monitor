@@ -129,6 +129,7 @@ ProcDraw (WINDOW *win)
   DrawWindow (win, "Processes");
   snprintf (info, 32, "%d - %d of %zu", first, last, proc_count);
   DrawWindowInfo (win, info);
+  DrawWindowInfo2 (win, "Press ? for help");
 
   /* Header */
   wattron (win, A_BOLD | COLOR_PAIR (C_PROC_HEADER));
