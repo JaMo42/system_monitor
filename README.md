@@ -36,3 +36,6 @@ make
   - `m`: sort by memory usage
   - `p`: sort by PID (ascending)
   - `P`: sort by PID (descending)
+
+These can be viewed while the application is running by pressing `?`.
+
