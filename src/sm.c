@@ -22,6 +22,37 @@ void DrawWidgets ();
 
 void ParseArgs (int, char *const *);
 
+static int
+my_getch ()
+{
+  int ch;
+  ch = getch ();
+  if (ch == 27)
+    {
+      nodelay (stdscr, true);
+      if (getch () == ERR)
+        {
+          nodelay (stdscr, false);
+          return 27;
+        }
+      nodelay (stdscr, false);
+      ch = getch ();
+      switch (ch)
+        {
+          case 'A': return KEY_UP;
+          case 'B': return KEY_DOWN;
+          case 'C': return KEY_RIGHT;
+          case 'D': return KEY_LEFT;
+          case 'F': return KEY_END;
+          case 'H': return KEY_HOME;
+          case '5': (void)getch (); return KEY_PPAGE;
+          case '6': (void)getch (); return KEY_NPAGE;
+        }
+      return 0;
+    }
+  return ch;
+}
+
 static void *
 UpdateThread (void *arg)
 {
@@ -64,36 +95,30 @@ main (int argc, char *const *argv)
   pthread_create (&update_thread, NULL, UpdateThread, &running);
   while (running)
     {
-      switch (ch = getch ())
+      switch (ch = my_getch ())
         {
         case KEY_UP:
         case 'k':
-key_up:
           ProcCursorUp ();
           break;
         case KEY_DOWN:
         case 'j':
-key_down:
           ProcCursorDown ();
           break;
-        case 27:
-          (void)getch ();  /* Consume '[' */
-          ch = getch ();
-          if (ch == 'A')
-            goto key_up;
-          else if (ch == 'B')
-            goto key_down;
-          break;
         case 'K':
+        case KEY_PPAGE:
           ProcCursorPageUp ();
           break;
         case 'J':
+        case KEY_NPAGE:
           ProcCursorPageDown ();
           break;
         case 'g':
+        case KEY_HOME:
           ProcCursorTop ();
           break;
         case 'G':
+        case KEY_END:
           ProcCursorBottom ();
           break;
         case 'p':
