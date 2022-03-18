@@ -301,7 +301,7 @@ HelpShow ()
   refresh ();
   help_refresh (&help);
 
-  if (help.max_cursor == 0)
+  if (!help_can_scroll (&help))
     {
       my_getch ();
       return;
