@@ -299,7 +299,7 @@ HelpShow ()
   help_draw (&help);
   DrawWindow (help.window, "Help");
   refresh ();
-  wrefresh (help.window);
+  help_refresh (&help);
 
   if (help.max_cursor == 0)
     {
@@ -339,7 +339,7 @@ HelpShow ()
           help_draw (&help);
           DrawWindow (help.window, "Help");
           refresh ();
-          wrefresh (help.window);
+          help_refresh (&help);
         }
     }
 }
