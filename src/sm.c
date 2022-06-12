@@ -258,6 +258,7 @@ Usage (FILE *stream)
   fputs ("  -a         Show average CPU usage\n", stream);
   fputs ("  -r millis  Update interval in milliseconds\n", stream);
   fputs ("  -s scale   Graph scale\n", stream);
+  fputs ("  -c         Always show CPU graph in range 0~100%\n", stream);
   fputs ("  -h         Show help message\n", stream);
 }
 
@@ -266,7 +267,7 @@ ParseArgs (int argc, char *const *argv)
 {
   char opt;
   unsigned long n;
-  while ((opt = getopt (argc, argv, "ar:hs:")) != -1)
+  while ((opt = getopt (argc, argv, "ar:hs:c")) != -1)
     {
       switch (opt)
         {
@@ -280,6 +281,9 @@ ParseArgs (int argc, char *const *argv)
             break;
           case 's':
             graph_scale = (unsigned)strtoull (optarg, NULL, 10);
+            break;
+          case 'c':
+            cpu_scale_height = false;
             break;
           case 'h':
           case '?':

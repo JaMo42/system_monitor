@@ -9,7 +9,8 @@ static unsigned cpu_max_samples;
 static unsigned cpu_samples;
 static int cpu_count;
 
-bool cpu_show_avg;
+bool cpu_show_avg = false;
+bool cpu_scale_height = true;
 static Canvas *cpu_canvas;
 static int cpu_graph_scale = 5;
 
@@ -92,7 +93,7 @@ CpuUpdate ()
 }
 
 static void
-CpuDrawGraph (int id, short color,
+CpuDrawGraph (int id, short color, double max_percent,
               void (*DrawLine) (Canvas *, double, double, double, double, short))
 {
   double last_x = -1.0, last_y = -1.0;
@@ -103,7 +104,7 @@ CpuDrawGraph (int id, short color,
   list_for_each (cpu_usages[id], u)
     {
       x += cpu_graph_scale;
-      y = (double)cpu_canvas->height - (((double)cpu_canvas->height - 0.25) * u->f);
+      y = (double)cpu_canvas->height - (((double)cpu_canvas->height - 0.25) * (u->f / max_percent));
 
       if (likely (last_y >= 0.0))
         {
@@ -117,6 +118,37 @@ CpuDrawGraph (int id, short color,
     }
 }
 
+static double
+CpuMaxPercent ()
+{
+  if (!cpu_scale_height)
+    return 1.0;
+  double max = 0.0;
+  if (cpu_show_avg)
+    {
+      list_for_each (cpu_usages[0], s)
+        {
+          if (s->f > max)
+            max = s->f;
+        }
+    }
+  else
+    {
+      for (int i = 1; i <= cpu_count; ++i)
+        {
+          list_for_each (cpu_usages[i], s)
+            {
+              if (s->f > max)
+                max = s->f;
+            }
+        }
+    }
+  max = round (max * 10.0) / 10.0 + 0.1;
+  if (max > 1.0)
+    max = 1.0;
+  return max;
+}
+
 #define COLOR(i) ((i) < 8 ? C_CPU_GRAPHS[i] : ((i + 10) % 256))
 
 void
@@ -124,16 +156,19 @@ CpuDraw (WINDOW *win)
 {
   CanvasClear (cpu_canvas);
 
+  const double max_percent = CpuMaxPercent ();
   if (cpu_show_avg)
-    CpuDrawGraph (0, C_CPU_AVG, CanvasDrawLineFill);
+    CpuDrawGraph (0, C_CPU_AVG, max_percent, CanvasDrawLineFill);
   else
     {
       for (int i = cpu_count; i > 0; --i)
-        CpuDrawGraph (i, COLOR (i - 1), CanvasDrawLine);
+        CpuDrawGraph (i, COLOR (i - 1), max_percent, CanvasDrawLine);
     }
 
   CanvasDraw (cpu_canvas, win);
 
+  const int width = getmaxx (win);
+  const int height = getmaxy (win);
   if (cpu_show_avg)
     {
       wattron (win, COLOR_PAIR (C_CPU_AVG));
@@ -142,7 +177,7 @@ CpuDraw (WINDOW *win)
     }
   else
     {
-      const int rows = getmaxy (win) - 4;
+      const int rows = height - 4;
       for (int i = 0; i < cpu_count; ++i)
         {
           wattron (win, COLOR_PAIR (COLOR (i)));
@@ -151,6 +186,8 @@ CpuDraw (WINDOW *win)
           wattroff (win, COLOR_PAIR (COLOR (i)));
         }
     }
+  mvwprintw (win, 1, width - 5, "%3d%%", (int)(max_percent*100.0+0.5));
+  mvwaddstr (win, height - 2, width - 3, "0%");
 }
 
 void
