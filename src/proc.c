@@ -43,16 +43,14 @@ ProcQuit ()
 static void
 ProcUpdateProcesses ()
 {
-  char ps_cmd[128] = "ps axo 'pid:10,comm:64,pcpu:5,pmem:5' --sort=";
+  char ps_cmd[128] = "ps axo 'pid:10,pcpu:5,pmem:5,command:1,comm:64' --sort=";
   strcat (ps_cmd, proc_sort);
   FILE *ps = popen (ps_cmd, "r");
   char line[256];
   pid_t pid;
   char cmd[64];
-  int cpu_i;
-  int mem_i;
-  char cpu_d;
-  char mem_d;
+  int cpu_i, mem_i;
+  char cpu_d, mem_d;
   double cpu, mem;
   int len;
 
@@ -61,14 +59,16 @@ ProcUpdateProcesses ()
   (void)fgets (line, 256, ps);  /* Skip header */
   while (fgets (line, 256, ps))
     {
-      /* apparently `%lf' doesn't parse deciamls and the memory is always 0 */
-      sscanf (line, "%d %s %d.%c %d.%c", &pid, cmd, &cpu_i, &cpu_d, &mem_i, &mem_d);
+      if (line[23] == '[')
+        continue;
+      sscanf (line, "%d %d.%c %d.%c", &pid, &cpu_i, &cpu_d, &mem_i, &mem_d);
       cpu = cpu_i + (double)(cpu_d - '0') / 10.0;
       mem = mem_i + (double)(mem_d - '0') / 10.0;
+      strcpy (cmd, line + 25);
       len = strlen (cmd);
       proc_processes[proc_count].pid = pid;
       memcpy (proc_processes[proc_count].cmd, cmd, len);
-      proc_processes[proc_count].cmd[len] = '\0';
+      proc_processes[proc_count].cmd[len - 1] = '\0';
       proc_processes[proc_count].cpu = cpu;
       proc_processes[proc_count].mem = mem;
       if (pid == proc_cursor_pid)
@@ -100,7 +100,7 @@ ProcDraw (WINDOW *win)
   pthread_mutex_lock (&proc_data_mutex);
   const unsigned rows = (unsigned)getmaxy (win) - 3;
   const unsigned rows_2 = rows / 2;
-  const unsigned cpu_mem_off = getmaxx (win) - 12;
+  const unsigned cpu_mem_off = getmaxx (win) - 13;
   unsigned first, last;
 
   if (proc_count <= rows)
@@ -136,7 +136,7 @@ ProcDraw (WINDOW *win)
   wmove (win, 1, 1);
   waddstr (win, " PID      Command");
   wmove (win, 1, cpu_mem_off);
-  waddstr (win, "CPU%  Mem%");
+  waddstr (win, " CPU%  Mem%");
   wattroff (win, A_BOLD | COLOR_PAIR (C_PROC_HEADER));
 
   /* Processes */
@@ -154,7 +154,7 @@ ProcDraw (WINDOW *win)
       wprintw (win, "%-7d  %s",
                proc_processes[first].pid, proc_processes[first].cmd);
       wmove (win, row, cpu_mem_off);
-      wprintw (win, "%4.1f  %4.1f",
+      wprintw (win, "%5.1f %5.1f",
                proc_processes[first].cpu, proc_processes[first].mem);
       /*====*/
       if (unlikely (first == proc_cursor))
