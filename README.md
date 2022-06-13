@@ -2,8 +2,6 @@
 
 A terminal based graphical system monitor, inspired by [gotop](https://github.com/cjbassi/gotop).
 
-This is mostly a learning project.
-
 ## Building
 
 ```
@@ -19,6 +17,7 @@ make
 - `-a` show average CPU usage
 - `-r rate` update rate in milliseconds
 - `-s scale` horizontal graph scale
+- `-c` always show CPU graph in range 0~100%
 - `-h` show help message
 
 ### Keybinds
