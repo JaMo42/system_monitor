@@ -184,3 +184,4 @@ CanvasDrawRect (Canvas *c, double x1_, double y1_, double x2_,
         }
     }
 }
+

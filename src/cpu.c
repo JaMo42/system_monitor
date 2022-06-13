@@ -104,7 +104,8 @@ CpuDrawGraph (int id, short color, double max_percent,
   list_for_each (cpu_usages[id], u)
     {
       x += cpu_graph_scale;
-      y = (double)cpu_canvas->height - (((double)cpu_canvas->height - 0.25) * (u->f / max_percent));
+      y = ((double)cpu_canvas->height
+           - (((double)cpu_canvas->height - 0.25) * (u->f / max_percent)));
 
       if (likely (last_y >= 0.0))
         {
@@ -149,6 +150,37 @@ CpuMaxPercent ()
   return max;
 }
 
+static void
+CpuDrawGraphBezir (Canvas *canvas, double x1, double y1, double x2, double y2, short color)
+{
+  /* Arbitrary constant that defined how squiggly(?) the bezir curbe will be;
+     0.0 -> straight line, 2.0 -> very shallow at beginning, vertical in the middle.
+     Values less than 0.0 or greater than 2.0 will cause it to overlap itself. */
+#define CONTROL_FACTOR ((2.0 + 1.618) / 3.0)
+  const double dx = fabs (x1 - x2);
+  const double dy = fabs (y1 - y2);
+  const double percision = 0.25 / (dx > dy ? dx : dy);
+  /* Control point coordinates.
+     Invariant: x2 > x1 */
+  const double x1_c = x1 + cpu_graph_scale * CONTROL_FACTOR;
+  const double x2_c = x2 - cpu_graph_scale * CONTROL_FACTOR;
+  const double y1_c = y1;
+  const double y2_c = y2;
+  double d, x, y;
+  for (d = 0.0; d <= 1.0; d += percision)
+    {
+      x = (          pow (1.0 - d, 3.0)             * x1
+           + 3 * d * pow (1.0 - d, 2.0)             * x1_c
+           + 3 *     pow (      d, 2.0) * (1.0 - d) * x2_c
+           +         pow (      d, 3.0)             * x2);
+      y = (          pow (1.0 - d, 3.0)             * y1
+           + 3 * d * pow (1.0 - d, 2.0)             * y1_c
+           + 3 *     pow (      d, 2.0) * (1.0 - d) * y2_c
+           +         pow (      d, 3.0)             * y2);
+      CanvasSet (canvas, x, y, color);
+    }
+}
+
 #define COLOR(i) ((i) < 8 ? C_CPU_GRAPHS[i] : ((i + 10) % 256))
 
 void
@@ -158,11 +190,11 @@ CpuDraw (WINDOW *win)
 
   const double max_percent = CpuMaxPercent ();
   if (cpu_show_avg)
-    CpuDrawGraph (0, C_CPU_AVG, max_percent, CanvasDrawLineFill);
+    CpuDrawGraph (0, C_CPU_AVG, max_percent, CpuDrawGraphBezir);
   else
     {
       for (int i = cpu_count; i > 0; --i)
-        CpuDrawGraph (i, COLOR (i - 1), max_percent, CanvasDrawLine);
+        CpuDrawGraph (i, COLOR (i - 1), max_percent, CpuDrawGraphBezir);
     }
 
   CanvasDraw (cpu_canvas, win);

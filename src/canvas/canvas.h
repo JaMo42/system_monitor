@@ -30,3 +30,4 @@ void CanvasDrawLineFill (Canvas *c, double x1_, double y1_, double x2_,
 
 void CanvasDrawRect (Canvas *c, double x1_, double y1_, double x2_,
                      double y2_, short color);
+
