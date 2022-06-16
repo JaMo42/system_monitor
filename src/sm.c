@@ -23,6 +23,7 @@ static help_text_type help_text = {
       {"m", "Sort by memort usage"},
       {"p", "Sort by PID (ascending)"},
       {"P", "Sort by PID (descending)"},
+      {"f", "Toggle ASCII art process tree"}
 };
 static help_type help;
 
