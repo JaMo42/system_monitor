@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra
+CFLAGS = -Wall -Wextra -Wno-stringop-truncation
 LDFLAGS = -lncurses -lm -pthread
 VGFLAGS = --track-origins=yes --leak-check=full #--show-leak-kinds=all
 

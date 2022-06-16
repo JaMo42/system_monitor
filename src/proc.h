@@ -20,6 +20,7 @@ void ProcCursorPageDown ();
 void ProcCursorTop ();
 void ProcCursorBottom ();
 void ProcSetSort (const char *mode);
+void ProcToggleTree ();
 
 extern Widget proc_widget;
 

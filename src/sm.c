@@ -151,6 +151,9 @@ main (int argc, char *const *argv)
         case 'm':
           ProcSetSort (PROC_SORT_MEM);
           break;
+        case 'f':
+          ProcToggleTree ();
+          break;
         case 'q':
           running = false;
           break;
@@ -259,6 +262,7 @@ Usage (FILE *stream)
   fputs ("  -r millis  Update interval in milliseconds\n", stream);
   fputs ("  -s scale   Graph scale\n", stream);
   fputs ("  -c         Always show CPU graph in range 0~100%\n", stream);
+  fputs ("  -f         ASCII art process tree\n", stream);
   fputs ("  -h         Show help message\n", stream);
 }
 
@@ -267,7 +271,7 @@ ParseArgs (int argc, char *const *argv)
 {
   char opt;
   unsigned long n;
-  while ((opt = getopt (argc, argv, "ar:hs:c")) != -1)
+  while ((opt = getopt (argc, argv, "ar:hs:cf")) != -1)
     {
       switch (opt)
         {
@@ -284,6 +288,9 @@ ParseArgs (int argc, char *const *argv)
             break;
           case 'c':
             cpu_scale_height = false;
+            break;
+          case 'f':
+            ProcToggleTree ();
             break;
           case 'h':
           case '?':

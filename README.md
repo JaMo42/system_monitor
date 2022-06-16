@@ -18,6 +18,7 @@ make
 - `-r rate` update rate in milliseconds
 - `-s scale` horizontal graph scale
 - `-c` always show CPU graph in range 0~100%
+- `-f` ASCII art process tree (like the `--forest` option for `ps`)
 - `-h` show help message
 
 ### Keybinds
@@ -35,6 +36,7 @@ make
   - `m`: sort by memory usage
   - `p`: sort by PID (ascending)
   - `P`: sort by PID (descending)
+- `f`: toggle procces ASCII art tree view
 
 These can be viewed while the application is running by pressing `?`.
 

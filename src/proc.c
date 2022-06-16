@@ -3,6 +3,8 @@
 
 #define PROC_MAX_COUNT 512
 
+#define PROC_COMMAND_STORAGE_SIZE 128
+
 Widget proc_widget = WIDGET(Proc);
 
 extern struct timespec interval;
@@ -10,7 +12,7 @@ static unsigned long proc_time_passed;
 static struct Process
 {
   pid_t pid;
-  char cmd[64];
+  char cmd[PROC_COMMAND_STORAGE_SIZE];
   double cpu;
   double mem;
 } proc_processes[PROC_MAX_COUNT];
@@ -19,7 +21,8 @@ static const char *proc_sort = PROC_SORT_CPU;
 static unsigned proc_cursor;
 static pid_t proc_cursor_pid;
 static pthread_mutex_t proc_data_mutex;
-unsigned proc_page_move_amount;
+static unsigned proc_page_move_amount;
+static bool proc_ps_tree = false;
 
 static void ProcUpdateProcesses ();
 
@@ -43,16 +46,15 @@ ProcQuit ()
 static void
 ProcUpdateProcesses ()
 {
-  char ps_cmd[128] = "ps axo 'pid:10,pcpu:5,pmem:5,command:1,comm:64' --sort=";
-  strcat (ps_cmd, proc_sort);
+  char ps_cmd[128];
+  sprintf (ps_cmd, "ps axo 'pid:10,pcpu:5,pmem:5,command:1,command:64' --sort=%s %s",
+           proc_sort, proc_ps_tree ? "--forest" : "");
   FILE *ps = popen (ps_cmd, "r");
   char line[256];
   pid_t pid;
-  char cmd[64];
   int cpu_i, mem_i;
   char cpu_d, mem_d;
   double cpu, mem;
-  int len;
 
   proc_count = 0;
 
@@ -64,11 +66,9 @@ ProcUpdateProcesses ()
       sscanf (line, "%d %d.%c %d.%c", &pid, &cpu_i, &cpu_d, &mem_i, &mem_d);
       cpu = cpu_i + (double)(cpu_d - '0') / 10.0;
       mem = mem_i + (double)(mem_d - '0') / 10.0;
-      strcpy (cmd, line + 25);
-      len = strlen (cmd);
       proc_processes[proc_count].pid = pid;
-      memcpy (proc_processes[proc_count].cmd, cmd, len);
-      proc_processes[proc_count].cmd[len - 1] = '\0';
+      strncpy (proc_processes[proc_count].cmd, line + 25, PROC_COMMAND_STORAGE_SIZE);
+      proc_processes[proc_count].cmd[strlen (proc_processes[proc_count].cmd) - 1] = '\0';
       proc_processes[proc_count].cpu = cpu;
       proc_processes[proc_count].mem = mem;
       if (pid == proc_cursor_pid)
@@ -151,8 +151,9 @@ ProcDraw (WINDOW *win)
       wmove (win, row, 1);
       PrintN (win, ' ', getmaxx (win) - 2);
       wmove (win, row, 2);
-      wprintw (win, "%-7d  %s",
-               proc_processes[first].pid, proc_processes[first].cmd);
+      wprintw (win, "%-7d  %.*s",
+               proc_processes[first].pid,
+               cpu_mem_off - 10, proc_processes[first].cmd);
       wmove (win, row, cpu_mem_off);
       wprintw (win, "%5.1f %5.1f",
                proc_processes[first].cpu, proc_processes[first].mem);
@@ -226,6 +227,15 @@ void
 ProcSetSort (const char *mode)
 {
   proc_sort = mode;
+  proc_cursor_pid = 0;
+  proc_cursor = 0;
+  proc_time_passed = 2000;
+}
+
+void
+ProcToggleTree ()
+{
+  proc_ps_tree = !proc_ps_tree;
   proc_cursor_pid = 0;
   proc_cursor = 0;
   proc_time_passed = 2000;
