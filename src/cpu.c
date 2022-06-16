@@ -153,6 +153,11 @@ CpuMaxPercent ()
 static void
 CpuDrawGraphBezir (Canvas *canvas, double x1, double y1, double x2, double y2, short color)
 {
+  if (x1 == x2)
+    {
+      CanvasDrawLine (canvas, x1, y1, x2, y2, color);
+      return;
+    }
   /* Arbitrary constant that defined how squiggly(?) the bezir curbe will be;
      0.0 -> straight line, 2.0 -> very shallow at beginning, vertical in the middle.
      Values less than 0.0 or greater than 2.0 will cause it to overlap itself. */
