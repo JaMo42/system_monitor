@@ -247,9 +247,6 @@ CpuResize (WINDOW *win)
 void
 CpuMinSize (int *width_return, int *height_return)
 {
-  // TODO: Dynamically choose based and CPU count and default aspect ratio.
-  //       Also prefer more lines/columns based on window dimensions.
-  //       of the CPU widget.
 #define LABELS 2+2*(4+1+3+3)
   //            \ \  \ \ \ \_ space between labels
   //             \ \  \ \ \__ percentage (2 digits)
