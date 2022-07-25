@@ -3,6 +3,7 @@
 
 typedef struct Widget
 {
+  const char *const name;
   WINDOW *win;
   void (*Init) (WINDOW *win, unsigned graph_scale);
   void (*Quit) ();
@@ -12,13 +13,14 @@ typedef struct Widget
   void (*MinSize) (int *width_return, int *height_return);
 } Widget;
 
-#define WIDGET(name)         \
-  (Widget) {                 \
-    .Init = name##Init,      \
-    .Quit = name##Quit,      \
-    .Update = name##Update,  \
-    .Draw = name##Draw,      \
-    .Resize = name##Resize,  \
-    .MinSize = name##MinSize \
+#define WIDGET(name_)         \
+  (Widget) {                  \
+    .name = #name_,           \
+    .Init = name_##Init,      \
+    .Quit = name_##Quit,      \
+    .Update = name_##Update,  \
+    .Draw = name_##Draw,      \
+    .Resize = name_##Resize,  \
+    .MinSize = name_##MinSize \
   }
 

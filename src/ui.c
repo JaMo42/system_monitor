@@ -139,10 +139,42 @@ UIWidgetsResize (Layout *l)
     }
 }
 
+static bool
+UICheckSize (Layout *self, unsigned width, unsigned height)
+{
+  unsigned i, w, h;
+  Layout *child;
+  for (i = 0; i < self->count; ++i)
+    {
+      child = self->elems[i];
+      if (self->type == UI_ROWS)
+        {
+          w = width;
+          h = (float)height * child->size;
+        }
+      else
+        {
+          w = (float)width * child->size;
+          h = height;
+        }
+      if (child->type == UI_WIDGET)
+        {
+          if ((int)w < child->min_width || (int)h < child->min_height)
+            return false;
+        }
+      else
+        {
+          if (!UICheckSize (child, w, h))
+            return false;
+        }
+    }
+  return true;
+}
+
 void
 UIResize (Layout *l, unsigned width, unsigned height)
 {
-  if ((int)width < l->min_width || (int)height < l->min_height)
+  if (!UICheckSize (l, width, height))
     {
       ui_too_small = true;
       return;
