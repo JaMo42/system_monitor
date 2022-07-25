@@ -1,7 +1,5 @@
 #include "proc.h"
 #include "util.h"
-#include <curses.h>
-#include <stdbool.h>
 
 #define PROC_MAX_COUNT 512
 
