@@ -16,6 +16,7 @@ extern const short C_NET_TRANSMIT;
 extern const short C_PROC_HEADER;
 extern const short C_PROC_PROCESSES;
 extern const short C_PROC_CURSOR;
+extern const short C_PROC_HIGHLIGHT;
 
 /* Draw a window border and title:
    +-< title >-----+

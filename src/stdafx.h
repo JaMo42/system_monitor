@@ -10,6 +10,7 @@
 #include <math.h>
 #include <locale.h>
 #include <time.h>
+#include <ctype.h>
 
 #include <sys/types.h>
 #include <sys/sysinfo.h>
@@ -32,5 +33,13 @@
 #define likely(x) (x)
 #define unlikely(x) (x)
 #endif
+
+#undef KEY_BACKSPACE
+#define KEY_BACKSPACE 127
+#define KEY_CTRL_BACKSPACE 8
+#undef KEY_ENTER
+#define KEY_ENTER '\n'
+#define KEY_ESCAPE 27
+#define KEY_CTRL_A 1
 
 #endif /* !STDAFX_H */

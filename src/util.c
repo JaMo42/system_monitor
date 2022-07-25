@@ -11,6 +11,7 @@ const short C_NET_TRANSMIT = 2;
 const short C_PROC_HEADER = 16;
 const short C_PROC_PROCESSES = 8;
 const short C_PROC_CURSOR = 254;
+const short C_PROC_HIGHLIGHT = 253;
 
 void
 DrawWindow (WINDOW *w, const char *title)

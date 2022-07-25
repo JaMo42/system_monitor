@@ -23,7 +23,10 @@ static help_text_type help_text = {
       {"m", "Sort by memort usage"},
       {"p", "Sort by PID (ascending)"},
       {"P", "Sort by PID (descending)"},
-      {"f", "Toggle ASCII art process tree"}
+      {"f", "Toggle ASCII art process tree"},
+      {"'/'", "Search processes"},
+      {"n", "Select next search result"},
+      {"N", "Select previous search result"},
 };
 static help_type help;
 
@@ -35,6 +38,8 @@ void CursesResize ();
 void InitWidgets ();
 void UpdateWidgets ();
 void DrawWidgets ();
+
+bool HandleInput (int key);
 
 void ParseArgs (int, char *const *);
 
@@ -114,65 +119,20 @@ main (int argc, char *const *argv)
   pthread_create (&update_thread, NULL, UpdateThread, &running);
   while (running)
     {
-      switch (ch = my_getch ())
+      ch = my_getch ();
+      if (ch == KEY_RESIZE)
         {
-        case KEY_UP:
-        case 'k':
-          ProcCursorUp ();
-          break;
-        case KEY_DOWN:
-        case 'j':
-          ProcCursorDown ();
-          break;
-        case 'K':
-        case KEY_PPAGE:
-          ProcCursorPageUp ();
-          break;
-        case 'J':
-        case KEY_NPAGE:
-          ProcCursorPageDown ();
-          break;
-        case 'g':
-        case KEY_HOME:
-          ProcCursorTop ();
-          break;
-        case 'G':
-        case KEY_END:
-          ProcCursorBottom ();
-          break;
-        case 'p':
-          ProcSetSort (PROC_SORT_PID);
-          break;
-        case 'P':
-          ProcSetSort (PROC_SORT_INVPID);
-          break;
-        case 'c':
-          ProcSetSort (PROC_SORT_CPU);
-          break;
-        case 'm':
-          ProcSetSort (PROC_SORT_MEM);
-          break;
-        case 'f':
-          ProcToggleTree ();
-          break;
-        case 'q':
-          running = false;
-          break;
-        case '?':
-          pthread_mutex_lock (&draw_mutex);
-          HelpShow ();
-          DrawWindow (cpu_widget.win, "CPU");
-          DrawWindow (mem_widget.win, "Memory");
-          DrawWindow (net_widget.win, "Network");
-          CursesUpdate ();
-          pthread_mutex_unlock (&draw_mutex);
-          break;
-        case KEY_RESIZE:
           pthread_mutex_lock (&draw_mutex);
           UIResize (ui, COLS, LINES);
           CursesResize ();
           pthread_mutex_unlock (&draw_mutex);
-          break;
+        }
+      else
+        {
+          if (ProcSearching ())
+            ProcSearchHandleInput (ch);
+          else
+            running = HandleInput (ch);
         }
       pthread_mutex_lock (&draw_mutex);
       ProcDraw (proc_widget.win);
@@ -184,6 +144,74 @@ main (int argc, char *const *argv)
   help_free (&help);
   UIDeleteLayout (ui);
   CursesQuit ();
+}
+
+bool
+HandleInput (int key)
+{
+  switch (key)
+    {
+    case KEY_UP:
+    case 'k':
+      ProcCursorUp ();
+      break;
+    case KEY_DOWN:
+    case 'j':
+      ProcCursorDown ();
+      break;
+    case 'K':
+    case KEY_PPAGE:
+      ProcCursorPageUp ();
+      break;
+    case 'J':
+    case KEY_NPAGE:
+      ProcCursorPageDown ();
+      break;
+    case 'g':
+    case KEY_HOME:
+      ProcCursorTop ();
+      break;
+    case 'G':
+    case KEY_END:
+      ProcCursorBottom ();
+      break;
+    case 'p':
+      ProcSetSort (PROC_SORT_PID);
+      break;
+    case 'P':
+      ProcSetSort (PROC_SORT_INVPID);
+      break;
+    case 'c':
+      ProcSetSort (PROC_SORT_CPU);
+      break;
+    case 'm':
+      ProcSetSort (PROC_SORT_MEM);
+      break;
+    case 'f':
+      ProcToggleTree ();
+      break;
+    case '/':
+      ProcBeginSearch ();
+      break;
+    case 'n':
+      ProcSearchNext ();
+      break;
+    case 'N':
+      ProcSearchPrev ();
+      break;
+    case 'q':
+      return false;
+    case '?':
+      pthread_mutex_lock (&draw_mutex);
+      HelpShow ();
+      DrawWindow (cpu_widget.win, "CPU");
+      DrawWindow (mem_widget.win, "Memory");
+      DrawWindow (net_widget.win, "Network");
+      CursesUpdate ();
+      pthread_mutex_unlock (&draw_mutex);
+      break;
+    }
+  return true;
 }
 
 void
@@ -201,6 +229,7 @@ CursesInit ()
   for (int i = 0; i < COLORS; ++i)
     init_pair (i + 1, i, -1);
   init_pair (C_PROC_CURSOR, 0, 76);
+  init_pair (C_PROC_HIGHLIGHT, 0, 81);
 }
 
 void

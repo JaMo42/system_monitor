@@ -1,5 +1,7 @@
 #include "proc.h"
 #include "util.h"
+#include <curses.h>
+#include <stdbool.h>
 
 #define PROC_MAX_COUNT 512
 
@@ -24,7 +26,17 @@ static pthread_mutex_t proc_data_mutex;
 static unsigned proc_page_move_amount;
 static bool proc_ps_tree = false;
 
+static bool proc_search_active;
+static char proc_search_string[PROC_COMMAND_STORAGE_SIZE + 1];
+static int proc_search_size;
+static bool proc_search_all_selected;
+static bool proc_search_show;
+static bool proc_search_matches[PROC_MAX_COUNT];
+static bool proc_search_single_match;
+static int proc_first_match;
+
 static void ProcUpdateProcesses ();
+static void ProcSearchUpdateMatches ();
 
 void
 ProcInit (WINDOW *win, unsigned graph_scale) {
@@ -78,8 +90,10 @@ ProcUpdateProcesses ()
       if (proc_count == PROC_MAX_COUNT)
         break;
     }
-
   pclose (ps);
+
+  proc_search_show = true;
+  ProcSearchUpdateMatches ();
 }
 
 void
@@ -98,7 +112,7 @@ void
 ProcDraw (WINDOW *win)
 {
   pthread_mutex_lock (&proc_data_mutex);
-  const unsigned rows = (unsigned)getmaxy (win) - 3;
+  const unsigned rows = (unsigned)getmaxy (win) - 3 - proc_search_active;
   const unsigned rows_2 = rows / 2;
   const unsigned cpu_mem_off = getmaxx (win) - 13;
   unsigned first, last;
@@ -140,11 +154,19 @@ ProcDraw (WINDOW *win)
   wattroff (win, A_BOLD | COLOR_PAIR (C_PROC_HEADER));
 
   /* Processes */
+  bool highlight;
   unsigned row = 2;
+  if (proc_search_show)
+    // We don't have strnstr on Linux so we need to null-terminate the needle
+    // for strstr.
+    proc_search_string[proc_search_size] = '\0';
   for (; first <= last; ++first, ++row)
     {
+      highlight = proc_search_show && proc_search_matches[first];
       if (unlikely (first == proc_cursor))
         wattron (win, COLOR_PAIR (C_PROC_CURSOR));
+      else if (highlight)
+        wattron (win, COLOR_PAIR (C_PROC_HIGHLIGHT) | A_DIM);
       else
         wattron (win, COLOR_PAIR (C_PROC_PROCESSES));
       /* Content */
@@ -160,9 +182,28 @@ ProcDraw (WINDOW *win)
       /*====*/
       if (unlikely (first == proc_cursor))
         wattroff (win, COLOR_PAIR (C_PROC_CURSOR));
+      else if (highlight)
+        wattroff (win, COLOR_PAIR (C_PROC_HIGHLIGHT) | A_DIM);
       else
         wattroff (win, COLOR_PAIR (C_PROC_PROCESSES));
     }
+
+  /* Search */
+  if (proc_search_active)
+    {
+      wmove (win, row, 1);
+      PrintN (win, ' ', getmaxx (win) - 2);
+      wmove (win, row, 1);
+      wattron (win, A_BOLD);
+      waddstr (win, "Search: ");
+      wattroff (win, A_BOLD);
+      if (proc_search_all_selected)
+        wattron (win, A_REVERSE);
+      waddnstr (win, proc_search_string, proc_search_size);
+      if (proc_search_all_selected)
+        wattroff (win, A_REVERSE);
+    }
+
   pthread_mutex_unlock (&proc_data_mutex);
 }
 
@@ -239,5 +280,182 @@ ProcToggleTree ()
   proc_cursor_pid = 0;
   proc_cursor = 0;
   proc_time_passed = 2000;
+}
+
+bool
+ProcSearching ()
+{
+  return proc_search_active;
+}
+
+void
+ProcBeginSearch ()
+{
+  proc_search_active = true;
+  proc_search_size = 0;
+  proc_search_all_selected = false;
+  curs_set (1);
+}
+
+static void
+ProcSearchUpdateMatches ()
+{
+  size_t i;
+  unsigned count = 0;
+  proc_first_match = -1;
+  if (proc_search_size == 0 || !proc_search_show)
+    return;
+  // We don't have strnstr on Linux so we need to null-terminate the needle
+  // for strstr.
+  proc_search_string[proc_search_size] = '\0';
+  for (i = 0; i < proc_count; ++i)
+    {
+      proc_search_matches[i] = strstr (proc_processes[i].cmd, proc_search_string) != NULL;
+      if (proc_search_matches[i])
+        {
+          ++count;
+          if (proc_first_match == -1)
+            proc_first_match = i;
+        }
+    }
+  proc_search_single_match = count == 1;
+  proc_search_show = count > 0;
+}
+
+static void
+ProcSearchCommit ()
+{
+  proc_search_active = false;
+  ProcSearchUpdateMatches ();
+  curs_set (0);
+}
+
+void
+ProcSearchHandleInput (int key)
+{
+  int i;
+  const int size_before = proc_search_size;
+  switch (key)
+    {
+    case KEY_BACKSPACE:
+      if (proc_search_all_selected)
+        {
+          proc_search_size = 0;
+          proc_search_all_selected = false;
+        }
+      else if (proc_search_size)
+        --proc_search_size;
+      break;
+
+    case KEY_CTRL_BACKSPACE:
+      if (proc_search_all_selected)
+        {
+          proc_search_size = 0;
+          proc_search_all_selected = false;
+        }
+      else if (proc_search_size)
+        {
+          for (i = proc_search_size - 1; i >= 0; --i)
+            {
+              if (!isalnum (proc_search_string[i]))
+                break;
+            }
+          proc_search_size = i + 1;
+        }
+      break;
+
+    case KEY_CTRL_A:
+      proc_search_all_selected = true;
+      break;
+
+    case KEY_ENTER:
+      ProcSearchCommit ();
+      break;
+
+    case KEY_ESCAPE:
+      proc_search_size = 0;
+      ProcSearchCommit ();
+      break;
+
+    default:
+      if (isprint (key))
+        {
+          if (proc_search_all_selected)
+            {
+              proc_search_size = 0;
+              proc_search_all_selected = false;
+            }
+          if (proc_search_size < PROC_COMMAND_STORAGE_SIZE)
+            proc_search_string[proc_search_size++] = key;
+        }
+      else
+        {
+          proc_search_all_selected = false;
+          return;
+        }
+      break;
+    }
+
+  proc_search_show = proc_search_size > 0;
+  if (proc_search_size != size_before)
+    {
+      ProcSearchUpdateMatches ();
+      if (proc_search_show)
+        {
+          proc_cursor = proc_first_match;
+          proc_cursor_pid = proc_processes[proc_cursor].pid;
+        }
+    }
+  proc_time_passed = 2000;
+}
+
+void
+ProcSearchNext ()
+{
+  const unsigned stop = proc_cursor;
+  if (!proc_search_show)
+    return;
+  else if (proc_search_single_match)
+    {
+      proc_cursor = proc_first_match;
+      proc_cursor_pid = proc_processes[proc_cursor].pid;
+      return;
+    }
+  ++proc_cursor;
+  if (proc_cursor == proc_count)
+    proc_cursor = 0;
+  while (!proc_search_matches[proc_cursor] && proc_cursor != stop)
+    {
+      ++proc_cursor;
+      if (proc_cursor == proc_count)
+        proc_cursor = 0;
+    }
+  proc_cursor_pid = proc_processes[proc_cursor].pid;
+}
+
+void
+ProcSearchPrev ()
+{
+  const unsigned stop = proc_cursor;
+  if (!proc_search_show)
+    return;
+  else if (proc_search_single_match)
+    {
+      proc_cursor = proc_first_match;
+      proc_cursor_pid = proc_processes[proc_cursor].pid;
+      return;
+    }
+  if (proc_cursor)
+    --proc_cursor;
+  else
+    proc_cursor = proc_count - 1;
+  while (!proc_search_matches[proc_cursor] && proc_cursor != stop)
+    {
+      if (proc_cursor)
+        --proc_cursor;
+      else
+        proc_cursor = proc_count - 1;
+    }
+  proc_cursor_pid = proc_processes[proc_cursor].pid;
 }
 

@@ -37,6 +37,22 @@ make
   - `p`: sort by PID (ascending)
   - `P`: sort by PID (descending)
 - `f`: toggle procces ASCII art tree view
+- Process searching
+  - `/`: start search
+  - `n`: select next search result
+  - `N`: select previous search result
 
 These can be viewed while the application is running by pressing `?`.
+
+### Searching
+
+During search the text can be modified using these keybindings:
+
+- `Backspace`: Delete one character
+- `Ctrl`+`Backspace`: Delete all characters until the first non-alphanumeric character
+- `Ctrl`+`A`: Select everything, after this pressing `Backspace` deletes everything
+   and entering a character deletes everything before adding that character.
+   Pressing any special key that doesn't have a function cancels the selection.
+- `Enter`: Finish search
+- `Escape`: Cancel search
 
