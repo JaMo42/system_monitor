@@ -78,14 +78,9 @@ UIResizeWindowsC (Layout *l, unsigned x, unsigned y,
     {
       if (l->elems[i]->type == UI_WIDGET)
         {
-          // Sometimes windows wouldn't move/resize properly and apparently
-          // doing it twice fixes it.
-          mvwin (l->elems[i]->widget->win, y, p);
           wresize (l->elems[i]->widget->win,
                    height, (unsigned)((float)width * l->elems[i]->size));
           mvwin (l->elems[i]->widget->win, y, p);
-          wresize (l->elems[i]->widget->win,
-                   height, (unsigned)((float)width * l->elems[i]->size));
         }
       else if (l->elems[i]->type == UI_ROWS)
         UIResizeWindowsR (l->elems[i], p, y,
@@ -106,13 +101,9 @@ UIResizeWindowsR (Layout *l, unsigned x, unsigned y,
     {
       if (l->elems[i]->type == UI_WIDGET)
         {
-          // See above
-          mvwin (l->elems[i]->widget->win, p, x);
           wresize (l->elems[i]->widget->win,
                    (unsigned)((float)height * l->elems[i]->size), width);
           mvwin (l->elems[i]->widget->win, p, x);
-          wresize (l->elems[i]->widget->win,
-                   (unsigned)((float)height * l->elems[i]->size), width);
         }
       else if (l->elems[i]->type == UI_ROWS)
         UIResizeWindowsR (l->elems[i], x, p,
