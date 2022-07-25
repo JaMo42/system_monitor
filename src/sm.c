@@ -96,9 +96,9 @@ UpdateThread (void *arg)
 int
 main (int argc, char *const *argv)
 {
-  /*r1*/ui = UICreateLayout (2, UI_ROWS);
-  Layout *c1 = UICreateLayout (2, UI_COLS);
-  Layout *r2 = UICreateLayout (2, UI_ROWS);
+  /*r1*/ui = UICreateLayout (UI_ROWS);
+  Layout *c1 = UICreateLayout (UI_COLS);
+  Layout *r2 = UICreateLayout (UI_ROWS);
   UIAddWidget (ui, &cpu_widget, 0, 0.333f);
   UIAddLayout (ui, c1, 1, 0.666f);
   UIAddLayout (c1, r2, 0, 0.5f);

@@ -1,35 +1,43 @@
 #include "ui.h"
 
+#define layout_for_each(l)                     \
+  for (Layout **it = (l)->elems, *child = *it; \
+       it != (l)->elems + 2;                   \
+       child = *++it)
+
+#define layout_sibling(l, c) \
+  ((c) == (l)->elems[0] ? (l)->elems[1] : (l)->elems[0])
+
 bool ui_too_small;
 
 Layout *
-UICreateLayout (unsigned n, LayoutType type)
+UICreateLayout (LayoutType type)
 {
   Layout *l = (Layout *)malloc (sizeof (Layout));
-  l->type = type;
-  l->count = n;
-  l->size = 1.0;
-  l->min_width = 0;
-  l->min_height = 0;
-  l->elems = calloc (n, sizeof (Layout *));
+  *l = (Layout) {
+    .type = type,
+    .size = 1.0,
+    .min_width = 0,
+    .min_height = 0,
+    .elems = {NULL, NULL}
+  };
   return l;
 }
 
 void
 UIDeleteLayout (Layout *l)
 {
-  for (unsigned i = 0; i < l->count; ++i)
+  layout_for_each (l)
     {
-      if (l->elems[i]->type == UI_WIDGET)
+      if (child->type == UI_WIDGET)
         {
-          l->elems[i]->widget->Quit ();
-          delwin (l->elems[i]->widget->win);
-          free (l->elems[i]);
+          child->widget->Quit ();
+          delwin (child->widget->win);
+          free (child);
         }
       else
-        UIDeleteLayout (l->elems[i]);
+        UIDeleteLayout (child);
     }
-  free (l->elems);
   free (l);
 }
 
@@ -57,12 +65,12 @@ UIAddWidget (Layout *l, Widget *w, unsigned i, float size)
 static void
 UICreateWindows (Layout *l)
 {
-  for (unsigned i = 0; i < l->count; ++i)
+  layout_for_each (l)
     {
-      if (l->elems[i]->type == UI_WIDGET)
-        l->elems[i]->widget->win = newwin (1, 1, 0, 0);
+      if (child->type == UI_WIDGET)
+        child->widget->win = newwin (1, 1, 0, 0);
       else
-        UICreateWindows (l->elems[i]);
+        UICreateWindows (child);
     }
 }
 
@@ -74,21 +82,21 @@ UIResizeWindowsC (Layout *l, unsigned x, unsigned y,
                   unsigned width, unsigned height)
 {
   unsigned p = x;
-  for (unsigned i = 0; i < l->count; ++i)
+  layout_for_each (l)
     {
-      if (l->elems[i]->type == UI_WIDGET)
+      if (child->type == UI_WIDGET)
         {
-          wresize (l->elems[i]->widget->win,
-                   height, (unsigned)((float)width * l->elems[i]->size));
-          mvwin (l->elems[i]->widget->win, y, p);
+          wresize (child->widget->win,
+                   height, (unsigned)((float)width * child->size));
+          mvwin (child->widget->win, y, p);
         }
-      else if (l->elems[i]->type == UI_ROWS)
-        UIResizeWindowsR (l->elems[i], p, y,
-                          (float)width * l->elems[i]->size, height);
+      else if (child->type == UI_ROWS)
+        UIResizeWindowsR (child, p, y,
+                          (float)width * child->size, height);
       else
-        UIResizeWindowsC (l->elems[i], p, y,
-                          (float)width * l->elems[i]->size, height);
-      p += (float)width * l->elems[i]->size;
+        UIResizeWindowsC (child, p, y,
+                          (float)width * child->size, height);
+      p += (float)width * child->size;
     }
 }
 
@@ -97,21 +105,21 @@ UIResizeWindowsR (Layout *l, unsigned x, unsigned y,
                   unsigned width, unsigned height)
 {
   unsigned p = y;
-  for (unsigned i = 0; i < l->count; ++i)
+  layout_for_each (l)
     {
-      if (l->elems[i]->type == UI_WIDGET)
+      if (child->type == UI_WIDGET)
         {
-          wresize (l->elems[i]->widget->win,
-                   (unsigned)((float)height * l->elems[i]->size), width);
-          mvwin (l->elems[i]->widget->win, p, x);
+          wresize (child->widget->win,
+                   (unsigned)((float)height * child->size), width);
+          mvwin (child->widget->win, p, x);
         }
-      else if (l->elems[i]->type == UI_ROWS)
-        UIResizeWindowsR (l->elems[i], x, p,
-                          width, (float)height * l->elems[i]->size);
+      else if (child->type == UI_ROWS)
+        UIResizeWindowsR (child, x, p,
+                          width, (float)height * child->size);
       else
-        UIResizeWindowsC (l->elems[i], x, p,
-                          width, (float)height * l->elems[i]->size);
-      p += (float)height * l->elems[i]->size;
+        UIResizeWindowsC (child, x, p,
+                          width, (float)height * child->size);
+      p += (float)height * child->size;
     }
 }
 
@@ -130,23 +138,21 @@ UIConstruct (Layout *l)
 static void
 UIWidgetsResize (Layout *l)
 {
-  for (unsigned i = 0; i < l->count; ++i)
+  layout_for_each (l)
     {
-      if (l->elems[i]->type == UI_WIDGET)
-        l->elems[i]->widget->Resize (l->elems[i]->widget->win);
+      if (child->type == UI_WIDGET)
+        child->widget->Resize (child->widget->win);
       else
-        UIWidgetsResize (l->elems[i]);
+        UIWidgetsResize (child);
     }
 }
 
 static bool
 UICheckSize (Layout *self, unsigned width, unsigned height)
 {
-  unsigned i, w, h;
-  Layout *child;
-  for (i = 0; i < self->count; ++i)
+  unsigned w, h;
+  layout_for_each (self)
     {
-      child = self->elems[i];
       if (self->type == UI_ROWS)
         {
           w = width;
@@ -190,11 +196,8 @@ UIResize (Layout *l, unsigned width, unsigned height)
 void
 UIGetMinSize (Layout *self)
 {
-  unsigned i;
-  Layout *child;
-  for (i = 0; i < self->count; ++i)
+  layout_for_each (self)
     {
-      child = self->elems[i];
       if (child->type != UI_WIDGET)
         UIGetMinSize (child);
       if (self->type == UI_ROWS)

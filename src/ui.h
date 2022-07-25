@@ -12,18 +12,17 @@ typedef enum
 typedef struct Layout
 {
   LayoutType type;
-  unsigned count;
   float size;
   int min_width;
   int min_height;
   union
     {
-      struct Layout **elems;
+      struct Layout *elems[2];
       Widget *widget;
     };
 } Layout;
 
-Layout *UICreateLayout (unsigned n, LayoutType type);
+Layout *UICreateLayout (LayoutType type);
 void    UIDeleteLayout (Layout *l);
 void    UIAddLayout (Layout *l, Layout *l2, unsigned i, float size);
 void    UIAddWidget (Layout *l, Widget *w, unsigned i, float size);
