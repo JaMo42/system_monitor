@@ -69,6 +69,7 @@ ProcUpdateProcesses ()
   double cpu, mem;
 
   proc_count = 0;
+  proc_cursor = 0;
 
   (void)fgets (line, 256, ps);  /* Skip header */
   while (fgets (line, 256, ps))
@@ -268,8 +269,6 @@ void
 ProcSetSort (const char *mode)
 {
   proc_sort = mode;
-  proc_cursor_pid = 0;
-  proc_cursor = 0;
   proc_time_passed = 2000;
 }
 
@@ -277,8 +276,6 @@ void
 ProcToggleTree ()
 {
   proc_ps_tree = !proc_ps_tree;
-  proc_cursor_pid = 0;
-  proc_cursor = 0;
   proc_time_passed = 2000;
 }
 
