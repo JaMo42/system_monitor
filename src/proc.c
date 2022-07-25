@@ -299,7 +299,10 @@ ProcSearchUpdateMatches ()
   unsigned count = 0;
   proc_first_match = -1;
   if (proc_search_size == 0 || !proc_search_show)
-    return;
+    {
+      proc_search_show = false;
+      return;
+    }
   // We don't have strnstr on Linux so we need to null-terminate the needle
   // for strstr.
   proc_search_string[proc_search_size] = '\0';
