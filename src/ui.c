@@ -8,11 +8,13 @@
 #define layout_sibling(l, c) \
   ((c) == (l)->elems[0] ? (l)->elems[1] : (l)->elems[0])
 
-#define child_size(l, c) \
-  ((c) == (l)->elems[0] ? (l)->percent_first : 1.0f - (l)->percent_first)
-
 #define max_priority(a, b) \
   ((a)->priority > (b)->priority ? (a) : (b))
+
+#define cool_child(l)                                \
+  ((l)->elems[0]->priority > (l)->elems[1]->priority \
+   ? (l)->elems[0]                                   \
+   : (l)->elems[1])
 
 bool ui_too_small;
 
@@ -95,6 +97,23 @@ UIHide (Layout *self)
     }
 }
 
+static int
+UIGetMin (Layout *self, bool height)
+{
+  Layout *child;
+  if (self->type == UI_WIDGET)
+    {
+      if (self->widget->hidden)
+        return 0;
+      return height ? self->min_height : self->min_width;
+    }
+  else
+    {
+      child = cool_child (self);
+      return height ? child->min_height : child->min_width;
+    }
+}
+
 static void UIResizeWindowsR (Layout *, unsigned, unsigned, unsigned,
                               unsigned);
 
@@ -132,7 +151,7 @@ UIResizeWindowsC (Layout *l, unsigned x, unsigned y,
   else
     {
       choice = max_priority (left, right);
-      if ((int)width < choice->min_width)
+      if ((int)width < UIGetMin (choice, false))
         choice = layout_sibling (l, choice);
       // no need to check again as we already ensured we can draw at least one
       // child in UICheckSize.
@@ -176,7 +195,7 @@ UIResizeWindowsR (Layout *l, unsigned x, unsigned y,
   else
     {
       choice = max_priority (top, bottom);
-      if ((int)height < choice->min_height)
+      if ((int)width < UIGetMin (choice, true))
         choice = layout_sibling (l, choice);
       // no need to check again as we already ensured we can draw at least one
       // child in UICheckSize.
@@ -235,10 +254,12 @@ UICheckSizeC (Layout *self, unsigned width, unsigned height)
   else
     {
       choice = max_priority (left, right);
-      if ((int)width < choice->min_width)
-        choice = layout_sibling (self, choice);
-      if ((int)width < choice->min_width)
-        return false;
+      if ((int)width < UIGetMin (choice, false))
+        {
+          choice = layout_sibling (self, choice);
+          if ((int)width < choice->min_width)
+            return false;
+        }
     }
   return true;
 #undef CHECK_CHILD
@@ -267,10 +288,12 @@ UICheckSizeR (Layout *self, unsigned width, unsigned height)
   else
     {
       choice = max_priority (top, bottom);
-      if ((int)height < choice->min_height)
-        choice = layout_sibling (self, choice);
-      if ((int)height < choice->min_height)
-        return false;
+      if ((int)height < UIGetMin (choice, true))
+        {
+          choice = layout_sibling (self, choice);
+          if ((int)height < choice->min_height)
+            return false;
+        }
     }
   return true;
 #undef CHECK_CHILD
