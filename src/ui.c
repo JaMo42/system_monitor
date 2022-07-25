@@ -172,7 +172,7 @@ UIResizeWindowsR (Layout *l, unsigned x, unsigned y,
   Layout *const bottom = l->elems[1];
   Layout *choice;
 
-  if (top_height >= top->min_height && bottom_height >= bottom->min_height)
+  if ((int)top_height >= top->min_height && (int)bottom_height >= bottom->min_height)
     {
 #define DO_RESIZE(target_, y_)                                        \
       switch (target_->type)                                          \
@@ -195,7 +195,7 @@ UIResizeWindowsR (Layout *l, unsigned x, unsigned y,
   else
     {
       choice = max_priority (top, bottom);
-      if ((int)width < UIGetMin (choice, true))
+      if ((int)height < UIGetMin (choice, true))
         choice = layout_sibling (l, choice);
       // no need to check again as we already ensured we can draw at least one
       // child in UICheckSize.
@@ -239,7 +239,9 @@ UICheckSizeC (Layout *self, unsigned width, unsigned height)
   Layout *const left = self->elems[0];
   Layout *const right = self->elems[1];
   Layout *choice;
-  if (left_width >= left->min_width && right_width >= right->min_width)
+  if ((int)height < UIGetMin (left, true) || (int)height < UIGetMin (right, true))
+    return false;
+  else if (left_width >= left->min_width && right_width >= right->min_width)
     {
 #define CHECK_CHILD(target_)                                      \
     if (target_->type == UI_ROWS                                  \
@@ -257,7 +259,7 @@ UICheckSizeC (Layout *self, unsigned width, unsigned height)
       if ((int)width < UIGetMin (choice, false))
         {
           choice = layout_sibling (self, choice);
-          if ((int)width < choice->min_width)
+          if ((int)width < UIGetMin (choice, false))
             return false;
         }
     }
@@ -273,6 +275,8 @@ UICheckSizeR (Layout *self, unsigned width, unsigned height)
   Layout *const top = self->elems[0];
   Layout *const bottom = self->elems[1];
   Layout *choice;
+  if ((int)width < UIGetMin (top, false) || (int)width < UIGetMin (bottom, false))
+    return false;
   if (top_height >= top->min_height && bottom_height >= bottom->min_height)
     {
 #define CHECK_CHILD(target_)                                      \
@@ -291,7 +295,7 @@ UICheckSizeR (Layout *self, unsigned width, unsigned height)
       if ((int)height < UIGetMin (choice, true))
         {
           choice = layout_sibling (self, choice);
-          if ((int)height < choice->min_height)
+          if ((int)height < UIGetMin (choice, true))
             return false;
         }
     }
