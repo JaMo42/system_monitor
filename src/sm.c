@@ -134,13 +134,10 @@ main (int argc, char *const *argv)
           CursesResize ();
           pthread_mutex_unlock (&draw_mutex);
         }
-      else if (!ui_too_small)
-        {
-          if (ProcSearching ())
-            ProcSearchHandleInput (ch);
-          else
-            running = HandleInput (ch);
-        }
+      if (ProcSearching ())
+        ProcSearchHandleInput (ch);
+      else
+        running = HandleInput (ch);
       if (!proc_widget.hidden)
         {
           pthread_mutex_lock (&draw_mutex);
