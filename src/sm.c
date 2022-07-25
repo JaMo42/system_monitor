@@ -96,15 +96,15 @@ UpdateThread (void *arg)
 int
 main (int argc, char *const *argv)
 {
-  /*r1*/ui = UICreateLayout (UI_ROWS);
-  Layout *c1 = UICreateLayout (UI_COLS);
-  Layout *r2 = UICreateLayout (UI_ROWS);
-  UIAddWidget (ui, &cpu_widget, 0, 0.333f);
-  UIAddLayout (ui, c1, 1, 0.666f);
-  UIAddLayout (c1, r2, 0, 0.5f);
-  UIAddWidget (r2, &mem_widget, 0, 0.5f);
-  UIAddWidget (r2, &net_widget, 1, 0.5f);
-  UIAddWidget (c1, &proc_widget, 1, 0.5f);
+  /*r1*/ui = UICreateLayout (UI_ROWS, 0.333f);
+  Layout *c1 = UICreateLayout (UI_COLS, 0.5f);
+  Layout *r2 = UICreateLayout (UI_ROWS, 0.5f);
+  UIAddWidget (ui, &cpu_widget, 2);
+  UIAddLayout (ui, c1);
+  UIAddLayout (c1, r2);
+  UIAddWidget (r2, &mem_widget, 1);
+  UIAddWidget (r2, &net_widget, 0);
+  UIAddWidget (c1, &proc_widget, 3);
   UIGetMinSize (ui);
 
   ParseArgs (argc, argv);
@@ -141,10 +141,13 @@ main (int argc, char *const *argv)
           else
             running = HandleInput (ch);
         }
-      pthread_mutex_lock (&draw_mutex);
-      ProcDraw (proc_widget.win);
-      wrefresh (proc_widget.win);
-      pthread_mutex_unlock (&draw_mutex);
+      if (!proc_widget.hidden)
+        {
+          pthread_mutex_lock (&draw_mutex);
+          ProcDraw (proc_widget.win);
+          wrefresh (proc_widget.win);
+          pthread_mutex_unlock (&draw_mutex);
+        }
     }
   pthread_join (update_thread, NULL);
   pthread_mutex_destroy (&draw_mutex);
@@ -243,10 +246,14 @@ void
 CursesUpdate ()
 {
   refresh ();
-  wrefresh (cpu_widget.win);
-  wrefresh (mem_widget.win);
-  wrefresh (net_widget.win);
-  wrefresh (proc_widget.win);
+#define DO_REFRESH(widget_) \
+  if (!widget_.hidden)      \
+    wrefresh (widget_.win)
+  DO_REFRESH (cpu_widget);
+  DO_REFRESH (mem_widget);
+  DO_REFRESH (net_widget);
+  DO_REFRESH (proc_widget);
+#undef DO_REFRESH
 }
 
 void
@@ -284,10 +291,14 @@ UpdateWidgets ()
 void
 DrawWidgets ()
 {
-  cpu_widget.Draw (cpu_widget.win);
-  mem_widget.Draw (mem_widget.win);
-  net_widget.Draw (net_widget.win);
-  proc_widget.Draw (proc_widget.win);
+#define DO_DRAW(widget_)       \
+  if (!widget_.hidden)         \
+    widget_.Draw (widget_.win)
+  DO_DRAW (cpu_widget);
+  DO_DRAW (mem_widget);
+  DO_DRAW (net_widget);
+  DO_DRAW (proc_widget);
+#undef DO_DRAW
 }
 
 void

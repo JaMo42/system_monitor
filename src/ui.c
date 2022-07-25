@@ -8,17 +8,24 @@
 #define layout_sibling(l, c) \
   ((c) == (l)->elems[0] ? (l)->elems[1] : (l)->elems[0])
 
+#define child_size(l, c) \
+  ((c) == (l)->elems[0] ? (l)->percent_first : 1.0f - (l)->percent_first)
+
+#define max_priority(a, b) \
+  ((a)->priority > (b)->priority ? (a) : (b))
+
 bool ui_too_small;
 
 Layout *
-UICreateLayout (LayoutType type)
+UICreateLayout (LayoutType type, float percent_first)
 {
   Layout *l = (Layout *)malloc (sizeof (Layout));
   *l = (Layout) {
     .type = type,
-    .size = 1.0,
+    .percent_first = percent_first,
     .min_width = 0,
     .min_height = 0,
+    .priority = -1,
     .elems = {NULL, NULL}
   };
   return l;
@@ -42,24 +49,26 @@ UIDeleteLayout (Layout *l)
 }
 
 void
-UIAddLayout (Layout *l, Layout *l2, unsigned i, float size)
+UIAddLayout (Layout *l, Layout *l2)
 {
-  l->elems[i] = l2;
-  l2->size = size;
+  l->elems[l->elems[0] != NULL] = l2;
 }
 
 void
-UIAddWidget (Layout *l, Widget *w, unsigned i, float size)
+UIAddWidget (Layout *l, Widget *w, int priority)
 {
   Layout *new = malloc (sizeof (Layout));
   new->type = UI_WIDGET;
-  new->size = size;
   new->widget = w;
   w->MinSize (&new->min_width, &new->min_height);
   // Window borders
   new->min_height += 2;
   new->min_width += 2;
-  l->elems[i] = new;
+  new->priority = priority;
+
+  l->elems[l->elems[0] != NULL] = new;
+  if (priority > l->priority)
+    l->priority = priority;
 }
 
 static void
@@ -74,53 +83,107 @@ UICreateWindows (Layout *l)
     }
 }
 
+static void
+UIHide (Layout *self)
+{
+  if (self->type == UI_WIDGET)
+    self->widget->hidden = true;
+  else
+    {
+      UIHide (self->elems[0]);
+      UIHide (self->elems[1]);
+    }
+}
+
 static void UIResizeWindowsR (Layout *, unsigned, unsigned, unsigned,
                               unsigned);
 
 static void
 UIResizeWindowsC (Layout *l, unsigned x, unsigned y,
-                  unsigned width, unsigned height)
+                  unsigned width, const unsigned height)
 {
-  unsigned p = x;
-  layout_for_each (l)
+  const int left_width = (float)width * l->percent_first;
+  const int right_width = width - left_width;
+  const int choice_width = width;  // for DO_RESIZE
+  Layout *const left = l->elems[0];
+  Layout *const right = l->elems[1];
+  Layout *choice;
+
+  if (left_width >= left->min_width && right_width >= right->min_width)
     {
-      if (child->type == UI_WIDGET)
-        {
-          wresize (child->widget->win,
-                   height, (unsigned)((float)width * child->size));
-          mvwin (child->widget->win, y, p);
+#define DO_RESIZE(target_, x_)                                        \
+      switch (target_->type)                                          \
+        {                                                             \
+        case UI_WIDGET:                                               \
+          wresize (target_->widget->win, height, target_##_width);    \
+          mvwin (target_->widget->win, y, x_);                        \
+          target_->widget->hidden = false;                            \
+          break;                                                      \
+        case UI_ROWS:                                                 \
+          UIResizeWindowsR (target_, x_, y, target_##_width, height); \
+          break;                                                      \
+        case UI_COLS:                                                 \
+          UIResizeWindowsC (target_, x_, y, target_##_width, height); \
+          break;                                                      \
         }
-      else if (child->type == UI_ROWS)
-        UIResizeWindowsR (child, p, y,
-                          (float)width * child->size, height);
-      else
-        UIResizeWindowsC (child, p, y,
-                          (float)width * child->size, height);
-      p += (float)width * child->size;
+      DO_RESIZE (left, x);
+      DO_RESIZE (right, x + left_width);
     }
+  else
+    {
+      choice = max_priority (left, right);
+      if ((int)width < choice->min_width)
+        choice = layout_sibling (l, choice);
+      // no need to check again as we already ensured we can draw at least one
+      // child in UICheckSize.
+      DO_RESIZE (choice, x);
+      UIHide (layout_sibling (l, choice));
+    }
+#undef DO_RESIZE
 }
 
 static void
 UIResizeWindowsR (Layout *l, unsigned x, unsigned y,
-                  unsigned width, unsigned height)
+                  const unsigned width, unsigned height)
 {
-  unsigned p = y;
-  layout_for_each (l)
+  const int top_height = (float)height * l->percent_first;
+  const int bottom_height = height - top_height;
+  const int choice_height = height;  // for DO_RESIZE
+  Layout *const top = l->elems[0];
+  Layout *const bottom = l->elems[1];
+  Layout *choice;
+
+  if (top_height >= top->min_height && bottom_height >= bottom->min_height)
     {
-      if (child->type == UI_WIDGET)
-        {
-          wresize (child->widget->win,
-                   (unsigned)((float)height * child->size), width);
-          mvwin (child->widget->win, p, x);
+#define DO_RESIZE(target_, y_)                                        \
+      switch (target_->type)                                          \
+        {                                                             \
+        case UI_WIDGET:                                               \
+          wresize (target_->widget->win, target_##_height, width);    \
+          mvwin (target_->widget->win, y_, x);                        \
+          target_->widget->hidden = false;                            \
+          break;                                                      \
+        case UI_ROWS:                                                 \
+          UIResizeWindowsR (target_, x, y_, width, target_##_height); \
+          break;                                                      \
+        case UI_COLS:                                                 \
+          UIResizeWindowsC (target_, x, y_, width, target_##_height); \
+          break;                                                      \
         }
-      else if (child->type == UI_ROWS)
-        UIResizeWindowsR (child, x, p,
-                          width, (float)height * child->size);
-      else
-        UIResizeWindowsC (child, x, p,
-                          width, (float)height * child->size);
-      p += (float)height * child->size;
+      DO_RESIZE (top, y);
+      DO_RESIZE (bottom, y + top_height);
     }
+  else
+    {
+      choice = max_priority (top, bottom);
+      if ((int)height < choice->min_height)
+        choice = layout_sibling (l, choice);
+      // no need to check again as we already ensured we can draw at least one
+      // child in UICheckSize.
+      DO_RESIZE (choice, x);
+      UIHide (layout_sibling (l, choice));
+    }
+#undef DO_RESIZE
 }
 
 void
@@ -147,40 +210,76 @@ UIWidgetsResize (Layout *l)
     }
 }
 
+static bool UICheckSizeR (Layout *, unsigned, unsigned);
+
 static bool
-UICheckSize (Layout *self, unsigned width, unsigned height)
+UICheckSizeC (Layout *self, unsigned width, unsigned height)
 {
-  unsigned w, h;
-  layout_for_each (self)
+  const int left_width = (float)width * self->percent_first;
+  const int right_width = width - left_width;
+  Layout *const left = self->elems[0];
+  Layout *const right = self->elems[1];
+  Layout *choice;
+  if (left_width >= left->min_width && right_width >= right->min_width)
     {
-      if (self->type == UI_ROWS)
-        {
-          w = width;
-          h = (float)height * child->size;
-        }
-      else
-        {
-          w = (float)width * child->size;
-          h = height;
-        }
-      if (child->type == UI_WIDGET)
-        {
-          if ((int)w < child->min_width || (int)h < child->min_height)
-            return false;
-        }
-      else
-        {
-          if (!UICheckSize (child, w, h))
-            return false;
-        }
+#define CHECK_CHILD(target_)                                      \
+    if (target_->type == UI_ROWS                                  \
+        && !UICheckSizeR (target_, target_##_width, height))      \
+      return false;                                               \
+    else if (target_->type == UI_COLS                             \
+             && !UICheckSizeC (target_, target_##_width, height)) \
+      return false
+      CHECK_CHILD (left);
+      CHECK_CHILD (right);
+    }
+  else
+    {
+      choice = max_priority (left, right);
+      if ((int)width < choice->min_width)
+        choice = layout_sibling (self, choice);
+      if ((int)width < choice->min_width)
+        return false;
     }
   return true;
+#undef CHECK_CHILD
+}
+
+static bool
+UICheckSizeR (Layout *self, unsigned width, unsigned height)
+{
+  const int top_height = (float)height * self->percent_first;
+  const int bottom_height = height - top_height;
+  Layout *const top = self->elems[0];
+  Layout *const bottom = self->elems[1];
+  Layout *choice;
+  if (top_height >= top->min_height && bottom_height >= bottom->min_height)
+    {
+#define CHECK_CHILD(target_)                                      \
+    if (target_->type == UI_ROWS                                  \
+        && !UICheckSizeR (target_, width, target_##_height))      \
+      return false;                                               \
+    else if (target_->type == UI_COLS                             \
+             && !UICheckSizeC (target_, width, target_##_height)) \
+      return false
+      CHECK_CHILD (top);
+      CHECK_CHILD (bottom);
+    }
+  else
+    {
+      choice = max_priority (top, bottom);
+      if ((int)height < choice->min_height)
+        choice = layout_sibling (self, choice);
+      if ((int)height < choice->min_height)
+        return false;
+    }
+  return true;
+#undef CHECK_CHILD
 }
 
 void
 UIResize (Layout *l, unsigned width, unsigned height)
 {
-  if (!UICheckSize (l, width, height))
+  if (!((l->type == UI_ROWS ? UICheckSizeR : UICheckSizeC) (l, width, height)))
     {
       ui_too_small = true;
       return;
@@ -200,6 +299,11 @@ UIGetMinSize (Layout *self)
     {
       if (child->type != UI_WIDGET)
         UIGetMinSize (child);
+      else
+        {
+          if (child->priority > self->priority)
+            self->priority = child->priority;
+        }
       if (self->type == UI_ROWS)
         {
           if (child->min_width > self->min_width)
