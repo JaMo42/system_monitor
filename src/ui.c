@@ -57,42 +57,60 @@ UICreateWindows (Layout *l)
     }
 }
 
-static void UIResizeWindowsR (Layout *, unsigned, unsigned, unsigned, unsigned);
+static void UIResizeWindowsR (Layout *, unsigned, unsigned, unsigned,
+                              unsigned);
 
 static void
-UIResizeWindowsC (Layout *l, unsigned x, unsigned y, unsigned width, unsigned height)
+UIResizeWindowsC (Layout *l, unsigned x, unsigned y,
+                  unsigned width, unsigned height)
 {
   unsigned p = x;
   for (unsigned i = 0; i < l->count; ++i)
     {
       if (l->elems[i]->type == UI_WIDGET)
         {
+          // Sometimes windows wouldn't move/resize properly and apparently
+          // doing it twice fixes it.
           mvwin (l->elems[i]->widget->win, y, p);
-          wresize (l->elems[i]->widget->win, height, (unsigned)((float)width * l->elems[i]->size));
+          wresize (l->elems[i]->widget->win,
+                   height, (unsigned)((float)width * l->elems[i]->size));
+          mvwin (l->elems[i]->widget->win, y, p);
+          wresize (l->elems[i]->widget->win,
+                   height, (unsigned)((float)width * l->elems[i]->size));
         }
       else if (l->elems[i]->type == UI_ROWS)
-        UIResizeWindowsR (l->elems[i], p, y, (float)width * l->elems[i]->size, height);
+        UIResizeWindowsR (l->elems[i], p, y,
+                          (float)width * l->elems[i]->size, height);
       else
-        UIResizeWindowsC (l->elems[i], p, y, (float)width * l->elems[i]->size, height);
+        UIResizeWindowsC (l->elems[i], p, y,
+                          (float)width * l->elems[i]->size, height);
       p += (float)width * l->elems[i]->size;
     }
 }
 
 static void
-UIResizeWindowsR (Layout *l, unsigned x, unsigned y, unsigned width, unsigned height)
+UIResizeWindowsR (Layout *l, unsigned x, unsigned y,
+                  unsigned width, unsigned height)
 {
   unsigned p = y;
   for (unsigned i = 0; i < l->count; ++i)
     {
       if (l->elems[i]->type == UI_WIDGET)
         {
+          // See above
           mvwin (l->elems[i]->widget->win, p, x);
-          wresize (l->elems[i]->widget->win, (unsigned)((float)height * l->elems[i]->size), width);
+          wresize (l->elems[i]->widget->win,
+                   (unsigned)((float)height * l->elems[i]->size), width);
+          mvwin (l->elems[i]->widget->win, p, x);
+          wresize (l->elems[i]->widget->win,
+                   (unsigned)((float)height * l->elems[i]->size), width);
         }
       else if (l->elems[i]->type == UI_ROWS)
-        UIResizeWindowsR (l->elems[i], x, p, width, (float)height * l->elems[i]->size);
+        UIResizeWindowsR (l->elems[i], x, p,
+                          width, (float)height * l->elems[i]->size);
       else
-        UIResizeWindowsC (l->elems[i], x, p, width, (float)height * l->elems[i]->size);
+        UIResizeWindowsC (l->elems[i], x, p,
+                          width, (float)height * l->elems[i]->size);
       p += (float)height * l->elems[i]->size;
     }
 }
