@@ -104,21 +104,25 @@ MemoryDraw (WINDOW *win)
   const double main_use = mem_main_usage->back->f * mem_main_total;
   const double swap_use = mem_swap_usage->back->f * mem_swap_total;
 
-  wattron (win, COLOR_PAIR (C_MEM_MAIN));
-  wmove (win, 2, 3);
-  wprintw (win, "Main %3d%% ", (int)(mem_main_usage->back->f * 100.0));
-  FormatSize (win, main_use, true);
-  waddch (win, '/');
-  FormatSize (win, mem_main_total, false);
-  wattroff (win, COLOR_PAIR (C_MEM_MAIN));
+  const int width = getmaxx (win) - 2;
 
-  wattron (win, COLOR_PAIR (C_MEM_SWAP));
-  wmove (win, 3, 3);
-  wprintw (win, "Swap %3d%% ", (int)(mem_swap_usage->back->f * 100.0));
-  FormatSize (win, swap_use, true);
-  waddch (win, '/');
-  FormatSize (win, mem_swap_total, false);
-  wattroff (win, COLOR_PAIR (C_MEM_SWAP));
+#define PRINT(line, lower, title, upper)                 \
+  wattron (win, COLOR_PAIR (C_MEM_##upper));             \
+  wmove (win, line, 3);                                  \
+  wprintw (win, #title " %3d%%",                         \
+           (int)(mem_##lower##_usage->back->f * 100.0)); \
+  if (width > 26)                                        \
+    {                                                    \
+      waddch (win, ' ');                                 \
+      FormatSize (win, lower##_use, true);               \
+      waddch (win, '/');                                 \
+      FormatSize (win, mem_##lower##_total, false);      \
+    }                                                    \
+  wattroff (win, COLOR_PAIR (C_MEM_##upper))
+
+  PRINT (2, main, Main, MAIN);
+  PRINT (3, swap, Swap, SWAP);
+#undef PRINT
 }
 
 void
@@ -133,5 +137,17 @@ MemoryResize (WINDOW *win)
   list_clear (mem_main_usage);
   list_clear (mem_swap_usage);
   mem_samples = 0;
+}
+
+void
+MemoryMinSize (int *width_return, int *height_return)
+{
+  *width_return = 4+1+4+2;
+  //              \ \ \ \_ Left padding
+  //               \ \ \__ Name
+  //                \ \___ Space
+  //                 \____ Percentage
+  // Main, Swap, and 1 row spacing above and below
+  *height_return = 4;
 }
 

@@ -7,6 +7,7 @@ void NetworkQuit ();
 void NetworkUpdate ();
 void NetworkDraw (WINDOW *win);
 void NetworkResize (WINDOW *win);
+void NetworkMinSize (int *width_return, int *height_return);
 
 extern Widget net_widget;
 

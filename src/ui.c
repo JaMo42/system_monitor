@@ -1,5 +1,7 @@
 #include "ui.h"
 
+bool ui_too_small;
+
 Layout *
 UICreateLayout (unsigned n, LayoutType type)
 {
@@ -7,6 +9,8 @@ UICreateLayout (unsigned n, LayoutType type)
   l->type = type;
   l->count = n;
   l->size = 1.0;
+  l->min_width = 0;
+  l->min_height = 0;
   l->elems = calloc (n, sizeof (Layout *));
   return l;
 }
@@ -39,10 +43,15 @@ UIAddLayout (Layout *l, Layout *l2, unsigned i, float size)
 void
 UIAddWidget (Layout *l, Widget *w, unsigned i, float size)
 {
-  l->elems[i] = (Layout *)malloc (sizeof (Layout));
-  l->elems[i]->type = UI_WIDGET;
-  l->elems[i]->size = size;
-  l->elems[i]->widget = w;
+  Layout *new = malloc (sizeof (Layout));
+  new->type = UI_WIDGET;
+  new->size = size;
+  new->widget = w;
+  w->MinSize (&new->min_width, &new->min_height);
+  // Window borders
+  new->min_height += 2;
+  new->min_width += 2;
+  l->elems[i] = new;
 }
 
 static void
@@ -142,10 +151,41 @@ UIWidgetsResize (Layout *l)
 void
 UIResize (Layout *l, unsigned width, unsigned height)
 {
+  if ((int)width < l->min_width || (int)height < l->min_height)
+    {
+      ui_too_small = true;
+      return;
+    }
   if (l->type == UI_ROWS)
     UIResizeWindowsR (l, 0, 0, width, height);
   else
     UIResizeWindowsC (l, 0, 0, width, height);
   UIWidgetsResize (l);
+  ui_too_small = false;
+}
+
+void
+UIGetMinSize (Layout *self)
+{
+  unsigned i;
+  Layout *child;
+  for (i = 0; i < self->count; ++i)
+    {
+      child = self->elems[i];
+      if (child->type != UI_WIDGET)
+        UIGetMinSize (child);
+      if (self->type == UI_ROWS)
+        {
+          if (child->min_width > self->min_width)
+            self->min_width = child->min_width;
+          self->min_height += child->min_height;
+        }
+      else // UI_COLS
+        {
+          if (child->min_height > self->min_height)
+            self->min_height = child->min_height;
+          self->min_width += child->min_width;
+        }
+    }
 }
 

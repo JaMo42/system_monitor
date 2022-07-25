@@ -243,3 +243,23 @@ CpuResize (WINDOW *win)
     }
   cpu_samples = 0;
 }
+
+void
+CpuMinSize (int *width_return, int *height_return)
+{
+  // TODO: Dynamically choose based and CPU count and default aspect ratio.
+  //       Also prefer more lines/columns based on window dimensions.
+  //       of the CPU widget.
+#define LABELS 2+2*(4+1+3+3)
+  //            \ \  \ \ \ \_ space between labels
+  //             \ \  \ \ \__ percentage (2 digits)
+  //              \ \  \ \___ space
+  //               \ \  \____ CPU<n>
+  //                \ \______ 4 columns
+  //                 \_______ Left padding
+  // + 5 for the % range labels
+  *width_return = LABELS + 5;
+  // For 2 rows of CPU labels and 1 row spacing above and below
+  *height_return = 6;
+}
+

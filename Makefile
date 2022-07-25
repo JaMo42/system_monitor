@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -Wno-stringop-truncation
 LDFLAGS = -lncurses -lm -pthread
-VGFLAGS = --track-origins=yes --leak-check=full #--show-leak-kinds=all
+VGFLAGS = --track-origins=yes #--leak-check=full #--show-leak-kinds=all
 
 PREFIX ?= ~/.local/bin
 

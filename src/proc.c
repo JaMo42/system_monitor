@@ -456,3 +456,16 @@ ProcSearchPrev ()
   proc_cursor_pid = proc_processes[proc_cursor].pid;
 }
 
+void
+ProcMinSize (int *width_return, int *height_return)
+{
+  *width_return = 7+7+5+5+8;
+  //              \ \ \ \ \_ Total spacing and padding
+  //               \ \ \ \__ Memory
+  //                \ \ \___ CPU
+  //                 \ \____ Command
+  //                  \_____ Pid
+  // Header, 2 rows of processes (1 for search)
+  *height_return = 3;
+}
+

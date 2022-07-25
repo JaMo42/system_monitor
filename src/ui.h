@@ -14,6 +14,8 @@ typedef struct Layout
   LayoutType type;
   unsigned count;
   float size;
+  int min_width;
+  int min_height;
   union
     {
       struct Layout **elems;
@@ -25,7 +27,9 @@ Layout *UICreateLayout (unsigned n, LayoutType type);
 void    UIDeleteLayout (Layout *l);
 void    UIAddLayout (Layout *l, Layout *l2, unsigned i, float size);
 void    UIAddWidget (Layout *l, Widget *w, unsigned i, float size);
+void    UIConstruct (Layout *l);
+void    UIResize (Layout *l, unsigned width, unsigned height);
+void    UIGetMinSize (Layout *l);
 
-void UIConstruct (Layout *l);
-void UIResize (Layout *l, unsigned width, unsigned height);
+extern bool ui_too_small;
 

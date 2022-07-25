@@ -7,6 +7,7 @@ void MemoryQuit ();
 void MemoryUpdate ();
 void MemoryDraw (WINDOW *win);
 void MemoryResize (WINDOW *win);
+void MemoryMinSize (int *width_return, int *height_return);
 
 extern Widget mem_widget;
 

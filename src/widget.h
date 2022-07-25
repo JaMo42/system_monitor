@@ -9,14 +9,16 @@ typedef struct Widget
   void (*Update) ();
   void (*Draw) (WINDOW *win);
   void (*Resize) (WINDOW *win);
+  void (*MinSize) (int *width_return, int *height_return);
 } Widget;
 
-#define WIDGET(name)\
-  (Widget) {\
-    .Init = name##Init, \
-    .Quit = name##Quit, \
-    .Update = name##Update, \
-    .Draw = name##Draw, \
-    .Resize = name##Resize\
+#define WIDGET(name)         \
+  (Widget) {                 \
+    .Init = name##Init,      \
+    .Quit = name##Quit,      \
+    .Update = name##Update,  \
+    .Draw = name##Draw,      \
+    .Resize = name##Resize,  \
+    .MinSize = name##MinSize \
   }
 

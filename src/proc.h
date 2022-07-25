@@ -12,6 +12,7 @@ void ProcQuit ();
 void ProcUpdate ();
 void ProcDraw (WINDOW *win);
 void ProcResize (WINDOW *win);
+void ProcMinSize (int *width_return, int *height_return);
 
 void ProcCursorUp ();
 void ProcCursorDown ();

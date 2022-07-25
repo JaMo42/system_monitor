@@ -10,6 +10,7 @@ void CpuQuit ();
 void CpuUpdate ();
 void CpuDraw (WINDOW *win);
 void CpuResize (WINDOW *win);
+void CpuMinSize (int *width_return, int *height_return);
 
 extern Widget cpu_widget;
 

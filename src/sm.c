@@ -38,6 +38,7 @@ void CursesResize ();
 void InitWidgets ();
 void UpdateWidgets ();
 void DrawWidgets ();
+void TooSmall ();
 
 bool HandleInput (int key);
 
@@ -104,6 +105,7 @@ main (int argc, char *const *argv)
   UIAddWidget (r2, &mem_widget, 0, 0.5f);
   UIAddWidget (r2, &net_widget, 1, 0.5f);
   UIAddWidget (c1, &proc_widget, 1, 0.5f);
+  UIGetMinSize (ui);
 
   ParseArgs (argc, argv);
   CursesInit ();
@@ -124,10 +126,15 @@ main (int argc, char *const *argv)
         {
           pthread_mutex_lock (&draw_mutex);
           UIResize (ui, COLS, LINES);
+          if (ui_too_small)
+            {
+              TooSmall ();
+              UpdateWidgets ();
+            }
           CursesResize ();
           pthread_mutex_unlock (&draw_mutex);
         }
-      else
+      else if (!ui_too_small)
         {
           if (ProcSearching ())
             ProcSearchHandleInput (ch);
@@ -281,6 +288,37 @@ DrawWidgets ()
   mem_widget.Draw (mem_widget.win);
   net_widget.Draw (net_widget.win);
   proc_widget.Draw (proc_widget.win);
+}
+
+void
+TooSmall ()
+{
+  static char too_small[] = "Window too small";
+  int ch;
+  bool running = true;
+  while (running)
+    {
+      clear ();
+      move ((LINES - 1) / 2,
+            (COLS >= (int)sizeof (too_small)
+             ? ((COLS - (int)sizeof (too_small)) / 2)
+             : 0));
+      addstr (COLS >= (int)sizeof (too_small) ? too_small : "!");
+      refresh ();
+      switch (ch = my_getch ())
+        {
+        case 'q':
+          ungetch ('q');
+          running = false;
+          break;
+
+        case KEY_RESIZE:
+          UIResize (ui, COLS, LINES);
+          if (!ui_too_small)
+            running = false;
+          break;
+        }
+    }
 }
 
 void

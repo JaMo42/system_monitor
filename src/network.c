@@ -228,3 +228,13 @@ NetworkResize (WINDOW *win)
   net_samples = 0;
 }
 
+void
+NetworkMinSize (int *width_return, int *height_return)
+{
+  *width_return = 10+5+4;
+  //               \ \ \_ Unit
+  //                \ \__ Amount
+  //                 \___ Name and space
+  // 2 lines for receiving and transmitting and 1 line above and below
+  *height_return = 6;
+}
