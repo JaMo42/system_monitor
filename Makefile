@@ -1,9 +1,17 @@
-CC = gcc
-CFLAGS = -Wall -Wextra -Wno-stringop-truncation
+CC ?= gcc
+CFLAGS = -Wall -Wextra
 LDFLAGS = -lncurses -lm -pthread
 VGFLAGS = --track-origins=yes #--leak-check=full #--show-leak-kinds=all
 
 PREFIX ?= ~/.local/bin
+
+ifeq ($(CC),gcc)
+	CFLAGS += -Wno-stringop-truncation
+else ifeq ($(CC),cc)
+	ifeq ($(shell readlink `which cc`),gcc)
+		CFLAGS += -Wno-stringop-truncation
+	endif
+endif
 
 ifdef DEBUG
 	CFLAGS += -O0 -g
