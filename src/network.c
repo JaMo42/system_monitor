@@ -210,7 +210,7 @@ NetworkDraw (WINDOW *win)
   waddstr (win, "TX/s:    ");
   wattron (win, COLOR_PAIR (C_NET_TRANSMIT));
   FormatSize (win, net_transmit->back->u, true);
-  waddstr (win, "/s  ");
+  waddstr (win, "/s");
   wattroff (win, COLOR_PAIR (C_NET_TRANSMIT));
 }
 
@@ -231,10 +231,11 @@ NetworkResize (WINDOW *win)
 void
 NetworkMinSize (int *width_return, int *height_return)
 {
-  *width_return = 10+5+4;
-  //               \ \ \_ Unit
-  //                \ \__ Amount
-  //                 \___ Name and space
+  *width_return = 2+10+5+4;
+  //              \ \ \ \_ Unit
+  //               \ \ \__ Amount
+  //                \ \___ Name and space
+  //                 \____ Left padding
   // 2 lines for receiving and transmitting and 1 line above and below
-  *height_return = 6;
+  *height_return = 7;
 }
