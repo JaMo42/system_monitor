@@ -17,6 +17,7 @@
    : (l)->elems[1])
 
 bool ui_too_small;
+bool ui_strict_size = false;
 
 Layout *
 UICreateLayout (LayoutType type, float percent_first)
@@ -121,12 +122,13 @@ static void
 UIResizeWindowsC (Layout *l, unsigned x, unsigned y,
                   unsigned width, const unsigned height)
 {
-  const int left_width = (float)width * l->percent_first;
-  const int right_width = width - left_width;
+  int left_width = (float)width * l->percent_first;
+  int right_width = width - left_width;
   const int choice_width = width;  // for DO_RESIZE
   Layout *const left = l->elems[0];
   Layout *const right = l->elems[1];
   Layout *choice;
+  int diff;
 
   if (left_width >= left->min_width && right_width >= right->min_width)
     {
@@ -148,6 +150,28 @@ UIResizeWindowsC (Layout *l, unsigned x, unsigned y,
       DO_RESIZE (left, x);
       DO_RESIZE (right, x + left_width);
     }
+  else if (!ui_strict_size
+           && left->min_width + right->min_width <= (int)width)
+    {
+      if (left->min_width > left_width)
+        {
+          diff = left->min_width - left_width;
+          fprintf (stderr, "Resizing:  left: %d -> %d\n", left_width, left_width + diff);
+          fprintf (stderr, "          right: %d -> %d\n", right_width, right_width - diff);
+          left_width += diff;
+          right_width -= diff;
+        }
+      else
+        {
+          diff = right->min_width - right_width;
+          fprintf (stderr, "Resizing:  left: %d -> %d\n", left_width, left_width - diff);
+          fprintf (stderr, "          right: %d -> %d\n", right_width, right_width + diff);
+          left_width -= diff;
+          right_width += diff;
+        }
+      DO_RESIZE (left, x);
+      DO_RESIZE (right, x + left_width);
+    }
   else
     {
       choice = max_priority (left, right);
@@ -165,14 +189,15 @@ static void
 UIResizeWindowsR (Layout *l, unsigned x, unsigned y,
                   const unsigned width, unsigned height)
 {
-  const int top_height = (float)height * l->percent_first;
-  const int bottom_height = height - top_height;
+  int top_height = (float)height * l->percent_first;
+  int bottom_height = height - top_height;
   const int choice_height = height;  // for DO_RESIZE
   Layout *const top = l->elems[0];
   Layout *const bottom = l->elems[1];
   Layout *choice;
+  int diff;
 
-  if ((int)top_height >= top->min_height && (int)bottom_height >= bottom->min_height)
+  if (top_height >= top->min_height && bottom_height >= bottom->min_height)
     {
 #define DO_RESIZE(target_, y_)                                        \
       switch (target_->type)                                          \
@@ -188,6 +213,28 @@ UIResizeWindowsR (Layout *l, unsigned x, unsigned y,
         case UI_COLS:                                                 \
           UIResizeWindowsC (target_, x, y_, width, target_##_height); \
           break;                                                      \
+        }
+      DO_RESIZE (top, y);
+      DO_RESIZE (bottom, y + top_height);
+    }
+  else if (!ui_strict_size
+           && top->min_height + bottom->min_height <= (int)height)
+    {
+      if (top->min_height > top_height)
+        {
+          diff = top->min_height - top_height;
+          fprintf (stderr, "Resizing:    top: %d -> %d\n", top_height, top_height + diff);
+          fprintf (stderr, "          bottom: %d -> %d\n", bottom_height, bottom_height - diff);
+          top_height += diff;
+          bottom_height -= diff;
+        }
+      else
+        {
+          diff = bottom->min_height - bottom_height;
+          fprintf (stderr, "Resizing:    top: %d -> %d\n", top_height, top_height - diff);
+          fprintf (stderr, "          bottom: %d -> %d\n", bottom_height, bottom_height + diff);
+          top_height -= diff;
+          bottom_height += diff;
         }
       DO_RESIZE (top, y);
       DO_RESIZE (bottom, y + top_height);
@@ -239,7 +286,8 @@ UICheckSizeC (Layout *self, unsigned width, unsigned height)
   Layout *const left = self->elems[0];
   Layout *const right = self->elems[1];
   Layout *choice;
-  if ((int)height < UIGetMin (left, true) || (int)height < UIGetMin (right, true))
+  if ((int)height < UIGetMin (left, true)
+      || (int)height < UIGetMin (right, true))
     return false;
   else if (left_width >= left->min_width && right_width >= right->min_width)
     {
@@ -275,7 +323,8 @@ UICheckSizeR (Layout *self, unsigned width, unsigned height)
   Layout *const top = self->elems[0];
   Layout *const bottom = self->elems[1];
   Layout *choice;
-  if ((int)width < UIGetMin (top, false) || (int)width < UIGetMin (bottom, false))
+  if ((int)width < UIGetMin (top, false)
+      || (int)width < UIGetMin (bottom, false))
     return false;
   if (top_height >= top->min_height && bottom_height >= bottom->min_height)
     {
@@ -345,4 +394,3 @@ UIGetMinSize (Layout *self)
         }
     }
 }
-

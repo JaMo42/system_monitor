@@ -32,4 +32,4 @@ void    UIResize (Layout *l, unsigned width, unsigned height);
 void    UIGetMinSize (Layout *l);
 
 extern bool ui_too_small;
-
+extern bool ui_strict_size;

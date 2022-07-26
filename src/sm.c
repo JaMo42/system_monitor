@@ -107,6 +107,9 @@ main (int argc, char *const *argv)
   UIAddWidget (c1, &proc_widget, 3);
   UIGetMinSize (ui);
 
+  // Uncomment to disable automatic widget resizing.
+  //ui_strict_size = true;
+
   ParseArgs (argc, argv);
   CursesInit ();
   UIConstruct (ui);
