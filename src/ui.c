@@ -22,6 +22,12 @@
 bool ui_too_small;
 bool ui_strict_size = false;
 
+static void UIResizeWindowsR (Layout *, unsigned, unsigned, unsigned,
+                                 unsigned);
+static bool UICheckSizeR (Layout *, unsigned, unsigned);
+static inline Widget* UIResizeWindows (Layout *l, unsigned width,
+                                       unsigned height);
+
 Layout *
 UICreateLayout (LayoutType type, float percent_first)
 {
@@ -117,9 +123,6 @@ UIGetMin (Layout *self, bool height)
       return height ? child->min_height : child->min_width;
     }
 }
-
-static void UIResizeWindowsR (Layout *, unsigned, unsigned, unsigned,
-                              unsigned);
 
 static void
 UIResizeWindowsC (Layout *l, unsigned x, unsigned y,
@@ -257,13 +260,12 @@ UIResizeWindowsR (Layout *l, unsigned x, unsigned y,
 #undef DO_RESIZE
 }
 
+
 void
 UIConstruct (Layout *l)
 {
-  //struct winsize w;
-  //ioctl (STDOUT_FILENO, TIOCGWINSZ, &w);
   UICreateWindows (l);
-  UIResize (l, COLS, LINES);
+  UIResizeWindows (l, COLS, LINES);
 }
 
 static void
@@ -277,8 +279,6 @@ UIWidgetsResize (Layout *l)
         UIWidgetsResize (child);
     }
 }
-
-static bool UICheckSizeR (Layout *, unsigned, unsigned);
 
 static bool
 UICheckSizeC (Layout *self, unsigned width, unsigned height)
@@ -377,8 +377,8 @@ UIBestFit (Layout *self, Layout **best_return, unsigned width, unsigned height)
     }
 }
 
-void
-UIResize (Layout *l, unsigned width, unsigned height)
+static inline Widget *
+UIResizeWindows (Layout *l, unsigned width, unsigned height)
 {
   Layout *show = NULL;
   if (!((l->type == UI_ROWS ? UICheckSizeR : UICheckSizeC) (l, width, height)))
@@ -390,19 +390,29 @@ UIResize (Layout *l, unsigned width, unsigned height)
           wresize (show->widget->win, height, width);
           mvwin (show->widget->win, 0, 0);
           show->widget->hidden = false;
-          show->widget->Resize (show->widget->win);
           ui_too_small = false;
+          return show->widget;
         }
       else
         ui_too_small = true;
-      return;
+      return NULL;
     }
   if (l->type == UI_ROWS)
     UIResizeWindowsR (l, 0, 0, width, height);
   else
     UIResizeWindowsC (l, 0, 0, width, height);
-  UIWidgetsResize (l);
   ui_too_small = false;
+  return NULL;
+}
+
+void
+UIResize (Layout *l, unsigned width, unsigned height)
+{
+  Widget *show_only;
+  if ((show_only = UIResizeWindows (l, width, height)) != NULL)
+    show_only->Resize (show_only->win);
+  else
+    UIWidgetsResize (l);
 }
 
 void
