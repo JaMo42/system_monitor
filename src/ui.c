@@ -361,11 +361,42 @@ UICheckSizeR (Layout *self, unsigned width, unsigned height)
 }
 
 void
+UIBestFit (Layout *self, Layout **best_return, unsigned width, unsigned height)
+{
+  layout_for_each (self)
+    {
+      if (child->type == UI_WIDGET)
+        {
+          if (*best_return && (*best_return)->priority > child->priority)
+            // We already have a fit and it has a higher priority
+            continue;
+          else if ((int)width >= child->min_width
+                   && (int)height >= child->min_height)
+            *best_return = child;
+        }
+      else
+        UIBestFit (child, best_return, width, height);
+    }
+}
+
+void
 UIResize (Layout *l, unsigned width, unsigned height)
 {
+  Layout *show = NULL;
   if (!((l->type == UI_ROWS ? UICheckSizeR : UICheckSizeC) (l, width, height)))
     {
-      ui_too_small = true;
+      UIBestFit (l, &show, width, height);
+      if (show)
+        {
+          UIHide (l);
+          wresize (show->widget->win, height, width);
+          mvwin (show->widget->win, 0, 0);
+          show->widget->hidden = false;
+          show->widget->Resize (show->widget->win);
+          ui_too_small = false;
+        }
+      else
+        ui_too_small = true;
       return;
     }
   if (l->type == UI_ROWS)
