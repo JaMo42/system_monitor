@@ -42,6 +42,7 @@ ProcInit (WINDOW *win, unsigned graph_scale) {
   proc_time_passed = 0;
   DrawWindow (win, "Processes");
   pthread_mutex_init (&proc_data_mutex, NULL);
+  proc_cursor_pid = -1;
   ProcUpdateProcesses ();
   proc_cursor_pid = proc_processes[0].pid;
   proc_page_move_amount = (getmaxy (win) - 3) / 2;
