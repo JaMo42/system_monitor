@@ -69,7 +69,6 @@ ProcUpdateProcesses ()
   double cpu, mem;
 
   proc_count = 0;
-  proc_cursor = 0;
 
   (void)fgets (line, 256, ps);  /* Skip header */
   while (fgets (line, 256, ps))
@@ -92,6 +91,9 @@ ProcUpdateProcesses ()
         break;
     }
   pclose (ps);
+
+  if (proc_cursor == proc_count)
+    --proc_cursor;
 
   proc_search_show = true;
   ProcSearchUpdateMatches ();
