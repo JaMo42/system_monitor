@@ -88,3 +88,26 @@ PrintN (WINDOW *win, int ch, unsigned n)
     waddch (win, ch);
 }
 
+void
+Strip (const char **s)
+{
+  while (isspace (**s))
+    ++(*s);
+}
+
+int
+TokenCount (const char *string, const char *delims)
+{
+  int count = 1, depth = 1;
+  while (*string && depth)
+    {
+      if (isspace (*string) && !isspace (string[1]) && depth == 1)
+        ++count;
+      else if (*string == delims[0])
+        ++depth;
+      else if (*string == delims[1])
+        --depth;
+      ++string;
+    }
+  return count;
+}

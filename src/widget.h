@@ -14,9 +14,9 @@ typedef struct Widget
   void (*MinSize) (int *width_return, int *height_return);
 } Widget;
 
-#define WIDGET(name_)         \
+#define WIDGET(ident, name_)  \
   (Widget) {                  \
-    .name = #name_,           \
+    .name = ident,            \
     .win = NULL,              \
     .hidden = false,          \
     .Init = name_##Init,      \
@@ -26,4 +26,3 @@ typedef struct Widget
     .Resize = name_##Resize,  \
     .MinSize = name_##MinSize \
   }
-

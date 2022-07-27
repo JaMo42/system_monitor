@@ -12,16 +12,17 @@ make
 
 ## Usage
 
-### Commandline options
+### Command-line options
 
 - `-a` show average CPU usage
 - `-r rate` update rate in milliseconds
 - `-s scale` horizontal graph scale
 - `-c` always show CPU graph in range 0~100%
 - `-f` ASCII art process tree (like the `--forest` option for `ps`)
+- `-l layout` specifies the [layout](#layout)
 - `-h` show help message
 
-### Keybinds
+### Keybindings
 
 - `q`: Quit
 - Process navigation
@@ -36,7 +37,7 @@ make
   - `m`: sort by memory usage
   - `p`: sort by PID (ascending)
   - `P`: sort by PID (descending)
-- `f`: toggle procces ASCII art tree view
+- `f`: toggle process ASCII art tree view
 - Process searching
   - `/`: start search
   - `n`: select next search result
@@ -56,3 +57,42 @@ During search the text can be modified using these keybindings:
 - `Enter`: Finish search
 - `Escape`: Cancel search
 
+## Layout
+
+A custom layout can be specified via the `SM_LAYOUT` environment variable or the `-l` argument (overrides environment variable).
+
+If neither is specified the default is `(rows 33% c[2] (cols (rows m[1] n[0]) p[3]))`.
+
+Another example: `strict (cols 66% cpu[3] (rows 33% mem[1] (rows net[0] proc[2])))`.
+
+### Syntax
+
+```
+layout-string: ["strict"] layout
+layout:        "(" shape [percent-fist] child child ")"
+shape:         rows | cols
+rows:          "rows" | "horizontal"
+cols:          "cols" | "columns" | "vertical"
+percent-first: <number> "%"
+child:         widget | layout
+widget:        widget-name "[" priority "]"
+widget-name:   "cpu" | "memory" | "network" | "processes"
+priority:      <number>
+```
+
+
+`percent-first` is the relative size of the first child of the layout (top for rows, left for columns). If omitted it defaults to 50%, if the given value is greater than 100% it becomes 100%.
+
+The `widget-name` can be abbreviated to any length as long as it's not ambiguous (this is why the default layout-string just uses single letters).
+
+The `priority` is used to decide which widgets to hide first when the window is too small.
+
+If the entire layout string is prefixed by `strict`, automatic widget resizing gets disabled.
+
+### Small window sizes
+
+If the window is too small to fit all widgets at their preferred relative size it tries to change the relative size of widgets to fit all of them (unless the layout string starts with `strict`).
+
+If it still can't fit all of them it hides some based on their priority (lower priority means they get hidden first).
+
+If no fits it just displays `Window too small`.

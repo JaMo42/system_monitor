@@ -5,7 +5,7 @@
 
 #define PROC_COMMAND_STORAGE_SIZE 128
 
-Widget proc_widget = WIDGET(Proc);
+Widget proc_widget = WIDGET("processes", Proc);
 
 extern struct timespec interval;
 static unsigned long proc_time_passed;
@@ -470,4 +470,3 @@ ProcMinSize (int *width_return, int *height_return)
   // Header, 2 rows of processes (1 for search)
   *height_return = 3;
 }
-

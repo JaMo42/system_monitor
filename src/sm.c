@@ -11,6 +11,7 @@ struct timespec interval = { .tv_sec = 0, .tv_nsec = 500000000L };
 static unsigned graph_scale = 8;
 static Layout *ui;
 static pthread_mutex_t draw_mutex;
+static const char *layout = NULL;
 
 static help_text_type help_text = {
       {"k/↑", "Move cursor up"},
@@ -96,21 +97,26 @@ UpdateThread (void *arg)
 int
 main (int argc, char *const *argv)
 {
-  /*r1*/ui = UICreateLayout (UI_ROWS, 0.333f);
-  Layout *c1 = UICreateLayout (UI_COLS, 0.5f);
-  Layout *r2 = UICreateLayout (UI_ROWS, 0.5f);
-  UIAddWidget (ui, &cpu_widget, 2);
-  UIAddLayout (ui, c1);
-  UIAddLayout (c1, r2);
-  UIAddWidget (r2, &mem_widget, 1);
-  UIAddWidget (r2, &net_widget, 0);
-  UIAddWidget (c1, &proc_widget, 3);
+  ParseArgs (argc, argv);
+
+  Widget *widgets[] = {
+    &cpu_widget,
+    &mem_widget,
+    &net_widget,
+    &proc_widget
+  };
+  if ((layout == NULL
+       && (layout = getenv ("SM_LAYOUT")) == NULL)
+      || *layout == '\0')
+    layout = "(rows 33% c[2] (cols (rows m[1] n[0]) p[3]))";
+  if (strncmp (layout, "strict", 6) == 0)
+    {
+      ui_strict_size = true;
+      layout += 6;
+    }
+  ui = UIFromString (&layout, widgets, countof (widgets));
   UIGetMinSize (ui);
 
-  // Uncomment to disable automatic widget resizing.
-  //ui_strict_size = true;
-
-  ParseArgs (argc, argv);
   CursesInit ();
   UIConstruct (ui);
   InitWidgets ();
@@ -350,7 +356,7 @@ ParseArgs (int argc, char *const *argv)
 {
   char opt;
   unsigned long n;
-  while ((opt = getopt (argc, argv, "ar:hs:cf")) != -1)
+  while ((opt = getopt (argc, argv, "ar:hs:cfl:")) != -1)
     {
       switch (opt)
         {
@@ -370,6 +376,9 @@ ParseArgs (int argc, char *const *argv)
             break;
           case 'f':
             ProcToggleTree ();
+            break;
+          case 'l':
+            layout = optarg;
             break;
           case 'h':
           case '?':
@@ -433,4 +442,3 @@ HelpShow ()
         }
     }
 }
-

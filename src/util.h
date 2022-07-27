@@ -40,3 +40,7 @@ void FormatSize (WINDOW *win, size_t size, bool pad);
 
 void PrintN (WINDOW *win, int ch, unsigned n);
 
+/* Removes leading whitespace. */
+void Strip (const char **s);
+
+int TokenCount (const char *string, const char *delims);

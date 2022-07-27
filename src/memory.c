@@ -2,7 +2,7 @@
 #include "util.h"
 #include "canvas/canvas.h"
 
-Widget mem_widget = WIDGET(Memory);
+Widget mem_widget = WIDGET("memory", Memory);
 
 static List *mem_main_usage;
 static List *mem_swap_usage;
@@ -150,4 +150,3 @@ MemoryMinSize (int *width_return, int *height_return)
   // Main, Swap, and 1 row spacing above and below
   *height_return = 4;
 }
-

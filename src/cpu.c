@@ -2,7 +2,7 @@
 #include "util.h"
 #include "canvas/canvas.h"
 
-Widget cpu_widget = WIDGET(Cpu);
+Widget cpu_widget = WIDGET("cpu", Cpu);
 
 static List **cpu_usages;
 static unsigned cpu_max_samples;
@@ -252,11 +252,10 @@ CpuMinSize (int *width_return, int *height_return)
   //             \ \  \ \ \__ percentage (2 digits)
   //              \ \  \ \___ space
   //               \ \  \____ CPU<n>
-  //                \ \______ 4 columns
+  //                \ \______ 2 columns
   //                 \_______ Left padding
   // + 5 for the % range labels
   *width_return = LABELS + 5;
   // For 2 rows of CPU labels and 1 row spacing above and below
   *height_return = 6;
 }
-

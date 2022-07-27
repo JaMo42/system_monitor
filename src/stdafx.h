@@ -34,6 +34,8 @@
 #define unlikely(x) (x)
 #endif
 
+#define countof(arr) (sizeof (arr) / sizeof (*(arr)))
+
 #undef KEY_BACKSPACE
 #define KEY_BACKSPACE 127
 #define KEY_CTRL_BACKSPACE 8
