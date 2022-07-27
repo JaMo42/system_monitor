@@ -1,10 +1,12 @@
 #include "ui.h"
 #include "util.h"
 
-#define layout_for_each(l)                     \
-  for (Layout **it = (l)->elems, *child = *it; \
-       it != (l)->elems + 2;                   \
-       child = *++it)
+#define layout_for_each(l)                    \
+  for (Layout **it = (l)->elems,              \
+             **end = it + 2,                  \
+            *child = *it;                     \
+       it != end;                             \
+       ++it, child = (it < end ? *it : NULL))
 
 #define layout_sibling(l, c) \
   ((c) == (l)->elems[0] ? (l)->elems[1] : (l)->elems[0])
