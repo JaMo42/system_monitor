@@ -1,5 +1,6 @@
 #include "proc.h"
 #include "util.h"
+#include "sm.h"
 
 #define PROC_MAX_COUNT 512
 
@@ -108,6 +109,16 @@ ProcUpdate () {
     }
 }
 
+static inline void
+ProcDrawBorderImpl (WINDOW *win, unsigned first, unsigned last)
+{
+  char info[32];
+  DrawWindow (win, "Processes");
+  snprintf (info, 32, "%d - %d of %zu", first, last, proc_count);
+  DrawWindowInfo (win, info);
+  DrawWindowInfo2 (win, "Press ? for help");
+}
+
 void
 ProcDraw (WINDOW *win)
 {
@@ -139,11 +150,7 @@ ProcDraw (WINDOW *win)
     }
 
   /* Window */
-  char info[32];
-  DrawWindow (win, "Processes");
-  snprintf (info, 32, "%d - %d of %zu", first, last, proc_count);
-  DrawWindowInfo (win, info);
-  DrawWindowInfo2 (win, "Press ? for help");
+  ProcDrawBorderImpl (win, first, last);
 
   /* Header */
   wattron (win, A_BOLD | COLOR_PAIR (C_PROC_HEADER));
@@ -210,7 +217,6 @@ ProcDraw (WINDOW *win)
 void
 ProcResize (WINDOW *win) {
   wclear (win);
-  DrawWindow (win, "Processes");
   proc_page_move_amount = (getmaxy (win) - 3) / 2;
 }
 
@@ -291,6 +297,7 @@ ProcBeginSearch ()
   proc_search_size = 0;
   proc_search_all_selected = false;
   curs_set (1);
+  HandleInput = ProcSearchHandleInput;
 }
 
 static void
@@ -326,10 +333,23 @@ ProcSearchCommit ()
 {
   proc_search_active = false;
   ProcSearchUpdateMatches ();
+  HandleInput = MainHandleInput;
   curs_set (0);
 }
 
-void
+static inline void
+ProcRefresh ()
+{
+  if (proc_widget.exists && !proc_widget.hidden)
+    {
+      pthread_mutex_lock (&draw_mutex);
+      ProcDraw (proc_widget.win);
+      wrefresh (proc_widget.win);
+      pthread_mutex_unlock (&draw_mutex);
+    }
+}
+
+bool
 ProcSearchHandleInput (int key)
 {
   int i;
@@ -390,7 +410,7 @@ ProcSearchHandleInput (int key)
       else
         {
           proc_search_all_selected = false;
-          return;
+          goto return_;
         }
       break;
     }
@@ -406,6 +426,9 @@ ProcSearchHandleInput (int key)
         }
     }
   proc_time_passed = 2000;
+return_:
+  ProcRefresh ();
+  return true;
 }
 
 void
@@ -469,4 +492,94 @@ ProcMinSize (int *width_return, int *height_return)
   //                  \_____ Pid
   // Header, 2 rows of processes (1 for search)
   *height_return = 3;
+}
+
+bool
+ProcHandleInput (int key)
+{
+  switch (key)
+    {
+    case KEY_UP:
+    case 'k':
+      ProcCursorUp ();
+      break;
+    case KEY_DOWN:
+    case 'j':
+      ProcCursorDown ();
+      break;
+    case 'K':
+    case KEY_PPAGE:
+      ProcCursorPageUp ();
+      break;
+    case 'J':
+    case KEY_NPAGE:
+      ProcCursorPageDown ();
+      break;
+    case 'g':
+    case KEY_HOME:
+      ProcCursorTop ();
+      break;
+    case 'G':
+    case KEY_END:
+      ProcCursorBottom ();
+      break;
+    case 'p':
+      ProcSetSort (PROC_SORT_PID);
+      break;
+    case 'P':
+      ProcSetSort (PROC_SORT_INVPID);
+      break;
+    case 'c':
+      ProcSetSort (PROC_SORT_CPU);
+      break;
+    case 'm':
+      ProcSetSort (PROC_SORT_MEM);
+      break;
+    case 'f':
+      ProcToggleTree ();
+      break;
+    case '/':
+      ProcBeginSearch ();
+      break;
+    case 'n':
+      ProcSearchNext ();
+      break;
+    case 'N':
+      ProcSearchPrev ();
+      break;
+    default:
+      return false;
+    }
+  ProcRefresh ();
+  return true;
+}
+
+void
+ProcDrawBorder (WINDOW *win)
+{
+  const unsigned rows = (unsigned)getmaxy (win) - 3 - proc_search_active;
+  const unsigned rows_2 = rows / 2;
+  unsigned first, last;
+
+  if (proc_count <= rows)
+    {
+      first = 0;
+      last = proc_count - 1;
+    }
+  else if (proc_cursor < rows_2)
+    {
+      first = 0;
+      last = rows - 1;
+    }
+  else if (proc_cursor >= (proc_count - rows_2))
+    {
+      first = proc_count - rows;
+      last = proc_count - 1;
+    }
+  else
+    {
+      first = proc_cursor - rows_2;
+      last = proc_cursor + (rows - rows_2) - 1;
+    }
+  ProcDrawBorderImpl (win, first, last);
 }

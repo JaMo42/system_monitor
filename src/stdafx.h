@@ -44,4 +44,6 @@
 #define KEY_ESCAPE 27
 #define KEY_CTRL_A 1
 
+#include "ic.h"
+
 #endif /* !STDAFX_H */

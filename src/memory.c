@@ -3,6 +3,7 @@
 #include "canvas/canvas.h"
 
 Widget mem_widget = WIDGET("memory", Memory);
+IgnoreInput (Memory);
 
 static List *mem_main_usage;
 static List *mem_swap_usage;
@@ -33,7 +34,7 @@ MemoryInit (WINDOW *win, unsigned graph_scale)
   mem_samples = 0;
   MemoryGetTotal ();
   mem_graph_scale = graph_scale;
-  DrawWindow (win, "Memory");
+  MemoryDrawBorder (win);
   mem_canvas = CanvasCreate (win);
 }
 
@@ -129,7 +130,6 @@ void
 MemoryResize (WINDOW *win)
 {
   wclear (win);
-  DrawWindow (win, "Memory");
 
   CanvasResize (mem_canvas, win);
 
@@ -149,4 +149,10 @@ MemoryMinSize (int *width_return, int *height_return)
   //                 \____ Percentage
   // Main, Swap, and 1 row spacing above and below
   *height_return = 4;
+}
+
+void
+MemoryDrawBorder (WINDOW *win)
+{
+  DrawWindow (win, "Memory");
 }

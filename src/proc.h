@@ -13,6 +13,8 @@ void ProcUpdate ();
 void ProcDraw (WINDOW *win);
 void ProcResize (WINDOW *win);
 void ProcMinSize (int *width_return, int *height_return);
+bool ProcHandleInput (int key);
+void ProcDrawBorder (WINDOW *win);
 
 void ProcCursorUp ();
 void ProcCursorDown ();
@@ -25,9 +27,8 @@ void ProcToggleTree ();
 
 bool ProcSearching ();
 void ProcBeginSearch ();
-void ProcSearchHandleInput (int key);
+bool ProcSearchHandleInput (int key);
 void ProcSearchNext ();
 void ProcSearchPrev ();
 
 extern Widget proc_widget;
-

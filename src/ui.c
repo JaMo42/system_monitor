@@ -274,7 +274,10 @@ UIWidgetsResize (Layout *l)
   layout_for_each (l)
     {
       if (child->type == UI_WIDGET)
-        child->widget->Resize (child->widget->win);
+        {
+          child->widget->Resize (child->widget->win);
+          child->widget->DrawBorder (child->widget->win);
+        }
       else
         UIWidgetsResize (child);
     }
@@ -598,4 +601,20 @@ UIFromString (const char **source_ptr, Widget **widgets, int nwidgets)
   return self;
 #undef AddChild
 #undef Next
+}
+
+Widget **
+UICollectWidgets (Layout *l, Widget **widgets_out)
+{
+  layout_for_each (l)
+    {
+      if (child->type == UI_WIDGET)
+        {
+          child->widget->exists = true;
+          *widgets_out++ = child->widget;
+        }
+      else
+        widgets_out = UICollectWidgets (child, widgets_out);
+    }
+  return widgets_out;
 }

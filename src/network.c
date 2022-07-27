@@ -5,6 +5,7 @@
 extern struct timespec interval;
 
 Widget net_widget = WIDGET("network", Network);
+IgnoreInput (Network);
 
 List *net_recieve;
 List *net_transmit;
@@ -77,7 +78,7 @@ NetworkInit (WINDOW *win, unsigned graph_scale)
   net_recieve_max = 0;
   net_transmit_max = 0;
   net_graph_scale = graph_scale;
-  DrawWindow (win, "Network");
+  NetworkDrawBorder (win);
   net_canvas = CanvasCreate (win);
 }
 
@@ -218,7 +219,6 @@ void
 NetworkResize (WINDOW *win)
 {
   wclear (win);
-  DrawWindow (win, "Network");
 
   CanvasResize (net_canvas, win);
 
@@ -238,4 +238,10 @@ NetworkMinSize (int *width_return, int *height_return)
   //                 \____ Left padding
   // 2 lines for receiving and transmitting and 1 line above and below
   *height_return = 7;
+}
+
+void
+NetworkDrawBorder (WINDOW *win)
+{
+  DrawWindow (win, "Network");
 }

@@ -7,10 +7,14 @@
 #include "proc.h"
 #include "nc-help/help.h"
 
+#define widgets_for_each()                      \
+  for (Widget *const *it = widgets, *w = *it;   \
+       w != NULL;                               \
+       w = *++it)
+
 struct timespec interval = { .tv_sec = 0, .tv_nsec = 500000000L };
 static unsigned graph_scale = 8;
 static Layout *ui;
-static pthread_mutex_t draw_mutex;
 static const char *layout = NULL;
 
 static help_text_type help_text = {
@@ -31,6 +35,19 @@ static help_text_type help_text = {
 };
 static help_type help;
 
+// All available widgets
+static struct Widget *all_widgets[] = {
+  &cpu_widget,
+  &mem_widget,
+  &net_widget,
+  &proc_widget
+};
+// Widgets used in the layout (null-terminated)
+static struct Widget *widgets[countof (all_widgets) + 1];
+
+pthread_mutex_t draw_mutex;
+bool (*HandleInput) (int key);
+
 void CursesInit ();
 void CursesUpdate ();
 void CursesQuit ();
@@ -40,8 +57,10 @@ void InitWidgets ();
 void UpdateWidgets ();
 void DrawWidgets ();
 void TooSmall ();
+void DrawBorders ();
+void CheckDuplicates ();
 
-bool HandleInput (int key);
+bool MainHandleInput (int key);
 
 void ParseArgs (int, char *const *);
 
@@ -99,12 +118,6 @@ main (int argc, char *const *argv)
 {
   ParseArgs (argc, argv);
 
-  Widget *widgets[] = {
-    &cpu_widget,
-    &mem_widget,
-    &net_widget,
-    &proc_widget
-  };
   if ((layout == NULL
        && (layout = getenv ("SM_LAYOUT")) == NULL)
       || *layout == '\0')
@@ -114,8 +127,12 @@ main (int argc, char *const *argv)
       ui_strict_size = true;
       layout += 6;
     }
-  ui = UIFromString (&layout, widgets, countof (widgets));
+  ui = UIFromString (&layout, all_widgets, countof (all_widgets));
   UIGetMinSize (ui);
+  UICollectWidgets (ui, widgets);
+  CheckDuplicates ();
+
+  HandleInput = MainHandleInput;
 
   CursesInit ();
   UIConstruct (ui);
@@ -143,17 +160,7 @@ main (int argc, char *const *argv)
           CursesResize ();
           pthread_mutex_unlock (&draw_mutex);
         }
-      if (ProcSearching ())
-        ProcSearchHandleInput (ch);
-      else
-        running = HandleInput (ch);
-      if (!proc_widget.hidden)
-        {
-          pthread_mutex_lock (&draw_mutex);
-          ProcDraw (proc_widget.win);
-          wrefresh (proc_widget.win);
-          pthread_mutex_unlock (&draw_mutex);
-        }
+      running = HandleInput (ch);
     }
   pthread_join (update_thread, NULL);
   pthread_mutex_destroy (&draw_mutex);
@@ -163,69 +170,27 @@ main (int argc, char *const *argv)
 }
 
 bool
-HandleInput (int key)
+MainHandleInput (int key)
 {
   switch (key)
     {
-    case KEY_UP:
-    case 'k':
-      ProcCursorUp ();
-      break;
-    case KEY_DOWN:
-    case 'j':
-      ProcCursorDown ();
-      break;
-    case 'K':
-    case KEY_PPAGE:
-      ProcCursorPageUp ();
-      break;
-    case 'J':
-    case KEY_NPAGE:
-      ProcCursorPageDown ();
-      break;
-    case 'g':
-    case KEY_HOME:
-      ProcCursorTop ();
-      break;
-    case 'G':
-    case KEY_END:
-      ProcCursorBottom ();
-      break;
-    case 'p':
-      ProcSetSort (PROC_SORT_PID);
-      break;
-    case 'P':
-      ProcSetSort (PROC_SORT_INVPID);
-      break;
-    case 'c':
-      ProcSetSort (PROC_SORT_CPU);
-      break;
-    case 'm':
-      ProcSetSort (PROC_SORT_MEM);
-      break;
-    case 'f':
-      ProcToggleTree ();
-      break;
-    case '/':
-      ProcBeginSearch ();
-      break;
-    case 'n':
-      ProcSearchNext ();
-      break;
-    case 'N':
-      ProcSearchPrev ();
-      break;
     case 'q':
       return false;
+
     case '?':
       pthread_mutex_lock (&draw_mutex);
       HelpShow ();
-      DrawWindow (cpu_widget.win, "CPU");
-      DrawWindow (mem_widget.win, "Memory");
-      DrawWindow (net_widget.win, "Network");
+      DrawBorders ();
       CursesUpdate ();
       pthread_mutex_unlock (&draw_mutex);
       break;
+
+      default:
+        widgets_for_each ()
+          {
+            if (w->HandleInput (key))
+              break;
+          }
     }
   return true;
 }
@@ -252,14 +217,11 @@ void
 CursesUpdate ()
 {
   refresh ();
-#define DO_REFRESH(widget_) \
-  if (!widget_.hidden)      \
-    wrefresh (widget_.win)
-  DO_REFRESH (cpu_widget);
-  DO_REFRESH (mem_widget);
-  DO_REFRESH (net_widget);
-  DO_REFRESH (proc_widget);
-#undef DO_REFRESH
+  widgets_for_each ()
+    {
+      if (!w->hidden)
+        wrefresh (w->win);
+    }
 }
 
 void
@@ -279,32 +241,35 @@ CursesResize ()
 void
 InitWidgets ()
 {
-  cpu_widget.Init (cpu_widget.win, graph_scale);
-  mem_widget.Init (mem_widget.win, graph_scale);
-  net_widget.Init (net_widget.win, graph_scale);
-  proc_widget.Init (proc_widget.win, graph_scale);
+  widgets_for_each ()
+    w->Init (w->win, graph_scale);
 }
 
 void
 UpdateWidgets ()
 {
-  cpu_widget.Update ();
-  mem_widget.Update ();
-  net_widget.Update ();
-  proc_widget.Update ();
+  widgets_for_each ()
+    w->Update ();
 }
 
 void
 DrawWidgets ()
 {
-#define DO_DRAW(widget_)       \
-  if (!widget_.hidden)         \
-    widget_.Draw (widget_.win)
-  DO_DRAW (cpu_widget);
-  DO_DRAW (mem_widget);
-  DO_DRAW (net_widget);
-  DO_DRAW (proc_widget);
-#undef DO_DRAW
+  widgets_for_each ()
+    {
+      if (!w->hidden)
+        w->Draw (w->win);
+    }
+}
+
+void
+DrawBorders ()
+{
+  widgets_for_each ()
+    {
+      if (!w->hidden)
+        w->DrawBorder (w->win);
+    }
 }
 
 void
@@ -439,6 +404,25 @@ HelpShow ()
           DrawWindow (help.window, "Help");
           refresh ();
           help_refresh (&help);
+        }
+    }
+}
+
+void
+CheckDuplicates ()
+{
+  size_t count = 0, i, j;
+  widgets_for_each ()
+    ++count;
+  for (i = 0; i < count; ++i)
+    {
+      for (j = 0; j < count; ++j)
+        {
+          if (i != j && widgets[i] == widgets[j])
+            {
+              fprintf (stderr, "Duplicate widget: ‘%s’\n", widgets[i]->name);
+              exit (1);
+            }
         }
     }
 }

@@ -3,6 +3,7 @@
 #include "canvas/canvas.h"
 
 Widget cpu_widget = WIDGET("cpu", Cpu);
+IgnoreInput (Cpu);
 
 static List **cpu_usages;
 static unsigned cpu_max_samples;
@@ -30,7 +31,7 @@ CpuInit (WINDOW *win, unsigned graph_scale)
   cpu_last_work_jiffies = calloc (cpu_count + 1, sizeof (size_t));
   cpu_show_avg = cpu_show_avg || cpu_count > 8;
   cpu_graph_scale = graph_scale;
-  DrawWindow (win, "CPU");
+  CpuDrawBorder (win);
   cpu_canvas = CanvasCreate (win);
 }
 
@@ -231,7 +232,6 @@ void
 CpuResize (WINDOW *win)
 {
   wclear (win);
-  DrawWindow (win, "CPU");
 
   CanvasResize (cpu_canvas, win);
 
@@ -258,4 +258,10 @@ CpuMinSize (int *width_return, int *height_return)
   *width_return = LABELS + 5;
   // For 2 rows of CPU labels and 1 row spacing above and below
   *height_return = 6;
+}
+
+void
+CpuDrawBorder (WINDOW *win)
+{
+  DrawWindow (win, "CPU");
 }
