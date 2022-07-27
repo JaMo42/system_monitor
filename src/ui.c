@@ -413,7 +413,10 @@ UIResize (Layout *l, unsigned width, unsigned height)
 {
   Widget *show_only;
   if ((show_only = UIResizeWindows (l, width, height)) != NULL)
-    show_only->Resize (show_only->win);
+    {
+      show_only->Resize (show_only->win);
+      show_only->DrawBorder (show_only->win);
+    }
   else
     UIWidgetsResize (l);
 }
