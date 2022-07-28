@@ -286,17 +286,40 @@ DrawBorders ()
 void
 TooSmall ()
 {
-  static char too_small[] = "Window too small";
-  int ch;
+  struct wrapped_text
+  {
+    const char *text;
+    int width;
+    int height;
+  } wrapped_texts[] = {
+    { "Window too small", 16, 1 },
+    { "Window too\0small", 10, 2 },
+    { "Window\0too small", 9, 2 },
+    { "Window\0too\0small", 6, 3 },
+  };
+  int ch, i, j, len, base_y;
+  const char *line;
   bool running = true;
   while (running)
     {
       clear ();
-      move ((LINES - 1) / 2,
-            (COLS >= (int)sizeof (too_small)
-             ? ((COLS - (int)sizeof (too_small)) / 2)
-             : 0));
-      addstr (COLS >= (int)sizeof (too_small) ? too_small : "!");
+      for (i = 0; i < (int)countof (wrapped_texts); ++i)
+        {
+          struct wrapped_text *t = &wrapped_texts[i];
+          if (t->width <= COLS && t->height <= LINES)
+            {
+              base_y = (LINES - t->height) / 2;
+              line = t->text;
+              for (j = 0; j < t->height; ++j)
+                {
+                  len = strlen (line);
+                  move (base_y + j, (COLS - len) / 2);
+                  addnstr (line, len);
+                  line += len + 1;
+                }
+              break;
+            }
+        }
       refresh ();
       switch (ch = my_getch ())
         {
@@ -441,3 +464,4 @@ CheckDuplicates ()
         }
     }
 }
+
