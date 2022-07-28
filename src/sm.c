@@ -118,10 +118,21 @@ main (int argc, char *const *argv)
 {
   ParseArgs (argc, argv);
 
+  const bool show_current_layout = layout && strcmp (layout, "?") == 0;
+  if (show_current_layout)
+    layout = NULL;
+
   if ((layout == NULL
        && (layout = getenv ("SM_LAYOUT")) == NULL)
       || *layout == '\0')
     layout = "(rows 33% c[2] (cols (rows m[1] n[0]) p[3]))";
+
+  if (show_current_layout)
+    {
+      printf ("Current layout: ‘%s’\n", layout);
+      return 0;
+    }
+
   if (strncmp (layout, "strict", 6) == 0)
     {
       ui_strict_size = true;
@@ -313,7 +324,11 @@ Usage (FILE *stream)
   fputs ("  -s scale   Graph scale\n", stream);
   fputs ("  -c         Always show CPU graph in range 0~100%\n", stream);
   fputs ("  -f         ASCII art process tree\n", stream);
+  fputs ("  -l layout  Specifies the layout string\n", stream);
   fputs ("  -h         Show help message\n", stream);
+  fputc ('\n', stream);
+  fputs ("If the layout option for -l is '?' the current layout string (either\n", stream);
+  fputs ("the default or the SM_LAYOUT environment variable) gets printed.\n", stream);
 }
 
 void

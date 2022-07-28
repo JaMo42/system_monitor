@@ -22,6 +22,8 @@ make
 - `-l layout` specifies the [layout](#layout)
 - `-h` show help message
 
+If the layout option for `-l` is `?` the current layout string (either the default or the `SM_LAYOUT` environment variable) gets printed.
+
 ### Keybindings
 
 - `q`: Quit
