@@ -163,16 +163,12 @@ UIResizeWindowsC (Layout *l, unsigned x, unsigned y,
       if (left->min_width > left_width)
         {
           diff = left->min_width - left_width;
-          fprintf (stderr, "Resizing:  left: %d -> %d\n", left_width, left_width + diff);
-          fprintf (stderr, "          right: %d -> %d\n", right_width, right_width - diff);
           left_width += diff;
           right_width -= diff;
         }
       else
         {
           diff = right->min_width - right_width;
-          fprintf (stderr, "Resizing:  left: %d -> %d\n", left_width, left_width - diff);
-          fprintf (stderr, "          right: %d -> %d\n", right_width, right_width + diff);
           left_width -= diff;
           right_width += diff;
         }
@@ -231,16 +227,12 @@ UIResizeWindowsR (Layout *l, unsigned x, unsigned y,
       if (top->min_height > top_height)
         {
           diff = top->min_height - top_height;
-          fprintf (stderr, "Resizing:    top: %d -> %d\n", top_height, top_height + diff);
-          fprintf (stderr, "          bottom: %d -> %d\n", bottom_height, bottom_height - diff);
           top_height += diff;
           bottom_height -= diff;
         }
       else
         {
           diff = bottom->min_height - bottom_height;
-          fprintf (stderr, "Resizing:    top: %d -> %d\n", top_height, top_height - diff);
-          fprintf (stderr, "          bottom: %d -> %d\n", bottom_height, bottom_height + diff);
           top_height -= diff;
           bottom_height += diff;
         }
