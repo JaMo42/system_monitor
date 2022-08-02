@@ -1,7 +1,5 @@
 #include "layout_parser.h"
 #include "sm.h"
-#include "ic.h"
-#include <assert.h>
 
 #define C_ERROR "\x1b[1;91m"
 #define C_NOTE "\x1b[1;92m"
@@ -290,7 +288,6 @@ Tokenize ()
           while (source[end] && isdigit (source[end]))
             ++end;
           number = strtoll (source+pos, &end_ptr, 10);
-          assert (end_ptr == source+end);
           if (strchr (" \t\n\r\v\f()[]%", *end_ptr) == NULL)
             {
               pos = end;
@@ -586,4 +583,3 @@ ParseLayoutString (const char *source_, const char *source_name_)
 
   return layout;
 }
-
