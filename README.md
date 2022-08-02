@@ -44,6 +44,9 @@ If the layout option for `-l` is `?` the current layout string (either the defau
   - `/`: start search
   - `n`: select next search result
   - `N`: select previous search result
+- CPU graph
+  - `a`: toggle average CPU usage
+  - `C`: togle CPU graph range scaling
 
 These can be viewed while the application is running by pressing `?`.
 

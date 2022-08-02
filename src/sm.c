@@ -17,20 +17,24 @@ static Layout *ui;
 static const char *layout = NULL;
 
 static help_text_type help_text = {
-      {"k/↑", "Move cursor up"},
-      {"j/↓", "Move cursor down"},
-      {"K/PgUp", "Move cursor up multiple items"},
-      {"J/PgDn", "Move cursor down multiple items"},
-      {"g/Home", "Jump to top"},
-      {"G/End", "Jump to bottom"},
-      {"c", "Sort by CPU usage"},
-      {"m", "Sort by memort usage"},
-      {"p", "Sort by PID (ascending)"},
-      {"P", "Sort by PID (descending)"},
-      {"f", "Toggle ASCII art process tree"},
-      {"'/'", "Search processes"},
-      {"n", "Select next search result"},
-      {"N", "Select previous search result"},
+  HELP_LABEL ("Processes"),
+  {"k/↑", "Move cursor up"},
+  {"j/↓", "Move cursor down"},
+  {"K/PgUp", "Move cursor up multiple items"},
+  {"J/PgDn", "Move cursor down multiple items"},
+  {"g/Home", "Jump to top"},
+  {"G/End", "Jump to bottom"},
+  {"c", "Sort by CPU usage"},
+  {"m", "Sort by memort usage"},
+  {"p", "Sort by PID (ascending)"},
+  {"P", "Sort by PID (descending)"},
+  {"f", "Toggle ASCII art process tree"},
+  {"'/'", "Search processes"},
+  {"n", "Select next search result"},
+  {"N", "Select previous search result"},
+  HELP_LABEL ("CPU"),
+  {"C", "Toggle CPU graph range scaling"},
+  {"a", "Toggle average CPU usage"}
 };
 static help_type help;
 
@@ -447,4 +451,3 @@ HelpShow ()
         }
     }
 }
-

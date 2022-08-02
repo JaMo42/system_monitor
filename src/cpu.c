@@ -3,7 +3,6 @@
 #include "canvas/canvas.h"
 
 Widget cpu_widget = WIDGET("cpu", Cpu);
-IgnoreInput (Cpu);
 
 static List **cpu_usages;
 static unsigned cpu_max_samples;
@@ -247,6 +246,8 @@ CpuResize (WINDOW *win)
 void
 CpuMinSize (int *width_return, int *height_return)
 {
+  // This is only checked at startup and since showing the average CPU usage
+  // can be toggeled we cannot allow the widget to be smaller if it's enabled.
 #define LABELS 2+2*(4+1+3+3)
   //            \ \  \ \ \ \_ space between labels
   //             \ \  \ \ \__ percentage (2 digits)
@@ -264,4 +265,21 @@ void
 CpuDrawBorder (WINDOW *win)
 {
   DrawWindow (win, "CPU");
+}
+
+bool
+CpuHandleInput (int key)
+{
+  switch (key)
+    {
+    case 'C':
+      cpu_scale_height = !cpu_scale_height;
+      break;
+    case 'a':
+      cpu_show_avg = !cpu_show_avg;
+      break;
+    default:
+      return false;
+    }
+  return true;
 }
