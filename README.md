@@ -2,6 +2,8 @@
 
 A terminal based graphical system monitor, inspired by [gotop](https://github.com/cjbassi/gotop).
 
+![system_monitor](./screenshot.png)
+
 ## Building
 
 ```
