@@ -30,8 +30,8 @@ void     UIAddWidget (Layout *l, Widget *w, int priority);
 void     UIConstruct (Layout *l);
 void     UIResize (Layout *l, unsigned width, unsigned height);
 void     UIGetMinSize (Layout *l);
-Layout*  UIFromString (const char **source, Widget **widgets, int nwidgets);
 Widget** UICollectWidgets (Layout *l, Widget **widgets_out);
 
 extern bool ui_too_small;
 extern bool ui_strict_size;
+

@@ -59,8 +59,11 @@ build/proc.o: src/proc.c src/proc.h
 build/help.o: src/nc-help/help.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+build/layout_parser.o: src/layout_parser.c src/layout_parser.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
 sm: build/list.o build/sm.o build/util.o build/canvas.o build/ui.o build/cpu.o \
-	  build/memory.o build/network.o build/proc.o build/help.o
+	  build/memory.o build/network.o build/proc.o build/help.o build/layout_parser.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 vgclean:

@@ -6,11 +6,10 @@
 #include "network.h"
 #include "proc.h"
 #include "nc-help/help.h"
+#include "layout_parser.h"
 
-#define widgets_for_each()                      \
-  for (Widget *const *it = widgets, *w = *it;   \
-       w != NULL;                               \
-       w = *++it)
+#define widgets_for_each() \
+  for (Widget *const *it = widgets, *w = *it; w != NULL; w = *++it)
 
 struct timespec interval = { .tv_sec = 0, .tv_nsec = 500000000L };
 static unsigned graph_scale = 8;
@@ -36,14 +35,15 @@ static help_text_type help_text = {
 static help_type help;
 
 // All available widgets
-static struct Widget *all_widgets[] = {
+struct Widget *all_widgets[] = {
   &cpu_widget,
   &mem_widget,
   &net_widget,
-  &proc_widget
+  &proc_widget,
+  NULL
 };
-// Widgets used in the layout (null-terminated)
-static struct Widget *widgets[countof (all_widgets) + 1];
+// Widgets used in the layout
+static struct Widget *widgets[countof (all_widgets)];
 
 pthread_mutex_t draw_mutex;
 bool (*HandleInput) (int key);
@@ -58,7 +58,6 @@ void UpdateWidgets ();
 void DrawWidgets ();
 void TooSmall ();
 void DrawBorders ();
-void CheckDuplicates ();
 
 bool MainHandleInput (int key);
 
@@ -122,10 +121,19 @@ main (int argc, char *const *argv)
   if (show_current_layout)
     layout = NULL;
 
-  if ((layout == NULL
-       && (layout = getenv ("SM_LAYOUT")) == NULL)
-      || *layout == '\0')
-    layout = "(rows 33% c[2] (cols (rows m[1] n[0]) p[3]))";
+  const char *layout_source;
+  if (layout == NULL || *layout == '\0')
+    {
+      if ((layout = getenv ("SM_LAYOUT")) && *layout != '\0')
+        layout_source = "SM_LAYOUT";
+      else
+        {
+          layout = "(rows 33% c[2] (cols (rows m[1] n[0]) p[3]))";
+          layout_source = "<builtin layout>";
+        }
+    }
+  else
+    layout_source = "-l";
 
   if (show_current_layout)
     {
@@ -133,15 +141,9 @@ main (int argc, char *const *argv)
       return 0;
     }
 
-  if (strncmp (layout, "strict", 6) == 0)
-    {
-      ui_strict_size = true;
-      layout += 6;
-    }
-  ui = UIFromString (&layout, all_widgets, countof (all_widgets));
+  ui = ParseLayoutString (layout, layout_source);
   UIGetMinSize (ui);
   UICollectWidgets (ui, widgets);
-  CheckDuplicates ();
 
   HandleInput = MainHandleInput;
 
@@ -442,25 +444,6 @@ HelpShow ()
           DrawWindow (help.window, "Help");
           refresh ();
           help_refresh (&help);
-        }
-    }
-}
-
-void
-CheckDuplicates ()
-{
-  size_t count = 0, i, j;
-  widgets_for_each ()
-    ++count;
-  for (i = 0; i < count; ++i)
-    {
-      for (j = 0; j < count; ++j)
-        {
-          if (i != j && widgets[i] == widgets[j])
-            {
-              fprintf (stderr, "Duplicate widget: ‘%s’\n", widgets[i]->name);
-              exit (1);
-            }
         }
     }
 }
