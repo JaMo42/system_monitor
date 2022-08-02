@@ -100,4 +100,4 @@ If the window is too small to fit all widgets at their preferred relative size i
 
 If it still can't fit all of them it hides some based on their priority (lower priority means they get hidden first).
 
-If no fits it just displays `Window too small`.
+If no widget fits it just displays `Window too small`.
