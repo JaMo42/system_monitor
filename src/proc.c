@@ -165,10 +165,6 @@ ProcDraw (WINDOW *win)
   /* Processes */
   bool highlight;
   unsigned row = 2;
-  if (proc_search_show)
-    // We don't have strnstr on Linux so we need to null-terminate the needle
-    // for strstr.
-    proc_search_string[proc_search_size] = '\0';
   for (; first <= last; ++first, ++row)
     {
       highlight = proc_search_show && proc_search_matches[first];
