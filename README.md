@@ -75,7 +75,7 @@ Another example: `strict (cols 66% cpu[3] (rows 33% mem[1] (rows net[0] proc[2])
 ### Syntax
 
 ```
-layout-string: ["strict"] layout
+layout-string: ["strict"] (layout | widget-name)
 layout:        "(" shape [percent-fist] child child ")"
 shape:         rows | cols
 rows:          "rows" | "horizontal"

@@ -46,6 +46,13 @@ UICreateLayout (LayoutType type, float percent_first)
 void
 UIDeleteLayout (Layout *l)
 {
+  if (l->type == UI_WIDGET)
+    {
+      l->widget->Quit ();
+      delwin (l->widget->win);
+      free (l);
+      return;
+    }
   layout_for_each (l)
     {
       if (child->type == UI_WIDGET)
@@ -256,8 +263,13 @@ UIResizeWindowsR (Layout *l, unsigned x, unsigned y,
 void
 UIConstruct (Layout *l)
 {
-  UICreateWindows (l);
-  UIResizeWindows (l, COLS, LINES);
+  if (l->type == UI_WIDGET)
+    l->widget->win = newwin (LINES, COLS, 0, 0);
+  else
+    {
+      UICreateWindows (l);
+      UIResizeWindows (l, COLS, LINES);
+    }
 }
 
 static void
@@ -376,6 +388,16 @@ static inline Widget *
 UIResizeWindows (Layout *l, unsigned width, unsigned height)
 {
   Layout *show = NULL;
+  if (l->type == UI_WIDGET)
+    {
+      ui_too_small = (int)width < l->min_width || (int)height < l->min_height;
+      if (!ui_too_small)
+        {
+          wresize (l->widget->win, height, width);
+          mvwin (l->widget->win, 0, 0);
+        }
+      return l->widget;
+    }
   if (!((l->type == UI_ROWS ? UICheckSizeR : UICheckSizeC) (l, width, height)))
     {
       UIBestFit (l, &show, width, height);
@@ -416,6 +438,8 @@ UIResize (Layout *l, unsigned width, unsigned height)
 void
 UIGetMinSize (Layout *self)
 {
+  if (self->type == UI_WIDGET)
+    return;
   layout_for_each (self)
     {
       if (child->type != UI_WIDGET)
@@ -443,6 +467,11 @@ UIGetMinSize (Layout *self)
 Widget **
 UICollectWidgets (Layout *l, Widget **widgets_out)
 {
+  if (l->type == UI_WIDGET)
+    {
+      *widgets_out++ = l->widget;
+      return widgets_out;
+    }
   layout_for_each (l)
     {
       if (child->type == UI_WIDGET)

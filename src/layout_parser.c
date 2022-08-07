@@ -548,7 +548,6 @@ ParseLayoutString (const char *source_, const char *source_name_)
   source_name = source_name_;
   Tokenize ();
 
-  int line_num_width;
   Token *tok = Peek ("‘strict’ or ‘(’");
   Layout *layout = NULL;
   if (tok->kind == TOK_STRICT)
@@ -561,23 +560,28 @@ ParseLayoutString (const char *source_, const char *source_name_)
     {
       layout = ParseLayout ();
     }
+  else if (tok->kind == TOK_WIDGET_NAME)
+    {
+      layout = UICreateLayout (UI_WIDGET, 1.0);
+      layout->widget = ParseWidget ();
+      layout->widget->MinSize (&layout->min_width, &layout->min_height);
+      layout->min_height += 2;
+      layout->min_width += 2;
+      layout->priority = 0;
+    }
   else
     {
       Error (tok->kind == TOK_END
              ? "unexpected end of layout string"
              : "unexpected token");
-      line_num_width = ErrorShowSource (tok->begin, tok->length,
-                                        "expected toplevel layout");
-      Note (line_num_width, true, "the layout string should look like "
-                                  "‘(...)’ or ‘strict (...)’");
+      ErrorShowSource (tok->begin, tok->length,
+                       "expected toplevel layout");
       exit (1);
     }
   if (tokens->kind != TOK_END)
     {
       Error ("unexpected token after toplevel layout");
-      line_num_width = ErrorShowSource (tokens->begin, tokens->length, "");
-      Note (line_num_width, true, "the layout string should look like "
-                                  "‘(...)’ or ‘strict (...)’");
+      ErrorShowSource (tokens->begin, tokens->length, "");
       exit (1);
     }
 
