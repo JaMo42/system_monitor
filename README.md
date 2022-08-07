@@ -72,6 +72,8 @@ If neither is specified the default is `(rows 33% c[2] (cols (rows m[1] n[0]) p[
 
 Another example: `strict (cols 66% cpu[3] (rows 33% mem[1] (rows net[0] proc[2])))`.
 
+Can also be a single widget: `cpu`.
+
 ### Syntax
 
 ```
