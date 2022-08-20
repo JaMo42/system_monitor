@@ -24,24 +24,32 @@
 
 #include "list.h"
 
-#define sm_clamp(x, low, high) (((x) < (low)) ? (low) : (((x) > (high)) ? (high) : (x)))
+#include "ic.h"
+
+#define Max(a, b) ({         \
+  typeof (a) my_a = a;       \
+  typeof (b) my_b = b;       \
+  my_a > my_b ? my_a : my_b; \
+})
+
+#define Min(a, b) ({         \
+  typeof (a) my_a = a;       \
+  typeof (b) my_b = b;       \
+  my_a < my_b ? my_a : my_b; \
+})
+
+#define Clamp(x, low, high) Max ((low), Min ((x), (high)))
+
+#define InRange(x, begin, end) (((x) >= (begin)) && ((x) < (end)))
 
 #ifdef __GNUC__
-#define likely(x) __builtin_expect((x), 1)
-#define unlikely(x) __builtin_expect((x), 0)
+#define likely(x) __builtin_expect((x), true)
+#define unlikely(x) __builtin_expect((x), false)
 #else
 #define likely(x) (x)
 #define unlikely(x) (x)
 #endif
 
 #define countof(arr) (sizeof (arr) / sizeof (*(arr)))
-
-#undef KEY_BACKSPACE
-#define KEY_BACKSPACE 127
-#define KEY_CTRL_BACKSPACE 8
-#undef KEY_ENTER
-#define KEY_ENTER '\n'
-#define KEY_ESCAPE 27
-#define KEY_CTRL_A 1
 
 #endif /* !STDAFX_H */

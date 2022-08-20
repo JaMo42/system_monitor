@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "sm.h"
 #include "util.h"
 #include "ui.h"
 #include "cpu.h"
@@ -7,6 +8,7 @@
 #include "proc.h"
 #include "nc-help/help.h"
 #include "layout_parser.h"
+#include "input.h"
 
 #define widgets_for_each() \
   for (Widget *const *it = widgets, *w = *it; w != NULL; w = *++it)
@@ -68,37 +70,6 @@ bool MainHandleInput (int key);
 void ParseArgs (int, char *const *);
 
 void HelpShow ();
-
-static int
-my_getch ()
-{
-  int ch;
-  ch = getch ();
-  if (ch == 27)
-    {
-      nodelay (stdscr, true);
-      if (getch () == ERR)
-        {
-          nodelay (stdscr, false);
-          return 27;
-        }
-      nodelay (stdscr, false);
-      ch = getch ();
-      switch (ch)
-        {
-          case 'A': return KEY_UP;
-          case 'B': return KEY_DOWN;
-          case 'C': return KEY_RIGHT;
-          case 'D': return KEY_LEFT;
-          case 'F': return KEY_END;
-          case 'H': return KEY_HOME;
-          case '5': (void)getch (); return KEY_PPAGE;
-          case '6': (void)getch (); return KEY_NPAGE;
-        }
-      return 0;
-    }
-  return ch;
-}
 
 static void *
 UpdateThread (void *arg)
@@ -164,19 +135,9 @@ main (int argc, char *const *argv)
   pthread_create (&update_thread, NULL, UpdateThread, &running);
   while (running)
     {
-      ch = my_getch ();
+      ch = GetChar ();
       if (ch == KEY_RESIZE)
-        {
-          pthread_mutex_lock (&draw_mutex);
-          UIResize (ui, COLS, LINES);
-          if (ui_too_small)
-            {
-              TooSmall ();
-              UpdateWidgets ();
-            }
-          CursesResize ();
-          pthread_mutex_unlock (&draw_mutex);
-        }
+        HandleResize ();
       running = HandleInput (ch);
     }
   pthread_join (update_thread, NULL);
@@ -184,6 +145,20 @@ main (int argc, char *const *argv)
   help_free (&help);
   UIDeleteLayout (ui);
   CursesQuit ();
+}
+
+void
+HandleResize ()
+{
+    pthread_mutex_lock (&draw_mutex);
+    UIResize (ui, COLS, LINES);
+    if (ui_too_small)
+      {
+        TooSmall ();
+        UpdateWidgets ();
+      }
+    CursesResize ();
+    pthread_mutex_unlock (&draw_mutex);
 }
 
 bool
@@ -217,7 +192,7 @@ CursesInit ()
 {
   setlocale (LC_ALL, "");
   initscr ();
-  curs_set (0);
+  curs_set (false);
   noecho ();
   cbreak ();
   nodelay (stdscr, FALSE);
@@ -327,7 +302,7 @@ TooSmall ()
             }
         }
       refresh ();
-      switch (ch = my_getch ())
+      switch (ch = GetChar ())
         {
         case 'q':
           ungetch ('q');
@@ -411,13 +386,13 @@ HelpShow ()
 
   if (!help_can_scroll (&help))
     {
-      my_getch ();
+      GetChar ();
       return;
     }
 
   while (running)
     {
-      switch (ch = my_getch ())
+      switch (ch = GetChar ())
         {
         case 'j':
         case KEY_UP:

@@ -52,18 +52,6 @@ If the layout option for `-l` is `?` the current layout string (either the defau
 
 These can be viewed while the application is running by pressing `?`.
 
-### Searching
-
-During search the text can be modified using these keybindings:
-
-- `Backspace`: Delete one character
-- `Ctrl`+`Backspace`: Delete all characters until the first non-alphanumeric character
-- `Ctrl`+`A`: Select everything, after this pressing `Backspace` deletes everything
-   and entering a character deletes everything before adding that character.
-   Pressing any special key that doesn't have a function cancels the selection.
-- `Enter`: Finish search
-- `Escape`: Cancel search
-
 ## Layout
 
 A custom layout can be specified via the `SM_LAYOUT` environment variable or the `-l` argument (overrides environment variable).

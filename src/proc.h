@@ -25,9 +25,7 @@ void ProcCursorBottom ();
 void ProcSetSort (const char *mode);
 void ProcToggleTree ();
 
-bool ProcSearching ();
 void ProcBeginSearch ();
-bool ProcSearchHandleInput (int key);
 void ProcSearchNext ();
 void ProcSearchPrev ();
 

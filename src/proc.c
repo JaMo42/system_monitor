@@ -1,6 +1,7 @@
 #include "proc.h"
 #include "util.h"
 #include "sm.h"
+#include "input.h"
 
 #define PROC_MAX_COUNT 512
 
@@ -26,9 +27,8 @@ static unsigned proc_page_move_amount;
 static bool proc_ps_tree = false;
 
 static bool proc_search_active;
-static char proc_search_string[PROC_COMMAND_STORAGE_SIZE + 1];
-static int proc_search_size;
-static bool proc_search_all_selected;
+static History *proc_search_history;
+static Input_String *proc_search_string;
 static bool proc_search_show;
 static bool proc_search_matches[PROC_MAX_COUNT];
 static bool proc_search_single_match;
@@ -47,12 +47,15 @@ ProcInit (WINDOW *win, unsigned graph_scale) {
   ProcUpdateProcesses ();
   proc_cursor_pid = proc_processes[0].pid;
   proc_page_move_amount = (getmaxy (win) - 3) / 2;
+  proc_search_history = NewHistory ();
+  proc_search_string = NULL;
 }
 
 void
 ProcQuit ()
 {
   pthread_mutex_destroy (&proc_data_mutex);
+  DeleteHistory (proc_search_history);
 }
 
 static void
@@ -193,21 +196,8 @@ ProcDraw (WINDOW *win)
         wattroff (win, COLOR_PAIR (C_PROC_PROCESSES));
     }
 
-  /* Search */
   if (proc_search_active)
-    {
-      wmove (win, row, 1);
-      PrintN (win, ' ', getmaxx (win) - 2);
-      wmove (win, row, 1);
-      wattron (win, A_BOLD);
-      waddstr (win, "Search: ");
-      wattroff (win, A_BOLD);
-      if (proc_search_all_selected)
-        wattron (win, A_REVERSE);
-      waddnstr (win, proc_search_string, proc_search_size);
-      if (proc_search_all_selected)
-        wattroff (win, A_REVERSE);
-    }
+    GetLineDraw ();
 
   pthread_mutex_unlock (&proc_data_mutex);
 }
@@ -282,59 +272,6 @@ ProcToggleTree ()
   proc_time_passed = 2000;
 }
 
-bool
-ProcSearching ()
-{
-  return proc_search_active;
-}
-
-void
-ProcBeginSearch ()
-{
-  proc_search_active = true;
-  proc_search_size = 0;
-  proc_search_all_selected = false;
-  curs_set (1);
-  HandleInput = ProcSearchHandleInput;
-}
-
-static void
-ProcSearchUpdateMatches ()
-{
-  size_t i;
-  unsigned count = 0;
-  proc_first_match = -1;
-  if (proc_search_size == 0 || !proc_search_show)
-    {
-      proc_search_show = false;
-      return;
-    }
-  // We don't have strnstr on Linux so we need to null-terminate the needle
-  // for strstr.
-  proc_search_string[proc_search_size] = '\0';
-  for (i = 0; i < proc_count; ++i)
-    {
-      proc_search_matches[i] = strstr (proc_processes[i].cmd, proc_search_string) != NULL;
-      if (proc_search_matches[i])
-        {
-          ++count;
-          if (proc_first_match == -1)
-            proc_first_match = i;
-        }
-    }
-  proc_search_single_match = count == 1;
-  proc_search_show = count > 0;
-}
-
-static void
-ProcSearchCommit ()
-{
-  proc_search_active = false;
-  ProcSearchUpdateMatches ();
-  HandleInput = MainHandleInput;
-  curs_set (0);
-}
-
 static inline void
 ProcRefresh ()
 {
@@ -347,86 +284,72 @@ ProcRefresh ()
     }
 }
 
-bool
-ProcSearchHandleInput (int key)
+static void
+ProcSearchUpdateMatches ()
 {
-  int i;
-  const int size_before = proc_search_size;
-  switch (key)
+  size_t i;
+  unsigned count = 0;
+  proc_first_match = -1;
+  if (StrEmpty (proc_search_string) || !proc_search_show)
     {
-    case KEY_BACKSPACE:
-      if (proc_search_all_selected)
-        {
-          proc_search_size = 0;
-          proc_search_all_selected = false;
-        }
-      else if (proc_search_size)
-        --proc_search_size;
-      break;
-
-    case KEY_CTRL_BACKSPACE:
-      if (proc_search_all_selected)
-        {
-          proc_search_size = 0;
-          proc_search_all_selected = false;
-        }
-      else if (proc_search_size)
-        {
-          for (i = proc_search_size - 1; i >= 0; --i)
-            {
-              if (!isalnum (proc_search_string[i]))
-                break;
-            }
-          proc_search_size = i + 1;
-        }
-      break;
-
-    case KEY_CTRL_A:
-      proc_search_all_selected = true;
-      break;
-
-    case KEY_ENTER:
-      ProcSearchCommit ();
-      break;
-
-    case KEY_ESCAPE:
-      proc_search_size = 0;
-      ProcSearchCommit ();
-      break;
-
-    default:
-      if (isprint (key))
-        {
-          if (proc_search_all_selected)
-            {
-              proc_search_size = 0;
-              proc_search_all_selected = false;
-            }
-          if (proc_search_size < PROC_COMMAND_STORAGE_SIZE)
-            proc_search_string[proc_search_size++] = key;
-        }
-      else
-        {
-          proc_search_all_selected = false;
-          goto return_;
-        }
-      break;
+      proc_search_show = false;
+      return;
     }
-
-  proc_search_show = proc_search_size > 0;
-  if (proc_search_size != size_before)
+  for (i = 0; i < proc_count; ++i)
     {
-      ProcSearchUpdateMatches ();
-      if (proc_search_show)
+      proc_search_matches[i] = (strstr (proc_processes[i].cmd,
+                                        proc_search_string->data)
+                                != NULL);
+      if (proc_search_matches[i])
         {
-          proc_cursor = proc_first_match;
-          proc_cursor_pid = proc_processes[proc_cursor].pid;
+          ++count;
+          if (proc_first_match == -1)
+            proc_first_match = i;
         }
+    }
+  proc_search_single_match = count == 1;
+  if ((proc_search_show = count > 0))
+    {
+      proc_cursor = proc_first_match;
+      proc_cursor_pid = proc_processes[proc_cursor].pid;
+    }
+}
+
+static void
+ProcSearchUpdate (Input_String *s, bool did_change)
+{
+  if (did_change)
+    {
+      proc_search_string = s;
+      ProcSearchUpdateMatches ();
     }
   proc_time_passed = 2000;
-return_:
   ProcRefresh ();
-  return true;
+}
+
+static void
+ProcSearchFinish (Input_String *s)
+{
+  proc_search_active = false;
+  proc_search_string = s;
+  ProcSearchUpdateMatches ();
+  proc_time_passed = 2000;
+  ProcRefresh ();
+}
+
+void
+ProcBeginSearch ()
+{
+  proc_search_active = true;
+  WINDOW *win = proc_widget.win;
+  const int x = 9;  // '|Search: '
+  const int y = getmaxy (win) - 2;
+  GetLineBegin (win, x, y, true, getmaxx (win) - x - 2,
+                proc_search_history, ProcSearchUpdate, ProcSearchFinish);
+  wmove (win, y, 1);
+  wattron (win, A_BOLD);
+  waddstr (win, "Search: ");
+  wattroff (win, A_BOLD);
 }
 
 void
