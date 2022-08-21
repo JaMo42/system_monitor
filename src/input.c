@@ -162,7 +162,9 @@ HistoryNewer ()
   else
     {
       S.history_selected = S.history_selected->newer;
-      memcpy (&S.history->history_value,&S.history_selected->value, sizeof (Input_String));
+      memcpy (&S.history->history_value,
+              &S.history_selected->value,
+              sizeof (Input_String));
       return &S.history->history_value;
     }
 }
@@ -177,7 +179,9 @@ HistoryOlder ()
   else if (S.history_selected == NULL)
     {
       S.history_selected = S.history->most_recent;
-      memcpy (&S.history->history_value, &S.history_selected->value, sizeof (Input_String));
+      memcpy (&S.history->history_value,
+              &S.history_selected->value,
+              sizeof (Input_String));
       return &S.history->history_value;
     }
   else if (S.history_selected->older == NULL)
@@ -185,7 +189,9 @@ HistoryOlder ()
   else
     {
       S.history_selected = S.history_selected->older;
-      memcpy (&S.history->history_value, &S.history_selected->value, sizeof (Input_String));
+      memcpy (&S.history->history_value,
+              &S.history_selected->value,
+              sizeof (Input_String));
       return &S.history->history_value;
     }
 }

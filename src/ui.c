@@ -264,7 +264,10 @@ void
 UIConstruct (Layout *l)
 {
   if (l->type == UI_WIDGET)
-    l->widget->win = newwin (LINES, COLS, 0, 0);
+    {
+      l->widget->win = stdscr;
+      l->widget->hidden = false;
+    }
   else
     {
       UICreateWindows (l);
@@ -469,6 +472,7 @@ UICollectWidgets (Layout *l, Widget **widgets_out)
 {
   if (l->type == UI_WIDGET)
     {
+      l->widget->exists = true;
       *widgets_out++ = l->widget;
       return widgets_out;
     }
