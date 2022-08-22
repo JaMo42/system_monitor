@@ -451,179 +451,179 @@ GetLineHandleInput (int key)
   int a, b;
   switch (key)
     {
-      case KEY_ENTER:
-        GetLineFinish ();
-        return true;
+    case KEY_ENTER:
+      GetLineFinish ();
+      return true;
 
-      case KEY_ESCAPE:
-        StrClear (S.input);
-        GetLineFinish ();
-        return true;
+    case KEY_ESCAPE:
+      StrClear (S.input);
+      GetLineFinish ();
+      return true;
 
-      case KEY_BACKSPACE:
-        if (S.selection_active)
-          {
-            DeleteSelection ();
-            text_changed = true;
-          }
-        else if (S.cursor == S.input->length)
-          {
-            text_changed = S.input->length > 0;
-            StrPop (S.input);
-            MoveCursor (-1);
-          }
-        else if (S.cursor > 0)
-          {
-            StrErase (S.input, S.cursor - 1, S.cursor);
-            text_changed = true;
-            MoveCursor (-1);
-          }
-        break;
+    case KEY_BACKSPACE:
+      if (S.selection_active)
+        {
+          DeleteSelection ();
+          text_changed = true;
+        }
+      else if (S.cursor == S.input->length)
+        {
+          text_changed = S.input->length > 0;
+          StrPop (S.input);
+          MoveCursor (-1);
+        }
+      else if (S.cursor > 0)
+        {
+          StrErase (S.input, S.cursor - 1, S.cursor);
+          text_changed = true;
+          MoveCursor (-1);
+        }
+      break;
 
-      case KEY_DC:
-        if (S.selection_active)
-          {
-            DeleteSelection ();
-            text_changed = true;
-          }
-        else if (S.cursor + 1 == S.input->length)
-          {
-            StrPop (S.input);
-            AdjustView ();
-            text_changed = true;
-          }
-        else if (S.cursor < S.input->length)
-          {
-            StrErase (S.input, S.cursor, S.cursor+1);
-            AdjustView ();
-            text_changed = true;
-          }
-        break;
+    case KEY_DC:
+      if (S.selection_active)
+        {
+          DeleteSelection ();
+          text_changed = true;
+        }
+      else if (S.cursor + 1 == S.input->length)
+        {
+          StrPop (S.input);
+          AdjustView ();
+          text_changed = true;
+        }
+      else if (S.cursor < S.input->length)
+        {
+          StrErase (S.input, S.cursor, S.cursor+1);
+          AdjustView ();
+          text_changed = true;
+        }
+      break;
 
-      case KEY_CTRL_BACKSPACE:
-        if (S.selection_active)
-          {
-            DeleteSelection ();
-            text_changed = true;
-          }
-        else if (S.cursor > 0)
-          {
-            a = JumpLeft ();
-            StrErase (S.input, a, S.cursor);
-            SetCursor (a);
-            text_changed = true;
-          }
-        break;
+    case KEY_CTRL_BACKSPACE:
+      if (S.selection_active)
+        {
+          DeleteSelection ();
+          text_changed = true;
+        }
+      else if (S.cursor > 0)
+        {
+          a = JumpLeft ();
+          StrErase (S.input, a, S.cursor);
+          SetCursor (a);
+          text_changed = true;
+        }
+      break;
 
-      case KEY_CTRL_DC:
-        if (S.selection_active)
-          {
-            DeleteSelection ();
-            text_changed = true;
-          }
-        else if (S.cursor < S.input->length)
-          {
-            StrErase (S.input, S.cursor, JumpRight ());
-            text_changed = true;
-          }
-        break;
+    case KEY_CTRL_DC:
+      if (S.selection_active)
+        {
+          DeleteSelection ();
+          text_changed = true;
+        }
+      else if (S.cursor < S.input->length)
+        {
+          StrErase (S.input, S.cursor, JumpRight ());
+          text_changed = true;
+        }
+      break;
 
-      case KEY_LEFT:
-        MoveCursor (-1);
-        break;
+    case KEY_LEFT:
+      MoveCursor (-1);
+      break;
 
-      case KEY_RIGHT:
-        MoveCursor (1);
-        break;
+    case KEY_RIGHT:
+      MoveCursor (1);
+      break;
 
-      case KEY_CTRL_LEFT:
-        SetCursor (JumpLeft ());
-        break;
+    case KEY_CTRL_LEFT:
+      SetCursor (JumpLeft ());
+      break;
 
-      case KEY_CTRL_RIGHT:
-        SetCursor (JumpRight ());
-        break;
+    case KEY_CTRL_RIGHT:
+      SetCursor (JumpRight ());
+      break;
 
-      case KEY_HOME:
-        SetCursor (0);
-        break;
+    case KEY_HOME:
+      SetCursor (0);
+      break;
 
-      case KEY_END:
-        SetCursor (S.input->length);
-        break;
+    case KEY_END:
+      SetCursor (S.input->length);
+      break;
 
-      case KEY_SHIFT_LEFT:
-      case KEY_SHIFT_RIGHT:
-        if (!S.selection_active)
-          {
-            S.selection_active = true;
-            S.selection_start = S.cursor;
-          }
-        MoveCursor (key == KEY_SHIFT_LEFT ? -1 : 1);
-        keep_selection = S.selection_start != S.cursor;
-        break;
+    case KEY_SHIFT_LEFT:
+    case KEY_SHIFT_RIGHT:
+      if (!S.selection_active)
+        {
+          S.selection_active = true;
+          S.selection_start = S.cursor;
+        }
+      MoveCursor (key == KEY_SHIFT_LEFT ? -1 : 1);
+      keep_selection = S.selection_start != S.cursor;
+      break;
 
-      case KEY_SHIFT_HOME:
-      case KEY_SHIFT_END:
-        if (!S.selection_active)
-          {
-            S.selection_active = true;
-            S.selection_start = S.cursor;
-          }
-        SetCursor (key == KEY_SHIFT_HOME ? 0 : S.input->length);
-        keep_selection = S.selection_active != S.cursor;
-        break;
+    case KEY_SHIFT_HOME:
+    case KEY_SHIFT_END:
+      if (!S.selection_active)
+        {
+          S.selection_active = true;
+          S.selection_start = S.cursor;
+        }
+      SetCursor (key == KEY_SHIFT_HOME ? 0 : S.input->length);
+      keep_selection = S.selection_active != S.cursor;
+      break;
 
-      case KEY_CTRL ('a'):
-        if (S.input->length != 0)
-          {
-            S.selection_active = true;
-            S.selection_start = S.input->length;
-            S.cursor_before = S.cursor;
-            S.cursor = 0;
-            keep_selection = true;
-          }
-        break;
+    case KEY_CTRL ('a'):
+      if (S.input->length != 0)
+        {
+          S.selection_active = true;
+          S.selection_start = S.input->length;
+          S.cursor_before = S.cursor;
+          S.cursor = 0;
+          keep_selection = true;
+        }
+      break;
 
-      case KEY_UP:
-      case KEY_DOWN:
-        S.input = key == KEY_UP ? HistoryOlder () : HistoryNewer ();
-        keep_selection = false;
-        SetCursor (S.input->length);
-        text_changed = true;
-        break;
+    case KEY_UP:
+    case KEY_DOWN:
+      S.input = key == KEY_UP ? HistoryOlder () : HistoryNewer ();
+      keep_selection = false;
+      SetCursor (S.input->length);
+      text_changed = true;
+      break;
 
-      case KEY_RESIZE:
-        a = getmaxx (S.window) - S.window_width;
-        S.width += a;
-        S.window_width += a;
-        if (S.move_y_on_resize)
-          {
-            b = getmaxy (S.window) - S.window_height;
-            S.y += b;
-            S.window_height += b;
-          }
-        break;
+    case KEY_RESIZE:
+      a = getmaxx (S.window) - S.window_width;
+      S.width += a;
+      S.window_width += a;
+      if (S.move_y_on_resize)
+        {
+          b = getmaxy (S.window) - S.window_height;
+          S.y += b;
+          S.window_height += b;
+        }
+      break;
 
-      default:
-        if (key && ((key < 0x80 && isprint (key)) || key < 0x100))
-          {
-            if (S.selection_active)
-              {
-                a = SELECTION_BEGIN ();
-                b = SELECTION_END ();
-                StrReplace (S.input, a, b, key);
-                SetCursor (a + 1);
-              }
-            else
-              {
-                StrInsert (S.input, S.cursor, key);
-                MoveCursor (1);
-              }
-            text_changed = true;
-          }
-        else
-          did_change =  false;
+    default:
+      if (key && ((key < 0x80 && isprint (key)) || key < 0x100))
+        {
+          if (S.selection_active)
+            {
+              a = SELECTION_BEGIN ();
+              b = SELECTION_END ();
+              StrReplace (S.input, a, b, key);
+              SetCursor (a + 1);
+            }
+          else
+            {
+              StrInsert (S.input, S.cursor, key);
+              MoveCursor (1);
+            }
+          text_changed = true;
+        }
+      else
+        did_change =  false;
     }
   S.selection_active = keep_selection;
   if (did_change)
