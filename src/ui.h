@@ -23,15 +23,34 @@ typedef struct Layout
     };
 } Layout;
 
-Layout*  UICreateLayout (LayoutType type, float percent_first);
-void     UIDeleteLayout (Layout *l);
-void     UIAddLayout (Layout *l, Layout *l2);
-void     UIAddWidget (Layout *l, Widget *w, int priority);
-void     UIConstruct (Layout *l);
-void     UIResize (Layout *l, unsigned width, unsigned height);
-void     UIGetMinSize (Layout *l);
-Widget** UICollectWidgets (Layout *l, Widget **widgets_out);
 
+/** whether there are no widgtes that fit the current screen size. */
 extern bool ui_too_small;
+
+/** whether the relative size may be adjusted to fir both children. */
 extern bool ui_strict_size;
 
+
+/** creates a new node. */
+Layout* UICreateLayout (LayoutType type, float percent_first);
+
+/** deletes the layout tree, quitting and deleting all its widgets. */
+void UIDeleteLayout (Layout *self);
+
+/** pushes a layout child to the given node. */
+void UIAddLayout (Layout *self, Layout *l2);
+
+/** pushes a widget child to the given node. */
+void UIAddWidget (Layout *self, Widget *w, int priority);
+
+/** creates the windows for the widgets in the given layout. */
+void UIConstruct (Layout *self);
+
+/** resizes or hides the widgets in the given layout. */
+void UIResize (Layout *self, unsigned width, unsigned height);
+
+/** sets the appropriate minimum size and priority for non-widget nodes. */
+void UIGetMinSize (Layout *self);
+
+/** gets all widgets present in the given layout and marks them as existent. */
+void UICollectWidgets (const Layout *self, Widget **widgets_out);
