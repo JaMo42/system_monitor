@@ -24,8 +24,6 @@
 
 #include "list.h"
 
-#include "ic.h"
-
 #define Max(a, b) ({         \
   typeof (a) my_a = a;       \
   typeof (b) my_b = b;       \
