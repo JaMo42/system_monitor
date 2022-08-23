@@ -338,13 +338,13 @@ UIBestFit (Layout *self, Layout **best_return, int width, int height)
 }
 
 static inline Widget *
-UIResizeWindows (Layout *l, unsigned width, unsigned height)
+UIResizeWindows (Layout *l, int width, int height)
 {
   Layout *show = NULL;
   if (l->type == UI_WIDGET)
     {
       /* single-widget layout */
-      ui_too_small = (int)width < l->min_width || (int)height < l->min_height;
+      ui_too_small = width < l->min_width || height < l->min_height;
       if (!ui_too_small)
         {
           wresize (l->widget->win, height, width);
@@ -380,7 +380,7 @@ UIConstruct (Layout *self)
 {
   if (self->type == UI_WIDGET)
     {
-      self->widget->win = stdscr;
+      self->widget->win = newwin (LINES, COLS, 0, 0);
       self->widget->hidden = false;
     }
   else
@@ -403,8 +403,11 @@ UIResize (Layout *self, unsigned width, unsigned height)
     }
   else
     UIForEachWidget (self, NULL, UI_VISITOR (w, _) (
-      w->widget->Resize (w->widget->win);
-      w->widget->DrawBorder (w->widget->win);
+      if (!w->widget->hidden)
+        {
+          w->widget->Resize (w->widget->win);
+          w->widget->DrawBorder (w->widget->win);
+        }
     ));
 }
 
