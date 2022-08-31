@@ -2,8 +2,8 @@
 #include "util.h"
 #include "canvas/canvas.h"
 
-Widget mem_widget = WIDGET("memory", Memory);
 IgnoreInput (Memory);
+Widget mem_widget = WIDGET("memory", Memory);
 
 static List *mem_main_usage;
 static List *mem_swap_usage;

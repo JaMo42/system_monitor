@@ -27,6 +27,16 @@ CanvasCreate (WINDOW *win)
   return c;
 }
 
+Canvas *
+CanvasCreateSized (size_t width, size_t height)
+{
+  Canvas *c = (Canvas *)malloc (sizeof (Canvas));
+  c->chars = NULL;
+  c->colors = NULL;
+  CanvasResizeTo (c, width, height);
+  return c;
+}
+
 void
 CanvasDelete (Canvas *c)
 {
@@ -38,7 +48,6 @@ CanvasDelete (Canvas *c)
 void
 CanvasClear (Canvas *c)
 {
-  //memset (c->chars, 0, c->width * c->height);
   for (size_t i = 0; i < c->width * c->height; ++i)
     {
       c->chars[i] = 0;
@@ -49,8 +58,12 @@ CanvasClear (Canvas *c)
 void
 CanvasResize (Canvas *c, WINDOW *win)
 {
-  const unsigned width = getmaxx (win) - 2;
-  const unsigned height = getmaxy (win) - 2;
+  CanvasResizeTo (c, getmaxx (win) - 2, getmaxy (win) - 2);
+}
+
+void
+CanvasResizeTo (Canvas *c, size_t width, size_t height)
+{
   /* No need to preserve old content. */
   free (c->chars);
   free (c->colors);
@@ -80,18 +93,31 @@ CanvasSet (Canvas *c, double x_, double y_, short color)
 void
 CanvasDraw (const Canvas *c, WINDOW *win)
 {
+  CanvasDrawAt (c, win, 1, 1);
+}
+
+void
+CanvasDrawAt (const Canvas *c, WINDOW *win, int x0, int y0)
+{
   size_t row_off;
   wchar_t ch[] = { 0, 0 };
+  uint8_t b;
 
   for (size_t y = 0; y < c->height; ++y)
     {
       row_off = y * c->width;
-      wmove (win, y + 1, 1);
+      wmove (win, y0 + y, x0);
       for (size_t x = 0; x < c->width; ++x)
         {
-          ch[0] = braille_char_offset + c->chars[row_off + x];
+          b = c->chars[row_off + x];
           wattron (win, COLOR_PAIR (c->colors[row_off + x]));
-          waddnwstr (win, ch, 1);
+          if (b || 1)
+            {
+              ch[0] = braille_char_offset + c->chars[row_off + x];
+              waddnwstr (win, ch, 1);
+            }
+          else
+            waddch (win, ' ');
           wattroff (win, COLOR_PAIR (c->colors[row_off + x]));
         }
     }

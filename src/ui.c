@@ -1,5 +1,6 @@
 #include "ui.h"
 #include "util.h"
+#include "sm.h"
 
 #define layout_for_each(l)                    \
   for (Layout **it = (l)->elems,              \
@@ -99,8 +100,9 @@ UIAddWidget (Layout *l, Widget *w, int priority)
   new->widget = w;
   w->MinSize (&new->min_width, &new->min_height);
   // Window borders
-  new->min_height += 2;
   new->min_width += 2;
+  new->min_height += 2;
+
   new->priority = priority;
 
   l->elems[l->elems[0] != NULL] = new;
@@ -161,10 +163,23 @@ static inline struct UI_Get_Size_Return {
   const Layout *const second = self->elems[1];
   const int first_min = height ? first->min_height : first->min_width;
   const int second_min = height ? second->min_height : second->min_width;
+  bool first_fixed = first->type == UI_WIDGET && first->widget->fixed_size;
+  bool second_fixed = second->type == UI_WIDGET && second->widget->fixed_size;
   int first_size = (float)total * percent_first;
   int second_size = total - first_size;
   int diff;
   const Layout *choice;
+
+  if (first_fixed && second_fixed)
+    {
+      /* we don't want gaps so only one of two adjacent nodes can have a
+         fixed size. */
+      if (first->priority > second->priority)
+        second_fixed = false;
+      else
+        first_fixed = false;
+    }
+
   if (first_size >= first_min && second_size >= second_min)
     ;
   else if (!ui_strict_size && first_min + second_min <= total)
@@ -198,6 +213,18 @@ static inline struct UI_Get_Size_Return {
           second_size = total;
         }
     }
+
+  if (first_fixed && first_min + second_min <= total)
+    {
+      first_size = first_min;
+      second_size = total - first_min;
+    }
+  else if (second_fixed && second_min + first_min <= total)
+    {
+      first_size = total - second_min;
+      second_size = second_min;
+    }
+
   return (struct UI_Get_Size_Return) {
     .first=first_size,
     .second=second_size
@@ -419,7 +446,11 @@ UIGetMinSize (Layout *self)
   layout_for_each (self)
     {
       if (child->type != UI_WIDGET)
-        UIGetMinSize (child);
+        {
+          child->min_width = 0;
+          child->min_height = 0;
+          UIGetMinSize (child);
+        }
       else
         {
           if (child->priority > self->priority)
@@ -441,11 +472,37 @@ UIGetMinSize (Layout *self)
 }
 
 void
+UIUpdateSizeInfo (Layout *self)
+{
+  bool changed = false;
+  UIForEachWidget (self, &changed, UI_VISITOR (w, changed) (
+    const int width = w->min_width, height = w->min_height;
+    const int fixed = w->type == UI_WIDGET ? w->widget->fixed_size : FIXED_SIZE_NO;
+    Layout *mut = (Layout *)w;
+
+    w->widget->MinSize (&mut->min_width, &mut->min_height);
+    mut->min_width += 2;
+    mut->min_height += 2;
+    if (w->type == UI_WIDGET && w->widget->fixed_size == FIXED_SIZE_SET)
+      w->widget->fixed_size = FIXED_SIZE_YES;
+
+    if (w->min_width != width || w->min_height != height
+        || fixed != (w->type == UI_WIDGET ? w->widget->fixed_size : FIXED_SIZE_NO))
+      *(bool *)changed = true;
+  ));
+
+  if (changed)
+    {
+      UIGetMinSize (self);
+      HandleResize ();
+    }
+}
+
+void
 UICollectWidgets (const Layout *self, Widget **widgets_out)
 {
   UIForEachWidget (self, &widgets_out, UI_VISITOR (w, data) (
-    Widget ***widgets_out = data;
     w->widget->exists = true;
-    *(*widgets_out)++ = w->widget;
+    *(*(Widget ***)data)++ = w->widget;
   ));
 }

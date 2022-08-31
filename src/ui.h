@@ -49,8 +49,12 @@ void UIConstruct (Layout *self);
 /** resizes or hides the widgets in the given layout. */
 void UIResize (Layout *self, unsigned width, unsigned height);
 
+// TODO: rename
 /** sets the appropriate minimum size and priority for non-widget nodes. */
 void UIGetMinSize (Layout *self);
+
+/** refreshes all widget size information and triggers a resize */
+void UIUpdateSizeInfo (Layout *self);
 
 /** gets all widgets present in the given layout and marks them as existent. */
 void UICollectWidgets (const Layout *self, Widget **widgets_out);

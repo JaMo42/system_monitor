@@ -1,10 +1,18 @@
 #pragma once
 #include "stdafx.h"
 
+enum
+{
+  FIXED_SIZE_NO = false,
+  FIXED_SIZE_YES = true,
+  FIXED_SIZE_SET = false + true + 1
+};
+
 typedef struct Widget
 {
   const char *const name;
   WINDOW *win;
+  int fixed_size;
   bool hidden;
   bool exists;
   void (*Init) (WINDOW *win, unsigned graph_scale);
@@ -23,6 +31,7 @@ typedef struct Widget
     .win = NULL,                       \
     .hidden = false,                   \
     .exists = false,                   \
+    .fixed_size = FIXED_SIZE_NO,       \
     .Init = name_##Init,               \
     .Quit = name_##Quit,               \
     .Update = name_##Update,           \
@@ -39,3 +48,9 @@ typedef struct Widget
     (void)key;                      \
     return false;                   \
   }
+
+static inline void
+WidgetFixedSize (Widget *widget, bool yay_or_nay)
+{
+  widget->fixed_size = yay_or_nay ? FIXED_SIZE_SET : FIXED_SIZE_NO;
+}

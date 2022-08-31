@@ -8,7 +8,6 @@ void MemoryUpdate ();
 void MemoryDraw (WINDOW *win);
 void MemoryResize (WINDOW *win);
 void MemoryMinSize (int *width_return, int *height_return);
-bool MemoryHandleInput (int key);
 void MemoryDrawBorder (WINDOW *win);
 
 extern Widget mem_widget;

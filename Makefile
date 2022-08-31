@@ -65,9 +65,12 @@ build/layout_parser.o: src/layout_parser.c src/layout_parser.h
 build/input.o: src/input.c src/input.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+build/disk.o: src/disk.c src/disk.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
 sm: build/list.o build/sm.o build/util.o build/canvas.o build/ui.o build/cpu.o \
-	  build/memory.o build/network.o build/proc.o build/help.o build/layout_parser.o \
-		build/input.o
+		build/memory.o build/network.o build/proc.o build/help.o build/layout_parser.o \
+		build/input.o build/disk.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 vgclean:

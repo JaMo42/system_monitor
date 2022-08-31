@@ -6,6 +6,7 @@
 #include "memory.h"
 #include "network.h"
 #include "proc.h"
+#include "disk.h"
 #include "nc-help/help.h"
 #include "layout_parser.h"
 #include "input.h"
@@ -15,8 +16,8 @@
 
 struct timespec interval = { .tv_sec = 0, .tv_nsec = 500000000L };
 static unsigned graph_scale = 8;
-static Layout *ui;
 static const char *layout = NULL;
+Layout *ui;
 
 static help_text_type help_text = {
   HELP_LABEL ("Processes"),
@@ -46,6 +47,7 @@ struct Widget *all_widgets[] = {
   &mem_widget,
   &net_widget,
   &proc_widget,
+  &disk_widget,
   NULL
 };
 // Widgets used in the layout
@@ -125,6 +127,7 @@ main (int argc, char *const *argv)
   CursesInit ();
   UIConstruct (ui);
   InitWidgets ();
+  UIUpdateSizeInfo (ui);
   CursesUpdate ();
   help_init (&help, help_text);
 
@@ -150,15 +153,15 @@ main (int argc, char *const *argv)
 void
 HandleResize ()
 {
-    pthread_mutex_lock (&draw_mutex);
-    UIResize (ui, COLS, LINES);
-    if (ui_too_small)
-      {
-        TooSmall ();
-        UpdateWidgets ();
-      }
-    CursesResize ();
-    pthread_mutex_unlock (&draw_mutex);
+  pthread_mutex_lock (&draw_mutex);
+  UIResize (ui, COLS, LINES);
+  if (ui_too_small)
+    {
+      TooSmall ();
+      UpdateWidgets ();
+    }
+  CursesResize ();
+  pthread_mutex_unlock (&draw_mutex);
 }
 
 bool

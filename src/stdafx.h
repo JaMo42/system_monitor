@@ -11,6 +11,7 @@
 #include <locale.h>
 #include <time.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 #include <sys/types.h>
 #include <sys/sysinfo.h>
@@ -19,10 +20,18 @@
 #include <signal.h>
 #include <ifaddrs.h>
 #include <pthread.h>
+#include <sys/statvfs.h>
 
 #include <ncurses.h>
 
 #include "list.h"
+
+#define PI 3.1415926
+
+#define KB 1024.0f
+#define MB (KB*KB)
+#define GB (MB*KB)
+#define TB (GB*KB)
 
 #define Max(a, b) ({         \
   typeof (a) my_a = a;       \

@@ -1,6 +1,9 @@
 #pragma once
 #include "stdafx.h"
 #include "widget.h"
+#include "ui.h"
+
+extern Layout *ui;
 
 extern struct Widget *all_widgets[];
 

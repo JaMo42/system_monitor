@@ -4,8 +4,8 @@
 
 extern struct timespec interval;
 
-Widget net_widget = WIDGET("network", Network);
 IgnoreInput (Network);
+Widget net_widget = WIDGET("network", Network);
 
 List *net_recieve;
 List *net_transmit;

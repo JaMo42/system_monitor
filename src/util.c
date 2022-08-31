@@ -12,6 +12,9 @@ const short C_PROC_HEADER = 16;
 const short C_PROC_PROCESSES = 8;
 const short C_PROC_CURSOR = 254;
 const short C_PROC_HIGHLIGHT = 253;
+const short C_DISK_FREE = 248;
+const short C_DISK_USED = 77;
+const short C_DISK_ERROR = 2;
 
 void
 DrawWindow (WINDOW *w, const char *title)
@@ -65,49 +68,40 @@ DrawWindowInfo2 (WINDOW *w, const char *info)
   wattroff (w, COLOR_PAIR (C_TITLE));
 }
 
-static const char *units[] = {" B", "KB", "MB", "GB", "TB", "PB"};
+Size_Format
+GetSizeFormat (size_t size)
+{
+  static const char *units[] = {"B", "KB", "MB", "GB", "TB", "PB", "EB"};
+  int order = 0;
+  double s = size;
+  while (s >= KB && order < (int)countof (units))
+    {
+      ++order;
+      s /= KB;
+    }
+  return (Size_Format) { .unit=units[order], .size=s };
+}
 
 void
 FormatSize (WINDOW *win, size_t size, bool pad)
 {
-  int order = 0;
-  double s = size;
-  while (s >= 1000.0 && order < 5)
-    {
-      ++order;
-      s /= 1000.0;
-    }
-  wprintw (win, pad ? "% 6.1lf" : "%.1lf", s);
-  waddstr (win, units[order]);
+  Size_Format format = GetSizeFormat (size);
+  wprintw (win, pad ? "% 6.1lf" : "%.1lf", format.size);
+  wprintw (win, "%2s", format.unit);
 }
 
 void
 PrintN (WINDOW *win, int ch, unsigned n)
 {
-  while (--n)
+  while (n--)
     waddch (win, ch);
 }
 
-void
-Strip (const char **s)
+char *
+StringPush (char *buf, const char *s)
 {
-  while (isspace (**s))
-    ++(*s);
-}
-
-int
-TokenCount (const char *string, const char *delims)
-{
-  int count = 1, depth = 1;
-  while (*string && depth)
-    {
-      if (isspace (*string) && !isspace (string[1]) && depth == 1)
-        ++count;
-      else if (*string == delims[0])
-        ++depth;
-      else if (*string == delims[1])
-        --depth;
-      ++string;
-    }
-  return count;
+  while (*s)
+    *buf++ = *s++;
+  *buf = '\0';
+  return buf;
 }

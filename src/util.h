@@ -17,6 +17,14 @@ extern const short C_PROC_HEADER;
 extern const short C_PROC_PROCESSES;
 extern const short C_PROC_CURSOR;
 extern const short C_PROC_HIGHLIGHT;
+extern const short C_DISK_FREE;
+extern const short C_DISK_USED;
+extern const short C_DISK_ERROR;
+
+typedef struct {
+  const char *unit;
+  double size;
+} Size_Format;
 
 /* Draw a window border and title:
    +-< title >-----+
@@ -36,11 +44,10 @@ void DrawWindowInfo (WINDOW *w, const char *info);
    +------< info >-+ */
 void DrawWindowInfo2 (WINDOW *w, const char *info);
 
+Size_Format GetSizeFormat (size_t size);
+
 void FormatSize (WINDOW *win, size_t size, bool pad);
 
 void PrintN (WINDOW *win, int ch, unsigned n);
 
-/* Removes leading whitespace. */
-void Strip (const char **s);
-
-int TokenCount (const char *string, const char *delims);
+char* StringPush (char *buf, const char *s);

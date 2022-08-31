@@ -52,6 +52,16 @@ If the layout option for `-l` is `?` the current layout string (either the defau
 
 These can be viewed while the application is running by pressing `?`.
 
+## Configuration
+
+There currently is no config file, only environment variables.
+
+- `SM_LAYOUT`: the layout string
+
+- `SM_DISK_FS`: disk filesystems string; comma-separated list of mounting points
+
+- `SM_DISK_VERTICAL`: if set, the disk usage widget is displayed vertically
+
 ## Layout
 
 A custom layout can be specified via the `SM_LAYOUT` environment variable or the `-l` argument (overrides environment variable).
@@ -73,7 +83,7 @@ cols:          "cols" | "columns" | "vertical"
 percent-first: <number> "%"
 child:         widget | layout
 widget:        widget-name "[" priority "]"
-widget-name:   "cpu" | "memory" | "network" | "processes"
+widget-name:   "cpu" | "memory" | "network" | "processes" | "disk_usage"
 priority:      <number>
 ```
 
