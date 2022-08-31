@@ -308,7 +308,7 @@ ProcSearchUpdateMatches ()
         }
     }
   proc_search_single_match = count == 1;
-  if ((proc_search_show = count > 0))
+  if ((proc_search_show = count > 0) && proc_search_active)
     {
       proc_cursor = proc_first_match;
       proc_cursor_pid = proc_processes[proc_cursor].pid;
@@ -330,9 +330,9 @@ ProcSearchUpdate (Input_String *s, bool did_change)
 static void
 ProcSearchFinish (Input_String *s)
 {
+  ProcSearchUpdateMatches ();
   proc_search_active = false;
   proc_search_string = s;
-  ProcSearchUpdateMatches ();
   proc_time_passed = 2000;
   ProcRefresh ();
 }
