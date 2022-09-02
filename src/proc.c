@@ -25,6 +25,8 @@ static pid_t proc_cursor_pid;
 static pthread_mutex_t proc_data_mutex;
 static unsigned proc_page_move_amount;
 static bool proc_ps_tree = false;
+static unsigned proc_view_begin;
+static unsigned proc_view_size;
 
 static bool proc_search_active;
 static History *proc_search_history;
@@ -37,6 +39,29 @@ static int proc_first_match;
 static void ProcUpdateProcesses ();
 static void ProcSearchUpdateMatches ();
 
+static void
+ProcSetCursor (unsigned cursor)
+{
+  if (cursor < proc_cursor && cursor < proc_view_begin + 1)
+    proc_view_begin = cursor ? cursor - 1 : 0;
+  else if (cursor > proc_cursor)
+    {
+      if (cursor > proc_view_begin + proc_view_size - 2)
+        proc_view_begin
+          = cursor - proc_view_size + 1 + (cursor != proc_count - 1);
+    }
+  proc_cursor = cursor;
+  proc_cursor_pid = proc_processes[cursor].pid;
+}
+
+static inline void
+ProcSetViewSize (unsigned size)
+{
+  proc_view_size = size;
+  proc_page_move_amount = size / 2;
+  ProcSetCursor (proc_cursor);
+}
+
 void
 ProcInit (WINDOW *win, unsigned graph_scale) {
   (void)graph_scale;
@@ -46,9 +71,10 @@ ProcInit (WINDOW *win, unsigned graph_scale) {
   proc_cursor_pid = -1;
   ProcUpdateProcesses ();
   proc_cursor_pid = proc_processes[0].pid;
-  proc_page_move_amount = (getmaxy (win) - 3) / 2;
   proc_search_history = NewHistory ();
   proc_search_string = NULL;
+  proc_view_begin = 0;
+  ProcSetViewSize (getmaxy (win) - 3);
 }
 
 void
@@ -87,7 +113,8 @@ ProcUpdateProcesses ()
       proc_processes[proc_count].cpu = cpu;
       proc_processes[proc_count].mem = mem;
       if (pid == proc_cursor_pid)
-        proc_cursor = proc_count;
+        //proc_cursor = proc_count;
+        ProcSetCursor (proc_count);
 
       ++proc_count;
       if (proc_count == PROC_MAX_COUNT)
@@ -95,8 +122,11 @@ ProcUpdateProcesses ()
     }
   pclose (ps);
 
-  if (proc_cursor == proc_count)
-    --proc_cursor;
+  if (proc_count < proc_view_size)
+    ProcSetViewSize (proc_count);
+
+  if (proc_cursor >= proc_count)
+    ProcSetCursor (proc_count - 1);
 
   proc_search_show = true;
   ProcSearchUpdateMatches ();
@@ -119,7 +149,7 @@ ProcDrawBorderImpl (WINDOW *win, unsigned first, unsigned last)
 {
   char info[32];
   DrawWindow (win, "Processes");
-  snprintf (info, 32, "%d - %d of %zu", first, last, proc_count);
+  snprintf (info, 32, "%u - %u of %zu", first+1, last+1, proc_count);
   DrawWindowInfo (win, info);
   DrawWindowInfo2 (win, "Press ? for help");
 }
@@ -128,31 +158,9 @@ void
 ProcDraw (WINDOW *win)
 {
   pthread_mutex_lock (&proc_data_mutex);
-  const unsigned rows = (unsigned)getmaxy (win) - 3 - proc_search_active;
-  const unsigned rows_2 = rows / 2;
   const unsigned cpu_mem_off = getmaxx (win) - 13;
-  unsigned first, last;
-
-  if (proc_count <= rows)
-    {
-      first = 0;
-      last = proc_count - 1;
-    }
-  else if (proc_cursor < rows_2)
-    {
-      first = 0;
-      last = rows - 1;
-    }
-  else if (proc_cursor >= (proc_count - rows_2))
-    {
-      first = proc_count - rows;
-      last = proc_count - 1;
-    }
-  else
-    {
-      first = proc_cursor - rows_2;
-      last = proc_cursor + (rows - rows_2) - 1;
-    }
+  const unsigned first = proc_view_begin;
+  const unsigned last = proc_view_begin + proc_view_size - 1;
 
   /* Window */
   ProcDrawBorderImpl (win, first, last);
@@ -168,10 +176,10 @@ ProcDraw (WINDOW *win)
   /* Processes */
   bool highlight;
   unsigned row = 2;
-  for (; first <= last; ++first, ++row)
+  for (unsigned i = first; i <= last; ++i, ++row)
     {
-      highlight = proc_search_show && proc_search_matches[first];
-      if (unlikely (first == proc_cursor))
+      highlight = proc_search_show && proc_search_matches[i];
+      if (unlikely (i == proc_cursor))
         wattron (win, COLOR_PAIR (C_PROC_CURSOR));
       else if (highlight)
         wattron (win, COLOR_PAIR (C_PROC_HIGHLIGHT) | A_DIM);
@@ -182,13 +190,13 @@ ProcDraw (WINDOW *win)
       PrintN (win, ' ', getmaxx (win) - 2);
       wmove (win, row, 2);
       wprintw (win, "%-7d  %.*s",
-               proc_processes[first].pid,
-               cpu_mem_off - 10, proc_processes[first].cmd);
+               proc_processes[i].pid,
+               cpu_mem_off - 10, proc_processes[i].cmd);
       wmove (win, row, cpu_mem_off);
       wprintw (win, "%5.1f %5.1f",
-               proc_processes[first].cpu, proc_processes[first].mem);
+               proc_processes[i].cpu, proc_processes[i].mem);
       /*====*/
-      if (unlikely (first == proc_cursor))
+      if (unlikely (i == proc_cursor))
         wattroff (win, COLOR_PAIR (C_PROC_CURSOR));
       else if (highlight)
         wattroff (win, COLOR_PAIR (C_PROC_HIGHLIGHT) | A_DIM);
@@ -205,57 +213,51 @@ ProcDraw (WINDOW *win)
 void
 ProcResize (WINDOW *win) {
   wclear (win);
-  proc_page_move_amount = (getmaxy (win) - 3) / 2;
+  ProcSetViewSize (getmaxy (win) - 3 - proc_search_active);
 }
 
 void
 ProcCursorUp ()
 {
   if (proc_cursor)
-    --proc_cursor;
-  proc_cursor_pid = proc_processes[proc_cursor].pid;
+    ProcSetCursor (proc_cursor - 1);
 }
 
 void
 ProcCursorDown ()
 {
   if ((proc_cursor + 1) < proc_count)
-    ++proc_cursor;
-  proc_cursor_pid = proc_processes[proc_cursor].pid;
+    ProcSetCursor (proc_cursor + 1);
 }
 
 void
 ProcCursorPageUp ()
 {
   if (proc_cursor >= proc_page_move_amount)
-    proc_cursor -= proc_page_move_amount;
+    ProcSetCursor (proc_cursor - proc_page_move_amount);
   else
-    proc_cursor = 0;
-  proc_cursor_pid = proc_processes[proc_cursor].pid;
+    ProcSetCursor (0);
 }
 
 void
 ProcCursorPageDown ()
 {
   if ((proc_cursor + proc_page_move_amount) < proc_count)
-    proc_cursor += proc_page_move_amount;
+    ProcSetCursor (proc_cursor + proc_page_move_amount);
   else
-    proc_cursor = proc_count - 1;
-  proc_cursor_pid = proc_processes[proc_cursor].pid;
+    ProcSetCursor (proc_count - 1);
 }
 
 void
 ProcCursorTop ()
 {
-  proc_cursor = 0;
-  proc_cursor_pid = proc_processes[0].pid;
+  ProcSetCursor (0);
 }
 
 void
 ProcCursorBottom ()
 {
-  proc_cursor = proc_count - 1;
-  proc_cursor_pid = proc_processes[proc_cursor].pid;
+  ProcSetCursor (proc_count - 1);
 }
 
 void
@@ -309,10 +311,7 @@ ProcSearchUpdateMatches ()
     }
   proc_search_single_match = count == 1;
   if ((proc_search_show = count > 0) && proc_search_active)
-    {
-      proc_cursor = proc_first_match;
-      proc_cursor_pid = proc_processes[proc_cursor].pid;
-    }
+    ProcSetCursor (proc_first_match);
 }
 
 static void
@@ -330,6 +329,7 @@ ProcSearchUpdate (Input_String *s, bool did_change)
 static void
 ProcSearchFinish (Input_String *s)
 {
+  ProcSetViewSize (proc_view_size + 1);
   ProcSearchUpdateMatches ();
   proc_search_active = false;
   proc_search_string = s;
@@ -341,6 +341,7 @@ void
 ProcBeginSearch ()
 {
   proc_search_active = true;
+  ProcSetViewSize (proc_view_size - 1);
   WINDOW *win = proc_widget.win;
   const int x = 9;  // '|Search: '
   const int y = getmaxy (win) - 2;
@@ -356,50 +357,50 @@ void
 ProcSearchNext ()
 {
   const unsigned stop = proc_cursor;
+  unsigned cursor = proc_cursor;
   if (!proc_search_show)
     return;
   else if (proc_search_single_match)
     {
-      proc_cursor = proc_first_match;
-      proc_cursor_pid = proc_processes[proc_cursor].pid;
+      ProcSetCursor (proc_first_match);
       return;
     }
-  ++proc_cursor;
-  if (proc_cursor == proc_count)
-    proc_cursor = 0;
-  while (!proc_search_matches[proc_cursor] && proc_cursor != stop)
+  ++cursor;
+  if (cursor == proc_count)
+    cursor = 0;
+  while (!proc_search_matches[cursor] && cursor != stop)
     {
-      ++proc_cursor;
-      if (proc_cursor == proc_count)
-        proc_cursor = 0;
+      ++cursor;
+      if (cursor == proc_count)
+        cursor = 0;
     }
-  proc_cursor_pid = proc_processes[proc_cursor].pid;
+  ProcSetCursor (cursor);
 }
 
 void
 ProcSearchPrev ()
 {
   const unsigned stop = proc_cursor;
+  unsigned cursor = proc_cursor;
   if (!proc_search_show)
     return;
   else if (proc_search_single_match)
     {
-      proc_cursor = proc_first_match;
-      proc_cursor_pid = proc_processes[proc_cursor].pid;
+      ProcSetCursor (proc_first_match);
       return;
     }
-  if (proc_cursor)
-    --proc_cursor;
+  if (cursor)
+    --cursor;
   else
-    proc_cursor = proc_count - 1;
-  while (!proc_search_matches[proc_cursor] && proc_cursor != stop)
+    cursor = proc_count - 1;
+  while (!proc_search_matches[cursor] && cursor != stop)
     {
-      if (proc_cursor)
-        --proc_cursor;
+      if (cursor)
+        --cursor;
       else
-        proc_cursor = proc_count - 1;
+        cursor = proc_count - 1;
     }
-  proc_cursor_pid = proc_processes[proc_cursor].pid;
+  ProcSetCursor (cursor);
 }
 
 void
@@ -478,29 +479,7 @@ ProcHandleInput (int key)
 void
 ProcDrawBorder (WINDOW *win)
 {
-  const unsigned rows = (unsigned)getmaxy (win) - 3 - proc_search_active;
-  const unsigned rows_2 = rows / 2;
-  unsigned first, last;
-
-  if (proc_count <= rows)
-    {
-      first = 0;
-      last = proc_count - 1;
-    }
-  else if (proc_cursor < rows_2)
-    {
-      first = 0;
-      last = rows - 1;
-    }
-  else if (proc_cursor >= (proc_count - rows_2))
-    {
-      first = proc_count - rows;
-      last = proc_count - 1;
-    }
-  else
-    {
-      first = proc_cursor - rows_2;
-      last = proc_cursor + (rows - rows_2) - 1;
-    }
+  const unsigned first = proc_view_begin;
+  const unsigned last = proc_view_begin + proc_view_size - 1;
   ProcDrawBorderImpl (win, first, last);
 }
