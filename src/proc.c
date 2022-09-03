@@ -96,6 +96,7 @@ ProcUpdateProcesses ()
   int cpu_i, mem_i;
   char cpu_d, mem_d;
   double cpu, mem;
+  const int cursor_position_in_view = proc_cursor - proc_view_begin;
 
   proc_count = 0;
 
@@ -121,6 +122,8 @@ ProcUpdateProcesses ()
         break;
     }
   pclose (ps);
+
+  proc_view_begin = proc_cursor - cursor_position_in_view;
 
   if (proc_count < proc_view_size)
     ProcSetViewSize (proc_count);
