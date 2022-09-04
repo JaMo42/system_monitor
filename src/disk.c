@@ -154,10 +154,10 @@ void
 DiskDrawFSInfo (WINDOW *win, Disk_FS_Info *fs_info, int x, int y)
 {
   static char print_buf[/*disk_width+1*/15];
-  const double used_percent = (fs_info->used | fs_info->avail)
-    ? ((double)fs_info->used
-       / (double)(fs_info->used + fs_info->avail))
-    : 0.0;
+  const double used_percent = ((fs_info->used | fs_info->avail)
+                               ? ((double)fs_info->used
+                                  / (double)(fs_info->used + fs_info->avail))
+                               : 0.0);
   const double outer_radius = disk_radius;
   const double inner_radius = outer_radius * 0.7;
   const double cx = outer_radius;
@@ -245,7 +245,7 @@ DiskResize (WINDOW *win)
 
   if (space < min_padding)
     {
-      disk_padding = 1;
+      disk_padding = min_padding;
       content += min_padding * (disk_filesystems->count - 1);
       disk_margin = (total - content) / 2;
     }
