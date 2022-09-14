@@ -1,3 +1,6 @@
 [submodule "src/nc-help"]
 	path = src/nc-help
 	url = https://github.com/JaMo42/nc-help
+[submodule "src/c-vector"]
+	path = src/c-vector
+	url = https://github.com/JaMo42/c-vector

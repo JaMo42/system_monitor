@@ -12,6 +12,8 @@ const short C_PROC_HEADER = 16;
 const short C_PROC_PROCESSES = 8;
 const short C_PROC_CURSOR = 254;
 const short C_PROC_HIGHLIGHT = 253;
+const short C_PROC_HIGH_PERCENT = 2;
+const short C_PROC_BRANCHES = 243;
 const short C_DISK_FREE = 248;
 const short C_DISK_USED = 77;
 const short C_DISK_ERROR = 2;
@@ -104,4 +106,22 @@ StringPush (char *buf, const char *s)
     *buf++ = *s++;
   *buf = '\0';
   return buf;
+}
+
+static int push_syle_backup;
+
+void
+PushStyle (WINDOW *win, attr_t attributes, short color)
+{
+  attr_t attr;
+  short current_color;
+  wattr_get (win, &attr, &current_color, NULL);
+  push_syle_backup = attr | COLOR_PAIR (current_color);
+  wattrset (win, attributes | COLOR_PAIR (color));
+}
+
+void
+PopStyle (WINDOW *win)
+{
+  wattrset (win, push_syle_backup);
 }

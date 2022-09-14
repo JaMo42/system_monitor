@@ -2,44 +2,64 @@
 #include "util.h"
 #include "sm.h"
 #include "input.h"
+#include "ps/ps.h"
 
-#define PROC_MAX_COUNT 512
+#define PROC_MAX_SEARCH_SIZE
 
-#define PROC_COMMAND_STORAGE_SIZE 128
+bool proc_forest = false;
 
 Widget proc_widget = WIDGET("processes", Proc);
 
 extern struct timespec interval;
 static unsigned long proc_time_passed;
-static struct Process
-{
-  pid_t pid;
-  char cmd[PROC_COMMAND_STORAGE_SIZE];
-  double cpu;
-  double mem;
-} proc_processes[PROC_MAX_COUNT];
+static pthread_mutex_t proc_data_mutex;
+static int current_sorting_mode = PS_SORT_CPU_DESCENDING;
 static size_t proc_count;
-static const char *proc_sort = PROC_SORT_CPU;
+
 static unsigned proc_cursor;
 static pid_t proc_cursor_pid;
-static pthread_mutex_t proc_data_mutex;
-static unsigned proc_page_move_amount;
-static bool proc_ps_tree = false;
 static unsigned proc_view_begin;
 static unsigned proc_view_size;
+static unsigned proc_page_move_amount;
 
+static bool proc_search_active;
 static bool proc_search_active;
 static History *proc_search_history;
 static Input_String *proc_search_string;
 static bool proc_search_show;
-static bool proc_search_matches[PROC_MAX_COUNT];
 static bool proc_search_single_match;
 static int proc_first_match;
-
-static void ProcUpdateProcesses ();
-static void ProcSearchUpdateMatches ();
+static int proc_last_match;
 
 static void
+DrawHeader (WINDOW *win)
+{
+  const unsigned cpu_mem_off = getmaxx (win) - 13;
+  static const char *const pid_indicators[] = {"▼", "▲", " ", " ", " ", " "};
+  static const char *const cpu_indicators[] = {" ", " ", "▼", "▲", " ", " "};
+  static const char *const mem_indicators[] = {" ", " ", " ", " ", "▼", "▲"};
+
+  wattron (win, A_BOLD | COLOR_PAIR (C_PROC_HEADER));
+
+  wmove (win, 1, 1);
+  waddstr (win, " PID");
+  waddstr (win, pid_indicators[current_sorting_mode]);
+
+  wmove (win, 1, 10);
+  waddstr (win, "Command");
+
+  wmove (win, 1, cpu_mem_off);
+  waddstr (win, cpu_indicators[current_sorting_mode]);
+  waddstr (win, "CPU%");
+
+  wmove (win, 1, cpu_mem_off + 6);
+  waddstr (win, mem_indicators[current_sorting_mode]);
+  waddstr (win, "MEM%");
+
+  wattroff (win, A_BOLD | COLOR_PAIR (C_PROC_HEADER));
+}
+
+static inline void
 ProcSetCursor (unsigned cursor)
 {
   if (cursor < proc_cursor && cursor < proc_view_begin + 1)
@@ -47,11 +67,13 @@ ProcSetCursor (unsigned cursor)
   else if (cursor > proc_cursor)
     {
       if (cursor > proc_view_begin + proc_view_size - 2)
-        proc_view_begin
-          = cursor - proc_view_size + 1 + (cursor != proc_count - 1);
+        {
+          const bool not_end = (cursor != proc_count - 1);
+          proc_view_begin = cursor - proc_view_size + 1 + not_end;
+        }
     }
   proc_cursor = cursor;
-  proc_cursor_pid = proc_processes[cursor].pid;
+  proc_cursor_pid = ps_get_procs ()[cursor]->pid;
 }
 
 static inline void
@@ -62,149 +84,188 @@ ProcSetViewSize (unsigned size)
   ProcSetCursor (proc_cursor);
 }
 
-void
-ProcInit (WINDOW *win, unsigned graph_scale) {
-  (void)graph_scale;
-  proc_time_passed = 0;
-  DrawWindow (win, "Processes");
-  pthread_mutex_init (&proc_data_mutex, NULL);
-  proc_cursor_pid = -1;
-  ProcUpdateProcesses ();
-  proc_cursor_pid = proc_processes[0].pid;
-  proc_search_history = NewHistory ();
-  proc_search_string = NULL;
-  proc_view_begin = 0;
-  ProcSetViewSize (getmaxy (win) - 3);
-}
-
-void
-ProcQuit ()
+static void
+ProcSearchUpdateMatches ()
 {
-  pthread_mutex_destroy (&proc_data_mutex);
-  DeleteHistory (proc_search_history);
+  size_t i;
+  unsigned count = 0;
+  proc_first_match = -1;
+  if (StrEmpty (proc_search_string) || !proc_search_show)
+    {
+      proc_search_show = false;
+      return;
+    }
+  VECTOR(Proc_Data*) procs = ps_get_procs ();
+  for (i = 0; i < vector__size (procs); ++i)
+    {
+      procs[i]->search_match = (strstr (procs[i]->command_line,
+                                        proc_search_string->data)
+                                != NULL);
+      if (procs[i]->search_match)
+        {
+          ++count;
+          if (proc_first_match == -1)
+            proc_first_match = i;
+          proc_last_match = i;
+        }
+    }
+  proc_search_single_match = count == 1;
+  if ((proc_search_show = count > 0) && proc_search_active)
+    ProcSetCursor (proc_first_match);
 }
 
 static void
 ProcUpdateProcesses ()
 {
-  char ps_cmd[128];
-  sprintf (ps_cmd, "ps axo 'pid:10,pcpu:5,pmem:5,command:1,command:64' --sort=%s %s",
-           proc_sort, proc_ps_tree ? "--forest" : "");
-  FILE *ps = popen (ps_cmd, "r");
-  char line[256];
-  pid_t pid;
-  int cpu_i, mem_i;
-  char cpu_d, mem_d;
-  double cpu, mem;
-  const int cursor_position_in_view = proc_cursor - proc_view_begin;
-
-  proc_count = 0;
-
-  (void)fgets (line, 256, ps);  /* Skip header */
-  while (fgets (line, 256, ps))
+  VECTOR(Proc_Data*) procs = ps_get_procs ();
+  proc_count = vector_size (procs);
+  for (size_t i = 0; i < proc_count; ++i)
     {
-      if (line[23] == '[')
-        continue;
-      sscanf (line, "%d %d.%c %d.%c", &pid, &cpu_i, &cpu_d, &mem_i, &mem_d);
-      cpu = cpu_i + (double)(cpu_d - '0') / 10.0;
-      mem = mem_i + (double)(mem_d - '0') / 10.0;
-      proc_processes[proc_count].pid = pid;
-      strncpy (proc_processes[proc_count].cmd, line + 25, PROC_COMMAND_STORAGE_SIZE);
-      proc_processes[proc_count].cmd[strlen (proc_processes[proc_count].cmd) - 1] = '\0';
-      proc_processes[proc_count].cpu = cpu;
-      proc_processes[proc_count].mem = mem;
-      if (pid == proc_cursor_pid)
-        //proc_cursor = proc_count;
-        ProcSetCursor (proc_count);
-
-      ++proc_count;
-      if (proc_count == PROC_MAX_COUNT)
-        break;
+      if (procs[i]->pid == proc_cursor_pid)
+        {
+          ProcSetCursor (i);
+          break;
+        }
     }
-  pclose (ps);
-
-  proc_view_begin = proc_cursor - cursor_position_in_view;
-
-  if (proc_count < proc_view_size)
-    ProcSetViewSize (proc_count);
-
-  if (proc_cursor >= proc_count)
-    ProcSetCursor (proc_count - 1);
-
   proc_search_show = true;
   ProcSearchUpdateMatches ();
 }
 
 void
-ProcUpdate () {
-  proc_time_passed += interval.tv_sec * 1000 + interval.tv_nsec / 1000000;
-  if (proc_time_passed >= 2000)
-    {
-      proc_time_passed = 0;
-      pthread_mutex_lock (&proc_data_mutex);
-      ProcUpdateProcesses ();
-      pthread_mutex_unlock (&proc_data_mutex);
-    }
+ProcInit (WINDOW *win, unsigned graph_scale)
+{
+  (void)graph_scale;
+  proc_time_passed = 1001;
+  DrawWindow (win, "Processes");
+  DrawHeader (win);
+  pthread_mutex_init (&proc_data_mutex, NULL);
+  ps_init ();
+  if (proc_forest)
+    ps_toggle_forest ();
+  proc_view_begin = proc_cursor = 0;
+  ProcSetViewSize (getmaxy (win) - 3);
+  ProcUpdateProcesses ();
 }
 
-static inline void
-ProcDrawBorderImpl (WINDOW *win, unsigned first, unsigned last)
+void
+ProcQuit ()
 {
-  char info[32];
+  ps_quit ();
+  pthread_mutex_destroy (&proc_data_mutex);
+}
+
+void
+ProcUpdate () {
+  proc_time_passed += interval.tv_sec * 1000 + interval.tv_nsec / 1000000;
+  if (proc_time_passed < 2000)
+    return;
+  proc_time_passed = 0;
+  pthread_mutex_lock (&proc_data_mutex);
+  ps_update ();
+  ProcUpdateProcesses ();
+  pthread_mutex_unlock (&proc_data_mutex);
+}
+
+static int
+ProcPrintPrefix (WINDOW *win, int8_t *prefix, unsigned level, bool color)
+{
+  static const char *prefixes[] = {
+    "│   ",
+    "    ",
+    "├─ ",
+    "╰─ ",
+  };
+  // Display width of the prefixes
+  static const int prefix_sizes[] = {4, 4, 3, 3};
+  int width = 0;
+  if (color)
+    PushStyle (win, 0, C_PROC_BRANCHES);
+  for (unsigned i = 0; i < level; ++i) {
+    width += prefix_sizes[prefix[i]];
+    waddstr (win, prefixes[prefix[i]]);
+  }
+  if (color)
+    PopStyle (win);
+  return width;
+}
+
+static void
+ProcFormatPercentage (WINDOW *win, unsigned long value, unsigned long max_value)
+{
+  unsigned long p = value * 1000UL / max_value;
+  if (p > 999) {
+    wattron (win, COLOR_PAIR (C_PROC_HIGH_PERCENT));
+    waddstr (win, " 100");
+    wattroff (win, COLOR_PAIR (C_PROC_HIGH_PERCENT));
+  } else {
+    if (p > 900) {
+      wattron (win, COLOR_PAIR (C_PROC_HIGH_PERCENT));
+    }
+    wprintw (win, "%2u.%u", (unsigned)(p / 10), (unsigned)(p % 10));
+    if (p > 900) {
+      wattroff (win, COLOR_PAIR (C_PROC_HIGH_PERCENT));
+    }
+  }
+}
+
+static void
+ProcDrawBorderImpl (WINDOW *win)
+{
   DrawWindow (win, "Processes");
-  snprintf (info, 32, "%u - %u of %zu", first+1, last+1, proc_count);
-  DrawWindowInfo (win, info);
+  if (proc_count)
+    {
+      char info[32];
+      snprintf (info, 32, "%u - %u of %zu", proc_view_begin,
+                proc_view_begin + proc_view_size, proc_count);
+      DrawWindowInfo (win, info);
+    }
   DrawWindowInfo2 (win, "Press ? for help");
 }
 
 void
 ProcDraw (WINDOW *win)
 {
+  const int cpu_and_memory_offset = 12;
   pthread_mutex_lock (&proc_data_mutex);
-  const unsigned cpu_mem_off = getmaxx (win) - 13;
-  const unsigned first = proc_view_begin;
-  const unsigned last = proc_view_begin + proc_view_size - 1;
 
-  /* Window */
-  ProcDrawBorderImpl (win, first, last);
+  ProcDrawBorderImpl (win);
 
-  /* Header */
-  wattron (win, A_BOLD | COLOR_PAIR (C_PROC_HEADER));
-  wmove (win, 1, 1);
-  waddstr (win, " PID      Command");
-  wmove (win, 1, cpu_mem_off);
-  waddstr (win, " CPU%  Mem%");
-  wattroff (win, A_BOLD | COLOR_PAIR (C_PROC_HEADER));
-
-  /* Processes */
-  bool highlight;
+  const unsigned long cpu_period = ps_cpu_period ();
+  const unsigned long total_memory = ps_total_memory ();
+  int command_len = (getmaxx (win) - 2 - 7 - 2 - cpu_and_memory_offset);
+  int prefix_size;
   unsigned row = 2;
-  for (unsigned i = first; i <= last; ++i, ++row)
+  bool colorize_branches;
+  VECTOR(Proc_Data*) procs = ps_get_procs ();
+  const unsigned end = proc_view_begin + proc_view_size;
+  for (unsigned i = proc_view_begin; i < end; ++i, ++row)
     {
-      highlight = proc_search_show && proc_search_matches[i];
-      if (unlikely (i == proc_cursor))
-        wattron (win, COLOR_PAIR (C_PROC_CURSOR));
-      else if (highlight)
-        wattron (win, COLOR_PAIR (C_PROC_HIGHLIGHT) | A_DIM);
+      Proc_Data *const p = procs[i];
+      colorize_branches = false;
+      if (i == proc_cursor)
+        wattrset (win, COLOR_PAIR (C_PROC_CURSOR));
+      else if (proc_search_show && p->search_match)
+        wattrset (win, COLOR_PAIR (C_PROC_HIGHLIGHT));
       else
-        wattron (win, COLOR_PAIR (C_PROC_PROCESSES));
-      /* Content */
+        {
+          wattrset (win, COLOR_PAIR (C_PROC_PROCESSES));
+          colorize_branches = true;
+        }
       wmove (win, row, 1);
       PrintN (win, ' ', getmaxx (win) - 2);
-      wmove (win, row, 2);
-      wprintw (win, "%-7d  %.*s",
-               proc_processes[i].pid,
-               cpu_mem_off - 10, proc_processes[i].cmd);
-      wmove (win, row, cpu_mem_off);
-      wprintw (win, "%5.1f %5.1f",
-               proc_processes[i].cpu, proc_processes[i].mem);
-      /*====*/
-      if (unlikely (i == proc_cursor))
-        wattroff (win, COLOR_PAIR (C_PROC_CURSOR));
-      else if (highlight)
-        wattroff (win, COLOR_PAIR (C_PROC_HIGHLIGHT) | A_DIM);
-      else
-        wattroff (win, COLOR_PAIR (C_PROC_PROCESSES));
+      wmove (win, row, 1);
+      wprintw (win, "%7d  ", p->pid);
+      prefix_size = ProcPrintPrefix (win, p->tree_prefix, p->tree_level,
+                                     colorize_branches);
+      if (p->command_line) {
+        wprintw (win, "%.*s", command_len - prefix_size, p->command_line);
+      } else {
+        waddstr (win, "(commandline not available)");
+      }
+      wmove (win, row, getmaxx (win) - cpu_and_memory_offset);
+      ProcFormatPercentage (win, jiffy_list_period (&p->cpu_times), cpu_period);
+      waddstr (win, "  ");
+      ProcFormatPercentage (win, p->memory, total_memory);
     }
 
   if (proc_search_active)
@@ -214,8 +275,10 @@ ProcDraw (WINDOW *win)
 }
 
 void
-ProcResize (WINDOW *win) {
+ProcResize (WINDOW *win)
+{
   wclear (win);
+  DrawHeader (win);
   ProcSetViewSize (getmaxy (win) - 3 - proc_search_active);
 }
 
@@ -263,58 +326,18 @@ ProcCursorBottom ()
   ProcSetCursor (proc_count - 1);
 }
 
-void
-ProcSetSort (const char *mode)
-{
-  proc_sort = mode;
-  proc_time_passed = 2000;
-}
-
-void
-ProcToggleTree ()
-{
-  proc_ps_tree = !proc_ps_tree;
-  proc_time_passed = 2000;
-}
-
 static inline void
-ProcRefresh ()
+ProcRefresh (bool redraw_header)
 {
   if (proc_widget.exists && !proc_widget.hidden)
     {
       pthread_mutex_lock (&draw_mutex);
       ProcDraw (proc_widget.win);
+      if (redraw_header)
+        DrawHeader (proc_widget.win);
       wrefresh (proc_widget.win);
       pthread_mutex_unlock (&draw_mutex);
     }
-}
-
-static void
-ProcSearchUpdateMatches ()
-{
-  size_t i;
-  unsigned count = 0;
-  proc_first_match = -1;
-  if (StrEmpty (proc_search_string) || !proc_search_show)
-    {
-      proc_search_show = false;
-      return;
-    }
-  for (i = 0; i < proc_count; ++i)
-    {
-      proc_search_matches[i] = (strstr (proc_processes[i].cmd,
-                                        proc_search_string->data)
-                                != NULL);
-      if (proc_search_matches[i])
-        {
-          ++count;
-          if (proc_first_match == -1)
-            proc_first_match = i;
-        }
-    }
-  proc_search_single_match = count == 1;
-  if ((proc_search_show = count > 0) && proc_search_active)
-    ProcSetCursor (proc_first_match);
 }
 
 static void
@@ -326,7 +349,7 @@ ProcSearchUpdate (Input_String *s, bool did_change)
       ProcSearchUpdateMatches ();
     }
   proc_time_passed = 2000;
-  ProcRefresh ();
+  ProcRefresh (false);
 }
 
 static void
@@ -337,7 +360,7 @@ ProcSearchFinish (Input_String *s)
   proc_search_active = false;
   proc_search_string = s;
   proc_time_passed = 2000;
-  ProcRefresh ();
+  ProcRefresh (false);
 }
 
 void
@@ -357,56 +380,6 @@ ProcBeginSearch ()
 }
 
 void
-ProcSearchNext ()
-{
-  const unsigned stop = proc_cursor;
-  unsigned cursor = proc_cursor;
-  if (!proc_search_show)
-    return;
-  else if (proc_search_single_match)
-    {
-      ProcSetCursor (proc_first_match);
-      return;
-    }
-  ++cursor;
-  if (cursor == proc_count)
-    cursor = 0;
-  while (!proc_search_matches[cursor] && cursor != stop)
-    {
-      ++cursor;
-      if (cursor == proc_count)
-        cursor = 0;
-    }
-  ProcSetCursor (cursor);
-}
-
-void
-ProcSearchPrev ()
-{
-  const unsigned stop = proc_cursor;
-  unsigned cursor = proc_cursor;
-  if (!proc_search_show)
-    return;
-  else if (proc_search_single_match)
-    {
-      ProcSetCursor (proc_first_match);
-      return;
-    }
-  if (cursor)
-    --cursor;
-  else
-    cursor = proc_count - 1;
-  while (!proc_search_matches[cursor] && cursor != stop)
-    {
-      if (cursor)
-        --cursor;
-      else
-        cursor = proc_count - 1;
-    }
-  ProcSetCursor (cursor);
-}
-
-void
 ProcMinSize (int *width_return, int *height_return)
 {
   *width_return = 7+7+5+5+8;
@@ -419,9 +392,66 @@ ProcMinSize (int *width_return, int *height_return)
   *height_return = 3;
 }
 
+void
+ProcSearchNext ()
+{
+  if (!proc_search_show)
+    return;
+  unsigned cursor;
+  if (proc_search_single_match)
+    cursor = proc_first_match;
+  else if ((int)proc_cursor >= proc_last_match)
+    cursor = proc_first_match;
+  else
+    {
+      // proc_cursor cannot be the last process due to the above statement
+      cursor = proc_cursor + 1;
+      VECTOR(Proc_Data*) procs = ps_get_procs ();
+      // We also know there is another match after the cursor
+      while (!procs[cursor]->search_match)
+        ++cursor;
+    }
+  ProcSetCursor (cursor);
+}
+
+void
+ProcSearchPrev ()
+{
+  if (!proc_search_show)
+    return;
+  unsigned cursor;
+  if (proc_search_single_match)
+    cursor = proc_first_match;
+  else if ((int)proc_cursor <= proc_first_match)
+    cursor = proc_last_match;
+  else
+    {
+      // proc_cursor cannot be zero due to the above statement
+      cursor = proc_cursor - 1;
+      VECTOR(Proc_Data*) procs = ps_get_procs ();
+      // We also know there is another match before the cursor
+      while (!procs[cursor]->search_match)
+        --cursor;
+    }
+  ProcSetCursor (cursor);
+}
+
 bool
 ProcHandleInput (int key)
 {
+  // If the current mode is A, set it to B otherwise set it to A.
+  #define SwapOrSetSortingType(a, b)         \
+    if (current_sorting_mode == a) {         \
+      current_sorting_mode = b;              \
+    } else {                                 \
+      current_sorting_mode = a;              \
+    }                                        \
+    pthread_mutex_lock (&proc_data_mutex);   \
+    ps_set_sort (current_sorting_mode);      \
+    pthread_mutex_unlock (&proc_data_mutex); \
+    sorting_changed = true;
+
+  bool sorting_changed = false;
   switch (key)
     {
     case KEY_UP:
@@ -449,19 +479,18 @@ ProcHandleInput (int key)
       ProcCursorBottom ();
       break;
     case 'p':
-      ProcSetSort (PROC_SORT_PID);
-      break;
-    case 'P':
-      ProcSetSort (PROC_SORT_INVPID);
+      SwapOrSetSortingType (PS_SORT_PID_DESCENDING, PS_SORT_PID_ASCENDING);
       break;
     case 'c':
-      ProcSetSort (PROC_SORT_CPU);
+      SwapOrSetSortingType (PS_SORT_CPU_DESCENDING, PS_SORT_CPU_ASCENDING);
       break;
     case 'm':
-      ProcSetSort (PROC_SORT_MEM);
+      SwapOrSetSortingType (PS_SORT_MEM_DESCENDING, PS_SORT_MEM_ASCENDING);
       break;
     case 'f':
-      ProcToggleTree ();
+      pthread_mutex_lock (&proc_data_mutex);
+      ps_toggle_forest ();
+      pthread_mutex_unlock (&proc_data_mutex);
       break;
     case '/':
       ProcBeginSearch ();
@@ -475,14 +504,14 @@ ProcHandleInput (int key)
     default:
       return false;
     }
-  ProcRefresh ();
+  ProcUpdateProcesses ();
+  ProcRefresh (sorting_changed);
   return true;
+  #undef SwapOrSetSortingType
 }
 
 void
 ProcDrawBorder (WINDOW *win)
 {
-  const unsigned first = proc_view_begin;
-  const unsigned last = proc_view_begin + proc_view_size - 1;
-  ProcDrawBorderImpl (win, first, last);
+  ProcDrawBorderImpl (win);
 }

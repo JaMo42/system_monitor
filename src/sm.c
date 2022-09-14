@@ -362,7 +362,7 @@ ParseArgs (int argc, char *const *argv)
             cpu_scale_height = false;
             break;
           case 'f':
-            ProcToggleTree ();
+            proc_forest = true;
             break;
           case 'l':
             layout = optarg;

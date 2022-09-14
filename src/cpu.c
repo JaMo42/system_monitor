@@ -1,6 +1,7 @@
 #include "cpu.h"
 #include "util.h"
 #include "canvas/canvas.h"
+#include "ps/util.h"
 
 Widget cpu_widget = WIDGET("cpu", Cpu);
 
@@ -48,26 +49,26 @@ CpuQuit ()
 static double
 CpuPollUsage (int id, FILE *stat)
 {
-  int _id = 0;
-  size_t user = 0, nice = 0, system = 0;
-  size_t idle = 0, iowait = 0, irq = 0, softirq = 0;
-  size_t steal = 0, guest = 0, guest_nice = 0;
+  static char buf[10*20+10+8];
+  fgets (buf, sizeof (buf), stat);
+  char *p = buf;
+  skipfields (&p, 1);
+  skipspace (&p);
 
-  if (unlikely (id == 0))
-    fscanf (stat, "cpu  %zu %zu %zu %zu %zu %zu %zu %zu %zu %zu\n",
-            &user, &nice, &system, &idle, &iowait, &irq, &softirq,
-            &steal, &guest, &guest_nice);
-  else
-    fscanf (stat, "cpu%d %zu %zu %zu %zu %zu %zu %zu %zu %zu %zu\n",
-            &_id, &user, &nice, &system, &idle, &iowait, &irq, &softirq,
-            &steal, &guest, &guest_nice);
+  const size_t work_jiffies = (str2u (&p)
+                               + str2u (&p)
+                               + str2u (&p));
+  const size_t total_jiffies = (work_jiffies
+                                + str2u (&p)
+                                + str2u (&p)
+                                + str2u (&p)
+                                + str2u (&p)
+                                + str2u (&p)
+                                + str2u (&p)
+                                + str2u (&p));
 
-  size_t total_jiffies = (user + nice + system + idle + iowait + irq + softirq
-                          + steal + guest + guest_nice);
-  size_t work_jiffies = user + nice + system;
-
-  size_t total_period = total_jiffies - cpu_last_total_jiffies[id];
-  size_t work_period = work_jiffies - cpu_last_work_jiffies[id];
+  const size_t total_period = total_jiffies - cpu_last_total_jiffies[id];
+  const size_t work_period = work_jiffies - cpu_last_work_jiffies[id];
 
   cpu_last_total_jiffies[id] = total_jiffies;
   cpu_last_work_jiffies[id] = work_jiffies;
@@ -161,7 +162,7 @@ CpuDrawGraphBezir (Canvas *canvas, double x1, double y1, double x2, double y2, s
   /* Arbitrary constant that defined how squiggly(?) the bezir curbe will be;
      0.0 -> straight line, 2.0 -> very shallow at beginning, vertical in the middle.
      Values less than 0.0 or greater than 2.0 will cause it to overlap itself. */
-#define CONTROL_FACTOR ((2.0 + 1.618) / 3.0)
+  #define CONTROL_FACTOR ((2.0 + 1.618) / 3.0)
   const double dx = fabs (x1 - x2);
   const double dy = fabs (y1 - y2);
   const double percision = 0.25 / (dx > dy ? dx : dy);

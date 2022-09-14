@@ -2,6 +2,8 @@
 #include "stdafx.h"
 #include "widget.h"
 
+extern Widget mem_widget;
+
 void MemoryInit (WINDOW *win, unsigned graph_scale);
 void MemoryQuit ();
 void MemoryUpdate ();
@@ -10,4 +12,4 @@ void MemoryResize (WINDOW *win);
 void MemoryMinSize (int *width_return, int *height_return);
 void MemoryDrawBorder (WINDOW *win);
 
-extern Widget mem_widget;
+unsigned long MemoryTotal ();

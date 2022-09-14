@@ -17,6 +17,8 @@ extern const short C_PROC_HEADER;
 extern const short C_PROC_PROCESSES;
 extern const short C_PROC_CURSOR;
 extern const short C_PROC_HIGHLIGHT;
+extern const short C_PROC_HIGH_PERCENT;
+extern const short C_PROC_BRANCHES;
 extern const short C_DISK_FREE;
 extern const short C_DISK_USED;
 extern const short C_DISK_ERROR;
@@ -51,3 +53,7 @@ void FormatSize (WINDOW *win, size_t size, bool pad);
 void PrintN (WINDOW *win, int ch, unsigned n);
 
 char* StringPush (char *buf, const char *s);
+
+void PushStyle (WINDOW *win, attr_t attributes, short color);
+
+void PopStyle (WINDOW *win);

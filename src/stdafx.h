@@ -12,6 +12,7 @@
 #include <time.h>
 #include <ctype.h>
 #include <inttypes.h>
+#include <errno.h>
 
 #include <sys/types.h>
 #include <sys/sysinfo.h>
@@ -21,8 +22,12 @@
 #include <ifaddrs.h>
 #include <pthread.h>
 #include <sys/statvfs.h>
+#include <fcntl.h>
+#include <dirent.h>
 
 #include <ncurses.h>
+
+#include "c-vector/vector.h"
 
 #include "list.h"
 
