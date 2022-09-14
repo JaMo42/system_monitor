@@ -79,16 +79,18 @@ CpuPollUsage (int id, FILE *stat)
 void
 CpuUpdate ()
 {
-  const bool shift = cpu_samples == cpu_max_samples;
+  const bool full = cpu_samples == cpu_max_samples;
   FILE *stat = fopen ("/proc/stat", "r");
 
   for (int i = 0; i <= cpu_count; ++i)
     {
-      if (likely (shift))
-        list_pop_front (cpu_usages[i]);
-      list_push_back (cpu_usages[i])->f = CpuPollUsage (i, stat);
+      const double usage = CpuPollUsage (i, stat);
+      if (likely (full))
+        list_rotate_left (cpu_usages[i])->f = usage;
+      else
+        list_push_back (cpu_usages[i])->f = usage;
     }
-  if (unlikely (!shift))
+  if (unlikely (!full))
     ++cpu_samples;
   fclose (stat);
 }

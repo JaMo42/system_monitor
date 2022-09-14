@@ -49,21 +49,27 @@ MemoryQuit ()
 void
 MemoryUpdate ()
 {
-  const bool shift = mem_samples == mem_max_samples;
+  const bool full = mem_samples == mem_max_samples;
   sysinfo (&mem_sysinfo);
   unsigned long main_used = (mem_sysinfo.totalram - mem_sysinfo.freeram
                              - mem_sysinfo.bufferram - mem_sysinfo.sharedram);
   unsigned long swap_used = mem_sysinfo.totalswap - mem_sysinfo.freeswap;
 
-  if (likely (shift))
+  List_Node *main_node, *swap_node;
+  if (likely (full))
     {
-      list_pop_front (mem_main_usage);
-      list_pop_front (mem_swap_usage);
+      main_node = list_rotate_left (mem_main_usage);
+      swap_node = list_rotate_left (mem_swap_usage);
     }
-  list_push_back (mem_main_usage)->f = (double)main_used / (double)mem_main_total;
-  list_push_back (mem_swap_usage)->f = (double)swap_used / (double)mem_swap_total;
+  else
+    {
+      main_node = list_push_back (mem_main_usage);
+      swap_node = list_push_back (mem_swap_usage);
+    }
+  main_node->f = (double)main_used / (double)mem_main_total;
+  swap_node->f = (double)swap_used / (double)mem_swap_total;
 
-  if (unlikely (!shift))
+  if (unlikely (!full))
     ++mem_samples;
 }
 

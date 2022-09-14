@@ -104,27 +104,24 @@ NetworkGetBytes (FILE *f)
 }
 
 static inline void
-NetworkAddValue (List *l, uintmax_t v, bool shift, uintmax_t *m)
+NetworkAddValue (List *l, uintmax_t v, bool full, uintmax_t *m)
 {
-  if (likely (shift))
+  if (likely (full))
+    list_rotate_left (l)->u = v;
+  else
+    list_push_back (l)->u = v;
+  *m = 0;
+  list_for_each (l, it)
     {
-      list_pop_front (l);
-      *m = 0;
-      list_for_each (l, i)
-        {
-          if (i->u > *m)
-            *m = i->u;
-        }
+      if (it->u > *m)
+        *m = it->u;
     }
-  if (v > *m)
-    *m = v;
-  list_push_back (l)->u = v;
 }
 
 void
 NetworkUpdate ()
 {
-  const bool shift = net_samples == net_max_samples;
+  const bool full = net_samples == net_max_samples;
   unsigned long prev_recieve = net_recieve_total;
   unsigned long prev_transmit = net_transmit_total;
   FILE *f;
@@ -148,12 +145,12 @@ NetworkUpdate ()
   double recieve_period = net_recieve_total - prev_recieve;
   double transmit_period = net_transmit_total - prev_transmit;
 
-  NetworkAddValue (net_recieve, recieve_period * net_period, shift,
+  NetworkAddValue (net_recieve, recieve_period * net_period, full,
                    &net_recieve_max);
-  NetworkAddValue (net_transmit, transmit_period * net_period, shift,
+  NetworkAddValue (net_transmit, transmit_period * net_period, full,
                    &net_transmit_max);
 
-  if (unlikely (!shift))
+  if (unlikely (!full))
     ++net_samples;
 }
 

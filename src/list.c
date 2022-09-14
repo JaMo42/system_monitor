@@ -85,6 +85,20 @@ list_pop_front (List *l)
     }
 }
 
+List_Node *
+list_rotate_left (List *l)
+{
+  if (l->front && l->back != l->front)
+    {
+      List_Node *take = l->front;
+      l->front = l->front->next;
+      l->back->next = take;
+      l->back = take;
+      l->back->next = NULL;
+    }
+  return l->back;
+}
+
 void list_clear (List *l)
 {
   if (!l->front)
@@ -94,4 +108,3 @@ void list_clear (List *l)
   l->back = NULL;
   l->count = 0;
 }
-
