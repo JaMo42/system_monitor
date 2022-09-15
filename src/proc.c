@@ -174,16 +174,31 @@ ProcPrintPrefix (WINDOW *win, int8_t *prefix, unsigned level, bool color)
     "    ",
     "├─ ",
     "╰─ ",
+    "┆ ",
   };
   // Display width of the prefixes
-  static const int prefix_sizes[] = {4, 4, 3, 3};
+  static const int prefix_sizes[] = {4, 4, 3, 3, 2};
   int width = 0;
   if (color)
     PushStyle (win, 0, C_PROC_BRANCHES);
-  for (unsigned i = 0; i < level; ++i) {
-    width += prefix_sizes[prefix[i]];
-    waddstr (win, prefixes[prefix[i]]);
-  }
+  if (level < PS_MAX_LEVEL)
+    {
+      for (unsigned i = 0; i < level; ++i)
+        {
+          width += prefix_sizes[prefix[i]];
+          waddstr (win, prefixes[prefix[i]]);
+        }
+    }
+  else
+    {
+      for (unsigned i = 0; i < PS_MAX_LEVEL-1; ++i)
+        {
+          width += prefix_sizes[prefix[i]];
+          waddstr (win, prefixes[prefix[i]]);
+        }
+      width += prefix_sizes[PS_PREFIX_MAX_LEVEL];
+      waddstr (win, prefixes[PS_PREFIX_MAX_LEVEL]);
+    }
   if (color)
     PopStyle (win);
   return width;
@@ -193,19 +208,22 @@ static void
 ProcFormatPercentage (WINDOW *win, unsigned long value, unsigned long max_value)
 {
   unsigned long p = value * 1000UL / max_value;
-  if (p > 999) {
-    wattron (win, COLOR_PAIR (C_PROC_HIGH_PERCENT));
-    waddstr (win, " 100");
-    wattroff (win, COLOR_PAIR (C_PROC_HIGH_PERCENT));
-  } else {
-    if (p > 900) {
+  if (p > 999)
+    {
       wattron (win, COLOR_PAIR (C_PROC_HIGH_PERCENT));
-    }
-    wprintw (win, "%2u.%u", (unsigned)(p / 10), (unsigned)(p % 10));
-    if (p > 900) {
+      waddstr (win, " 100");
       wattroff (win, COLOR_PAIR (C_PROC_HIGH_PERCENT));
     }
-  }
+  else
+    {
+      if (p > 900) {
+        wattron (win, COLOR_PAIR (C_PROC_HIGH_PERCENT));
+      }
+      wprintw (win, "%2u.%u", (unsigned)(p / 10), (unsigned)(p % 10));
+      if (p > 900) {
+        wattroff (win, COLOR_PAIR (C_PROC_HIGH_PERCENT));
+      }
+    }
 }
 
 static void

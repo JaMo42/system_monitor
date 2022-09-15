@@ -48,7 +48,7 @@ sm: $(object_files)
 vgclean:
 	rm -f vgcore.* callgrind.out.*
 
-clean: vgclean cgclean
+clean: vgclean
 	rm -f build/*.o sm
 
 vg: sm

@@ -2,7 +2,7 @@
 #include "../stdafx.h"
 #include "jiffy_list.h"
 
-#define PS_MAX_LEVEL 8
+#define PS_MAX_LEVEL 8U
 
 typedef struct Proc_Data {
   /*** Data ***/
@@ -14,7 +14,7 @@ typedef struct Proc_Data {
   char *command_line;
   VECTOR(struct Proc_Data *) children;
   /*** Display info ***/
-  // For forest mode, depth in the tree
+  // For forest mode, depth in the tree (may be larger than PS_MAX_LEVEL)
   unsigned tree_level;
   // What prefixes it should have in forest mode, these need to be set during
   // sorting as we want to be able to draw any range of processes and may
@@ -41,16 +41,22 @@ enum {
  *        |   '- bar2 <4
  *        '- baz
  *     2>     '- baz1
+ *        ...
+ *               |- at_max_level
+ *            5> :  after_max_level
+ *               :  after_max_level
  * 1: PS_PREFIX_OUTER_SIBLING
  * 2: PS_PREFIX_OUTER_NO_SIBLING
  * 3: PS_PREFIX_SIBLING
  * 4: PS_PREFIX_NO_SIBLING
+ * 5: PS_PREFIX_MAX_LEVEL
  */
 enum {
   PS_PREFIX_OUTER_SIBLING,
   PS_PREFIX_OUTER_NO_SIBLING,
   PS_PREFIX_SIBLING,
   PS_PREFIX_NO_SIBLING,
+  PS_PREFIX_MAX_LEVEL
 };
 
 void ps_init ();
