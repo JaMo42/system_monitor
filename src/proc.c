@@ -218,6 +218,11 @@ ProcPrintPrefix (WINDOW *win, int8_t *prefix, unsigned level, bool color)
 static void
 ProcFormatPercentage (WINDOW *win, unsigned long value, unsigned long max_value)
 {
+  if (max_value == 0)
+    {
+      waddstr (win, "   ?");
+      return;
+    }
   unsigned long p = value * 1000UL / max_value;
   if (p > 999)
     {
