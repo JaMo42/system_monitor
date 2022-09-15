@@ -131,6 +131,13 @@ ProcUpdateProcesses ()
           break;
         }
     }
+
+  if (proc_count < proc_view_size)
+    ProcSetViewSize (proc_count);
+
+  if (proc_cursor >= proc_count)
+    ProcSetCursor (proc_count - 1);
+
   proc_search_show = true;
   ProcSearchUpdateMatches ();
 }
