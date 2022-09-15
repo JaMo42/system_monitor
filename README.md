@@ -12,6 +12,8 @@ cd system_monitor
 make
 ```
 
+Note: by default the progams links with the `-lncurses` library but on some systems you may need to change it to `-lncursesw`.
+
 ## Usage
 
 ### Command-line options
