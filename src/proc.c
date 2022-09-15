@@ -71,6 +71,8 @@ ProcSetCursor (unsigned cursor)
           const bool not_end = (cursor != proc_count - 1);
           proc_view_begin = cursor - proc_view_size + 1 + not_end;
         }
+      if (proc_view_begin + proc_view_size > proc_count)
+        proc_view_begin = proc_count - proc_view_size;
     }
   proc_cursor = cursor;
   proc_cursor_pid = ps_get_procs ()[cursor]->pid;
@@ -124,11 +126,11 @@ ProcUpdateProcesses ()
     {
       if (procs[i]->pid == proc_cursor_pid)
         {
+          proc_view_begin = i - cursor_position_in_view;
           ProcSetCursor (i);
           break;
         }
     }
-  proc_view_begin = proc_cursor - cursor_position_in_view;
   proc_search_show = true;
   ProcSearchUpdateMatches ();
 }
