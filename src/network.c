@@ -169,8 +169,8 @@ NetworkDrawGraph (List *values, uintmax_t max, unsigned y_off,
 
       if (likely (y >= 0.0))
         {
-          CanvasDrawRect (net_canvas, x * 2.0, y_off * 4,
-                          (x - net_graph_scale) * 2.0, y * 4.0, color);
+          CanvasDrawRect (net_canvas, x * 2.0, y_off * 4 - 1,
+                          (x - net_graph_scale) * 2.0, y * 4.0 - 1, color);
         }
     }
 }
