@@ -119,6 +119,7 @@ ProcUpdateProcesses ()
 {
   VECTOR(Proc_Data*) procs = ps_get_procs ();
   proc_count = vector_size (procs);
+  const unsigned cursor_position_in_view = proc_cursor - proc_view_begin;
   for (size_t i = 0; i < proc_count; ++i)
     {
       if (procs[i]->pid == proc_cursor_pid)
@@ -127,6 +128,7 @@ ProcUpdateProcesses ()
           break;
         }
     }
+  proc_view_begin = proc_cursor - cursor_position_in_view;
   proc_search_show = true;
   ProcSearchUpdateMatches ();
 }
