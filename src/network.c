@@ -175,29 +175,42 @@ NetworkDrawGraph (List *values, uintmax_t max, unsigned y_off,
     }
 }
 
+static void
+NetworkFlatline (unsigned y, short color)
+{
+  CanvasDrawLine (net_canvas, 0, y*4 - 1, net_canvas->width * 2, y*4 - 1, color);
+}
+
 void
 NetworkDraw (WINDOW *win)
 {
   CanvasClear (net_canvas);
 
-  NetworkDrawGraph (net_receive, net_receive_max, net_canvas->height / 2,
-                    net_canvas->height / 4, C_NET_RECIEVE);
-  NetworkDrawGraph (net_transmit, net_transmit_max, net_canvas->height,
-                    net_canvas->height / 4, C_NET_TRANSMIT);
+  if (net_receive_max)
+    NetworkDrawGraph (net_receive, net_receive_max, net_canvas->height / 2,
+                      net_canvas->height / 4, C_NET_RECEIVE);
+  else
+    NetworkFlatline (net_canvas->height / 2, C_NET_RECEIVE);
+
+  if (net_transmit_max)
+    NetworkDrawGraph (net_transmit, net_transmit_max, net_canvas->height,
+                      net_canvas->height / 4, C_NET_TRANSMIT);
+  else
+    NetworkFlatline (net_canvas->height, C_NET_TRANSMIT);
 
   CanvasDraw (net_canvas, win);
 
   wmove (win, 2, 3);
   waddstr (win, "Total RX:");
-  wattron (win, COLOR_PAIR (C_NET_RECIEVE));
+  wattron (win, COLOR_PAIR (C_NET_RECEIVE));
   FormatSize (win, net_receive_total, true);
-  wattroff (win, COLOR_PAIR (C_NET_RECIEVE));
+  wattroff (win, COLOR_PAIR (C_NET_RECEIVE));
   wmove (win, 3, 3);
   waddstr (win, "RX/s:    ");
-  wattron (win, COLOR_PAIR (C_NET_RECIEVE));
+  wattron (win, COLOR_PAIR (C_NET_RECEIVE));
   FormatSize (win, net_receive->back->u, true);
   waddstr (win, "/s");
-  wattroff (win, COLOR_PAIR (C_NET_RECIEVE));
+  wattroff (win, COLOR_PAIR (C_NET_RECEIVE));
 
   wmove (win, getmaxy (win) / 2 + 1, 3);
   waddstr (win, "Total TX:");
@@ -242,3 +255,4 @@ NetworkDrawBorder (WINDOW *win)
 {
   DrawWindow (win, "Network");
 }
+

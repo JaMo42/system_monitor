@@ -11,7 +11,7 @@ extern const short C_CPU_AVG;
 extern const short C_CPU_GRAPHS[8];
 extern const short C_MEM_MAIN;
 extern const short C_MEM_SWAP;
-extern const short C_NET_RECIEVE;
+extern const short C_NET_RECEIVE;
 extern const short C_NET_TRANSMIT;
 extern const short C_PROC_HEADER;
 extern const short C_PROC_PROCESSES;
