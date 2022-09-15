@@ -33,6 +33,8 @@ void list_pop_front (List *);
 
 List_Node *list_rotate_left (List *);
 
+void list_shrink (List *, size_t length);
+
 void list_clear (List *);
 
 #define list_for_each(l, it)\

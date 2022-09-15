@@ -140,9 +140,9 @@ MemoryResize (WINDOW *win)
   CanvasResize (mem_canvas, win);
 
   mem_max_samples = MAX_SAMPLES (win, mem_graph_scale);
-  list_clear (mem_main_usage);
-  list_clear (mem_swap_usage);
-  mem_samples = 0;
+  list_shrink (mem_main_usage, mem_max_samples);
+  list_shrink (mem_swap_usage, mem_max_samples);
+  mem_samples = mem_main_usage->count;
 }
 
 void

@@ -99,6 +99,22 @@ list_rotate_left (List *l)
   return l->back;
 }
 
+void
+list_shrink (List *l, size_t length)
+{
+  if (length < l->count)
+    {
+      unsigned n = l->count - length;
+      while (n--)
+        {
+          List_Node *const remove = l->front;
+          l->front = l->front->next;
+          free (remove);
+        }
+      l->count = length;
+    }
+}
+
 void list_clear (List *l)
 {
   if (!l->front)

@@ -220,9 +220,9 @@ NetworkResize (WINDOW *win)
   CanvasResize (net_canvas, win);
 
   net_max_samples = MAX_SAMPLES (win, net_max_samples);
-  list_clear (net_recieve);
-  list_clear (net_transmit);
-  net_samples = 0;
+  list_shrink (net_recieve, net_max_samples);
+  list_shrink (net_transmit, net_max_samples);
+  net_samples = net_recieve->count;
 }
 
 void

@@ -239,11 +239,8 @@ CpuResize (WINDOW *win)
 
   cpu_max_samples = MAX_SAMPLES (win, cpu_graph_scale);
   for (int i = 0; i <= cpu_count; ++i)
-    {
-      // @TODO: only remove excess
-      list_clear (cpu_usages[i]);
-    }
-  cpu_samples = 0;
+    list_shrink (cpu_usages[i], cpu_max_samples);
+  cpu_samples = cpu_usages[0]->count;
 }
 
 void
