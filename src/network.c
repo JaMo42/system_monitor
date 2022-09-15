@@ -7,9 +7,9 @@ extern struct timespec interval;
 IgnoreInput (Network);
 Widget net_widget = WIDGET("network", Network);
 
-List *net_recieve;
+List *net_receive;
 List *net_transmit;
-unsigned long net_recieve_total;
+unsigned long net_receive_total;
 unsigned long net_transmit_total;
 unsigned net_max_samples;
 unsigned net_samples;
@@ -23,7 +23,7 @@ static struct {
 } *net_interfaces;
 static unsigned net_interface_count;
 static double net_period;
-static uintmax_t net_recieve_max;
+static uintmax_t net_receive_max;
 static uintmax_t net_transmit_max;
 
 static void
@@ -66,16 +66,16 @@ NetworkGetInterfaces ()
 void
 NetworkInit (WINDOW *win, unsigned graph_scale)
 {
-  net_recieve = list_create ();
+  net_receive = list_create ();
   net_transmit = list_create ();
-  net_recieve_total = 0;
+  net_receive_total = 0;
   net_transmit_total = 0;
   net_max_samples = MAX_SAMPLES (win, graph_scale);
   net_samples = 0;
   NetworkGetInterfaces ();
   net_period = (double)interval.tv_sec + interval.tv_nsec / 1.0e9;
   NetworkUpdate ();
-  net_recieve_max = 0;
+  net_receive_max = 0;
   net_transmit_max = 0;
   net_graph_scale = graph_scale;
   NetworkDrawBorder (win);
@@ -85,7 +85,7 @@ NetworkInit (WINDOW *win, unsigned graph_scale)
 void
 NetworkQuit ()
 {
-  list_delete (net_recieve);
+  list_delete (net_receive);
   list_delete (net_transmit);
   for (unsigned i = 0; i < net_interface_count; ++i)
     {
@@ -122,18 +122,18 @@ void
 NetworkUpdate ()
 {
   const bool full = net_samples == net_max_samples;
-  unsigned long prev_recieve = net_recieve_total;
+  unsigned long prev_receive = net_receive_total;
   unsigned long prev_transmit = net_transmit_total;
   FILE *f;
 
-  net_recieve_total = 0;
+  net_receive_total = 0;
   net_transmit_total = 0;
 
   for (unsigned i = 0; i < net_interface_count; ++i)
     {
       *net_interfaces[i].rt_char = 'r';
       f = fopen (net_interfaces[i].name, "r");
-      net_recieve_total += NetworkGetBytes (f);
+      net_receive_total += NetworkGetBytes (f);
       fclose (f);
 
       *net_interfaces[i].rt_char = 't';
@@ -142,11 +142,11 @@ NetworkUpdate ()
       fclose (f);
     }
 
-  double recieve_period = net_recieve_total - prev_recieve;
+  double receive_period = net_receive_total - prev_receive;
   double transmit_period = net_transmit_total - prev_transmit;
 
-  NetworkAddValue (net_recieve, recieve_period * net_period, full,
-                   &net_recieve_max);
+  NetworkAddValue (net_receive, receive_period * net_period, full,
+                   &net_receive_max);
   NetworkAddValue (net_transmit, transmit_period * net_period, full,
                    &net_transmit_max);
 
@@ -180,7 +180,7 @@ NetworkDraw (WINDOW *win)
 {
   CanvasClear (net_canvas);
 
-  NetworkDrawGraph (net_recieve, net_recieve_max, net_canvas->height / 2,
+  NetworkDrawGraph (net_receive, net_receive_max, net_canvas->height / 2,
                     net_canvas->height / 4, C_NET_RECIEVE);
   NetworkDrawGraph (net_transmit, net_transmit_max, net_canvas->height,
                     net_canvas->height / 4, C_NET_TRANSMIT);
@@ -190,12 +190,12 @@ NetworkDraw (WINDOW *win)
   wmove (win, 2, 3);
   waddstr (win, "Total RX:");
   wattron (win, COLOR_PAIR (C_NET_RECIEVE));
-  FormatSize (win, net_recieve_total, true);
+  FormatSize (win, net_receive_total, true);
   wattroff (win, COLOR_PAIR (C_NET_RECIEVE));
   wmove (win, 3, 3);
   waddstr (win, "RX/s:    ");
   wattron (win, COLOR_PAIR (C_NET_RECIEVE));
-  FormatSize (win, net_recieve->back->u, true);
+  FormatSize (win, net_receive->back->u, true);
   waddstr (win, "/s");
   wattroff (win, COLOR_PAIR (C_NET_RECIEVE));
 
@@ -220,9 +220,9 @@ NetworkResize (WINDOW *win)
   CanvasResize (net_canvas, win);
 
   net_max_samples = MAX_SAMPLES (win, net_max_samples);
-  list_shrink (net_recieve, net_max_samples);
+  list_shrink (net_receive, net_max_samples);
   list_shrink (net_transmit, net_max_samples);
-  net_samples = net_recieve->count;
+  net_samples = net_receive->count;
 }
 
 void
