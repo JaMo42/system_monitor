@@ -43,13 +43,17 @@ enum {
  *     2>     '- baz1
  *        ...
  *               |- at_max_level
- *            5> :  after_max_level
- *               :  after_max_level
+ *                5> :  after_max_level
+ *                   :  after_max_level
  * 1: PS_PREFIX_OUTER_SIBLING
  * 2: PS_PREFIX_OUTER_NO_SIBLING
  * 3: PS_PREFIX_SIBLING
  * 4: PS_PREFIX_NO_SIBLING
  * 5: PS_PREFIX_MAX_LEVEL
+ *
+ * Note: PS_PREFIX_MAX_LEVEL is never stored in the tree_prefix array,
+ *       instead tree_level may be greater than PS_MAX_LEVEL in which case
+ *       PS_PREFIX_MAX_LEVEL is an implied value for the excess elements.
  */
 enum {
   PS_PREFIX_OUTER_SIBLING,
