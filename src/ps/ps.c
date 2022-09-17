@@ -223,6 +223,7 @@ void ps_toggle_forest ()
 
 void ps_quit ()
 {
+  vector_free (sorted_procs);
   proc_map_destruct (&procs);
 }
 
