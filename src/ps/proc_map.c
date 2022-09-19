@@ -2,6 +2,13 @@
 
 #define PROC_MAP_MAX_LOAD_FACTOR 75
 
+#define INSERT_RESULT(bucket_, new_) \
+  ((Proc_Map_Insert_Result) { \
+    .value      = bucket->data, \
+    .generation = &bucket->generation, \
+    .is_new     = (new_) \
+  })
+
 enum {
   PROC_MAP_FREE,
   PROC_MAP_USED,
@@ -66,7 +73,8 @@ static Proc_Map_Bucket *proc_map_create (size_t count)
 void proc_map_construct (Proc_Map *self, Proc_Map_Alloc alloc_data,
                          Proc_Map_Free free_data, Proc_Map_Remove remove_data)
 {
-  const size_t initial_capacity = next_prime (200);
+  const size_t initial_capacity = next_prime ((150*100 + PROC_MAP_MAX_LOAD_FACTOR)
+                                              / PROC_MAP_MAX_LOAD_FACTOR);
   self->data = proc_map_create (initial_capacity);
   self->capacity = initial_capacity;
   self->size = 0;
@@ -120,15 +128,16 @@ static Proc_Map_Bucket* proc_map_lookup_existing (Proc_Map *self, pid_t pid)
 }
 
 static void proc_map_insert_during_rehash (Proc_Map *self, pid_t pid,
-                                           bool mark, Proc_Data *data)
+                                           uint8_t generation, Proc_Data *data)
 {
   Proc_Map_Bucket *bucket = proc_map_lookup_for_writing (self, pid);
   bucket->key = pid;
-  bucket->mark = mark;
+  bucket->generation = generation;
   bucket->data = data;
+  bucket->state = PROC_MAP_USED;
 }
 
-static void proc_map_rehash (Proc_Map *self, bool mark, size_t capacity)
+static void proc_map_rehash (Proc_Map *self, size_t capacity)
 {
   capacity = next_prime (capacity);
   Proc_Map_Bucket *old_data = self->data;
@@ -137,7 +146,7 @@ static void proc_map_rehash (Proc_Map *self, bool mark, size_t capacity)
   self->capacity = capacity;
   self->tombs = 0;
   for (; it; it = proc_map_next (it)) {
-    proc_map_insert_during_rehash (self, it->key, mark, it->data);
+    proc_map_insert_during_rehash (self, it->key, it->generation, it->data);
   }
   free (old_data);
 }
@@ -148,24 +157,21 @@ static inline bool proc_map_should_rehash (Proc_Map *self)
           >= (self->capacity * PROC_MAP_MAX_LOAD_FACTOR));
 }
 
-Proc_Data* proc_map_insert_or_get (Proc_Map *self, pid_t pid, bool mark)
+Proc_Map_Insert_Result proc_map_insert_or_get (Proc_Map *self, pid_t pid)
 {
   if (proc_map_should_rehash (self)) {
-    proc_map_rehash (self, mark, self->capacity << 1);
+    proc_map_rehash (self, self->capacity << 1);
   }
   Proc_Map_Bucket *bucket = proc_map_lookup_for_writing (self, pid);
-  bucket->mark = mark;
   if (bucket->state == PROC_MAP_USED) {
-    return bucket->data;
+    return INSERT_RESULT (bucket, false);
   }
-  if (bucket->state == PROC_MAP_TOMB) {
-    --self->tombs;
-  }
+  self->tombs -= bucket->state == PROC_MAP_TOMB;
   bucket->key = pid;
   bucket->state = PROC_MAP_USED;
   bucket->data = self->alloc_data ();
   ++self->size;
-  return bucket->data;
+  return INSERT_RESULT (bucket, true);
 }
 
 Proc_Data* proc_map_get (Proc_Map *self, pid_t pid)
@@ -177,21 +183,19 @@ Proc_Data* proc_map_get (Proc_Map *self, pid_t pid)
   return NULL;
 }
 
-void proc_map_erase_unmarked (Proc_Map *self, bool expected_mark)
+void proc_map_erase_outdated (Proc_Map *self, uint8_t expected_generation)
 {
   proc_map_for_each (self) {
-    if (it->mark != expected_mark) {
+    if (it->state == PROC_MAP_USED && it->generation != expected_generation) {
       self->remove_data (it->data);
       self->free_data (it->data);
-      //it->key = 0;
-      //it->data = NULL;
       it->state = PROC_MAP_TOMB;
       --self->size;
       ++self->tombs;
     }
   }
   if (self->tombs >= self->size && proc_map_should_rehash (self)) {
-    proc_map_rehash (self, expected_mark, self->capacity);
+    proc_map_rehash (self, self->capacity);
   }
 }
 
@@ -211,3 +215,4 @@ Proc_Map_Bucket *proc_map_next (Proc_Map_Bucket *it)
     ++it;
   return it->data ? it : NULL;
 }
+

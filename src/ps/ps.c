@@ -7,65 +7,91 @@
 
 #define MAX_PID_LEN 7
 
+static Proc_Data* add_or_update (pid_t pid, bool force);
+
 static bool is_pid_dir (const struct dirent *entry)
 {
   return entry->d_type == DT_DIR && isdigit (entry->d_name[0]);
 }
 
-static void add_or_update (Proc_Stat *ps, File_Content *cmdline)
+static void update_process (int dir_fd, Proc_Data *process)
 {
-  Proc_Data *d = proc_map_insert_or_get (&procs, ps->pid, current_mark);
-  if (d->pid) {
-    jiffy_list_push (&d->cpu_times, ps->utime + ps->stime);
-  } else {
-    d->pid = ps->pid;
-    d->parent = ps->parent;
-    jiffy_list_construct (&d->cpu_times, ps->utime + ps->stime);
-    d->start_time = ps->start_time;
-    d->memory = ps->resident_memory;
-    d->command_line = parse_commandline (cmdline);
-    d->children = NULL;
-    d->tree_level = 0;
-    d->search_match = false;
+  Proc_Stat stat;
+  readstat_update (dir_fd, &stat);
+  jiffy_list_push (&process->cpu_times, stat.utime + stat.stime);
+  process->memory = stat.resident_memory;
+}
 
-    if (d->parent) {
-      Proc_Data *parent = proc_map_get (&procs, d->parent);
-      if (parent) {
-        vector_for_each (parent->children, it) {
-          if ((*it)->pid == d->pid) {
-            break;
-          }
+static void new_process (int dir_fd, Proc_Data *process, pid_t pid,
+                         char *command_line)
+{
+  Proc_Stat stat;
+  readstat (dir_fd, &stat);
+  process->pid = pid;
+  process->parent = stat.parent;
+  jiffy_list_construct (&process->cpu_times, stat.utime + stat.stime);
+  process->start_time = stat.start_time;
+  process->memory = stat.resident_memory;
+  process->command_line = command_line;
+  process->tree_level = 0;
+  process->search_match = false;
+
+  if (stat.parent) {
+    Proc_Data *parent = add_or_update (stat.parent, true);
+    if (parent) {
+      vector_for_each (parent->children, it) {
+        if ((*it)->pid == pid) {
+          return;
         }
-        vector_push (parent->children, d);
-      } else {
-        d->parent = 0;
       }
+      vector_push (parent->children, process);
+    } else {
+      process->parent = 0;
     }
   }
+}
+
+static Proc_Data* add_or_update (pid_t pid, bool force)
+{
+  char pathname[6+MAX_PID_LEN+1] = "/proc/";
+  snprintf (pathname+6, MAX_PID_LEN+1, "%d", pid);
+  int dir_fd = open (pathname, O_RDONLY|O_DIRECTORY);
+  Proc_Map_Insert_Result insert_result;
+  File_Content cmdline = read_entire_file (dir_fd, "cmdline");
+  char *command_line = NULL;
+  if (cmdline.size <= 0) {
+    if (force) {
+      command_line = get_comm (dir_fd);
+    } else {
+      close (dir_fd);
+      return NULL;
+    }
+  }
+  insert_result = proc_map_insert_or_get (&procs, pid);
+  const uint8_t bucket_generation = *insert_result.generation;
+  *insert_result.generation = current_generation;
+  if (insert_result.is_new) {
+    if (!command_line) {
+      command_line = parse_commandline (&cmdline);
+    }
+    new_process (dir_fd, insert_result.value, pid, command_line);
+  } else if (bucket_generation != current_generation) {
+    update_process (dir_fd, insert_result.value);
+  }
+  close (dir_fd);
+  return insert_result.value;
 }
 
 static void update_procs ()
 {
   struct dirent *entry;
   DIR *proc_dir = opendir ("/proc");
-  int proc_dir_fd;
   char *name;
-  Proc_Stat stat_data;
-  char filename[6+MAX_PID_LEN+1] = "/proc/";
-  File_Content cmdline;
   while ((entry = readdir (proc_dir))) {
     if (is_pid_dir (entry)) {
       name = entry->d_name;
-      strncpy (filename+6, name, MAX_PID_LEN+1);
-      proc_dir_fd = open (filename, O_RDONLY|O_DIRECTORY);
-      if (readstat (proc_dir_fd, &stat_data)) {
-        stat_data.pid = str2u (&name);
-        cmdline = read_entire_file (proc_dir_fd, "cmdline");
-        if (cmdline.size > 0) {
-          add_or_update (&stat_data, &cmdline);
-        }
-      }
-      close (proc_dir_fd);
+      const pid_t pid = str2u (&name);
+      add_or_update (pid, false);
     }
   }
   closedir (proc_dir);
@@ -82,7 +108,9 @@ static Proc_Data* proc_data_alloc ()
 {
   Proc_Data *d = malloc (sizeof (Proc_Data));
   d->pid = 0;
+  d->parent = 0;
   d->command_line = NULL;
+  d->children = NULL;
   return d;
 }
 
@@ -114,16 +142,6 @@ static void proc_data_remove (Proc_Data *d)
     remove_child (p, d->pid);
 }
 
-static void remove_missing_parents ()
-{
-  proc_map_for_each (&procs) {
-    if (it->data->pid == 0) {
-      it->mark = !current_mark;
-      unparent_children_of (it->data);
-    }
-  }
-}
-
 void ps_init ()
 {
   // For memory info in /proc/[pid]/stat, need to translate from pages to KB.
@@ -132,7 +150,7 @@ void ps_init ()
   proc_map_construct (&procs, proc_data_alloc, proc_data_free,
                       proc_data_remove);
   jiffy_list_construct (&cpu_times, get_total_cpu ());
-  current_mark = true;
+  current_generation = 1;
   mem_total = get_total_memory ();
   forest = false;
   sorting_mode = PS_SORT_CPU_DESCENDING;
@@ -199,10 +217,11 @@ static void ps_sort_procs ()
 
 void ps_update ()
 {
-  current_mark = !current_mark;
+  ++current_generation;
+  if (current_generation == INVALID_GENERATION)
+    ++current_generation;
   update_procs ();
-  remove_missing_parents ();
-  proc_map_erase_unmarked (&procs, current_mark);
+  proc_map_erase_outdated (&procs, current_generation);
   jiffy_list_push (&cpu_times, get_total_cpu ());
   ps_sort_procs ();
 }

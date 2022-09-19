@@ -180,12 +180,12 @@ MainHandleInput (int key)
       pthread_mutex_unlock (&draw_mutex);
       break;
 
-      default:
-        widgets_for_each ()
-          {
-            if (w->HandleInput (key))
-              break;
-          }
+    default:
+      widgets_for_each ()
+        {
+          if (w->HandleInput (key))
+            break;
+        }
     }
   return true;
 }

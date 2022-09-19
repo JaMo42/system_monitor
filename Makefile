@@ -52,10 +52,10 @@ clean: vgclean
 	rm -f build/*.o sm
 
 vg: sm
-	valgrind $(VGFLAGS) ./sm 2> err
+	valgrind $(VGFLAGS) ./sm $(VGARGS) 2>err
 
 cg: sm
-	valgrind --tool=callgrind -v ./sm -r 100
+	valgrind --tool=callgrind -v ./sm -r 100 2>err
 
 install: sm
 	cp sm $(PREFIX)/sm
