@@ -5,14 +5,6 @@ VGFLAGS = --track-origins=yes #--leak-check=full
 
 PREFIX ?= ~/.local/bin
 
-ifeq ($(CC),gcc)
-	CFLAGS += -Wno-stringop-truncation
-else ifeq ($(CC),cc)
-	ifeq ($(shell readlink `which cc`),gcc)
-		CFLAGS += -Wno-stringop-truncation
-	endif
-endif
-
 ifdef DEBUG
 	CFLAGS += -O0 -g
 else

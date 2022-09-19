@@ -15,6 +15,8 @@ typedef struct Layout
   float percent_first;
   int min_width;
   int min_height;
+  int x, y;
+  int width, height;
   int priority;
   union
     {
@@ -57,3 +59,7 @@ void UIUpdateSizeInfo (Layout *self);
 
 /** gets all widgets present in the given layout and marks them as existent. */
 void UICollectWidgets (const Layout *self, Widget **widgets_out);
+
+/** gets the widget containing the given point. */
+Layout* UIFindWidgetContaining (Layout *self, int x, int y);
+

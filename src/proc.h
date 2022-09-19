@@ -16,6 +16,7 @@ void ProcDraw (WINDOW *win);
 void ProcResize (WINDOW *win);
 void ProcMinSize (int *width_return, int *height_return);
 bool ProcHandleInput (int key);
+void ProcHandleMouse (Mouse_Event *event);
 void ProcDrawBorder (WINDOW *win);
 
 void ProcCursorUp ();

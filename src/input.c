@@ -1,9 +1,6 @@
 #include "input.h"
 #include "sm.h"
-#include <bits/types/mbstate_t.h>
-#include <curses.h>
-#include <stdlib.h>
-#include <wchar.h>
+#include "ui.h"
 
 #define SELECTION_BEGIN() \
   Min (S.cursor, S.selection_start)
@@ -697,3 +694,30 @@ DeleteHistory (History *self)
     DeleteHistoryImpl (self->most_recent);
   free (self);
 }
+
+// For mouse wheel scrolling we'll likely get a lot of
+// events at the same position.
+static int last_mouse_x = -1, last_mouse_y = -1;
+static Layout *last_mouse_widget = NULL;
+
+void
+ResolveMouseEvent (MEVENT *event, Layout *ui, Mouse_Event *out)
+{
+  out->button = event->bstate;
+  if (ui->type != UI_WIDGET)
+    {
+      if (last_mouse_widget
+          && event->x == last_mouse_x
+          && event->y == last_mouse_y)
+        ui = last_mouse_widget;
+      else
+        ui = UIFindWidgetContaining (ui, event->x, event->y);
+    }
+  out->widget = ui->widget;
+  out->x = event->x - ui->x;
+  out->y = event->y - ui->y;
+  last_mouse_x = event->x;
+  last_mouse_y = event->y;
+  last_mouse_widget = ui;
+}
+

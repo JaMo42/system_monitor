@@ -3,6 +3,7 @@
 #include "canvas/canvas.h"
 
 IgnoreInput (Memory);
+IgnoreMouse (Memory);
 Widget mem_widget = WIDGET("memory", Memory);
 
 static List *mem_main_usage;

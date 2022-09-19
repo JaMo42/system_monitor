@@ -3,6 +3,7 @@
 #include "canvas/canvas.h"
 #include "ps/util.h"
 
+IgnoreMouse (Cpu);
 Widget cpu_widget = WIDGET("cpu", Cpu);
 
 static List **cpu_usages;

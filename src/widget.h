@@ -1,5 +1,6 @@
 #pragma once
 #include "stdafx.h"
+#include "input.h"
 
 enum
 {
@@ -22,6 +23,7 @@ typedef struct Widget
   void (*Resize) (WINDOW *win);
   void (*MinSize) (int *width_return, int *height_return);
   bool (*HandleInput) (int key);
+  void (*HandleMouse) (Mouse_Event *event);
   void (*DrawBorder) (WINDOW *win);
 } Widget;
 
@@ -39,6 +41,7 @@ typedef struct Widget
     .Resize = name_##Resize,           \
     .MinSize = name_##MinSize,         \
     .HandleInput = name_##HandleInput, \
+    .HandleMouse = name_##HandleMouse, \
     .DrawBorder = name_##DrawBorder    \
   }
 
@@ -47,6 +50,12 @@ typedef struct Widget
   {                                 \
     (void)key;                      \
     return false;                   \
+  }
+
+#define IgnoreMouse(name_)                     \
+  void name_##HandleMouse (Mouse_Event *event) \
+  {                                            \
+    (void)event;                               \
   }
 
 static inline void

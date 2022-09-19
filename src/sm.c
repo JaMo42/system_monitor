@@ -169,6 +169,8 @@ HandleResize ()
 bool
 MainHandleInput (int key)
 {
+  MEVENT event;
+  Mouse_Event mouse;
   switch (key)
     {
     case 'q':
@@ -180,6 +182,14 @@ MainHandleInput (int key)
       DrawBorders ();
       CursesUpdate ();
       pthread_mutex_unlock (&draw_mutex);
+      break;
+
+    case KEY_MOUSE:
+      if (getmouse (&event) == OK)
+        {
+          ResolveMouseEvent (&event, ui, &mouse);
+          mouse.widget->HandleMouse (&mouse);
+        }
       break;
 
     default:
@@ -203,6 +213,8 @@ CursesInit ()
   nodelay (stdscr, FALSE);
   start_color ();
   use_default_colors ();
+  keypad (stdscr, TRUE);
+  mousemask (ALL_MOUSE_EVENTS, NULL);
 
   for (int i = 0; i < COLORS; ++i)
     init_pair (i + 1, i, -1);

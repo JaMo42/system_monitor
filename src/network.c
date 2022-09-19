@@ -5,6 +5,7 @@
 extern struct timespec interval;
 
 IgnoreInput (Network);
+IgnoreMouse (Network);
 Widget net_widget = WIDGET("network", Network);
 
 List *net_receive;

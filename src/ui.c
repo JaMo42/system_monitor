@@ -56,6 +56,10 @@ UICreateLayout (LayoutType type, float percent_first)
     .percent_first = percent_first,
     .min_width = 0,
     .min_height = 0,
+    .x = 0,
+    .y = 0,
+    .width = 0,
+    .height = 0,
     .priority = -1,
     .elems = {NULL, NULL}
   };
@@ -144,6 +148,20 @@ UIGetMin (const Layout *self, bool height)
       child = cool_child (self);
       return height ? child->min_height : child->min_width;
     }
+}
+
+/**
+ * set the position and size of a layout containing a widget.
+ */
+static void
+UISetWidgetDimensions (Layout *self, int x, int y, int w, int h)
+{
+  wresize (self->widget->win, h, w);
+  mvwin (self->widget->win, y, x);
+  self->x = x;
+  self->y = y;
+  self->width = w;
+  self->height = h;
 }
 
 /**
@@ -291,8 +309,7 @@ UIResizeLayout (Layout *self, int x, int y, int width, int height)
         {
           if (child->type == UI_WIDGET)
             {
-              wresize (child->widget->win, g->h, g->w);
-              mvwin (child->widget->win, g->y, g->x);
+              UISetWidgetDimensions (child, g->x, g->y, g->w, g->h);
               child->widget->hidden = false;
             }
           else
@@ -300,6 +317,10 @@ UIResizeLayout (Layout *self, int x, int y, int width, int height)
         }
       ++g;
     }
+  self->x = x;
+  self->y = y;
+  self->width = width;
+  self->height = height;
 }
 
 static bool
@@ -374,8 +395,7 @@ UIResizeWindows (Layout *l, int width, int height)
       ui_too_small = width < l->min_width || height < l->min_height;
       if (!ui_too_small)
         {
-          wresize (l->widget->win, height, width);
-          mvwin (l->widget->win, 0, 0);
+          UISetWidgetDimensions (l, 0, 0, width, height);
         }
       return l->widget;
     }
@@ -386,8 +406,7 @@ UIResizeWindows (Layout *l, int width, int height)
       if (show)
         {
           UIHide (l);
-          wresize (show->widget->win, height, width);
-          mvwin (show->widget->win, 0, 0);
+          UISetWidgetDimensions (show, 0, 0, width, height);
           show->widget->hidden = false;
           ui_too_small = false;
           return show->widget;
@@ -506,3 +525,16 @@ UICollectWidgets (const Layout *self, Widget **widgets_out)
     *(*(Widget ***)data)++ = w->widget;
   ));
 }
+
+Layout *
+UIFindWidgetContaining (Layout *self, int x, int y)
+{
+  if (self->type == UI_WIDGET)
+    return self;
+  if (InRange (x, self->x, self->x + self->elems[0]->width)
+      && InRange (y, self->y, self->y + self->elems[0]->height))
+    return UIFindWidgetContaining (self->elems[0], x, y);
+  else
+    return UIFindWidgetContaining (self->elems[1], x, y);
+}
+

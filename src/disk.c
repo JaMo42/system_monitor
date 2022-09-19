@@ -9,6 +9,7 @@ static const int disk_width = 14;
 static const int disk_height = 7;
 
 IgnoreInput (Disk);
+IgnoreMouse (Disk);
 Widget disk_widget = WIDGET ("disk_usage", Disk);
 
 bool disk_vertical = false;

@@ -1,8 +1,15 @@
 #pragma once
 #include "stdafx.h"
-#include <curses.h>
 
 #define LINE_SIZE 256
+
+typedef struct Widget Widget;
+typedef struct Layout Layout;
+
+enum {
+  MOUSE_WHEEL_UP = 0x10000,
+  MOUSE_WHEEL_DOWN = 0x200000
+};
 
 enum
 {
@@ -64,9 +71,17 @@ struct More_Marker
 #define MORE_MARKER(chars_, attrs_) \
   ((More_Marker) {                  \
     .chars = (chars_),              \
-    .size = sizeof(chars_) - 1,     \
+    .size = sizeof (chars_) - 1,    \
     .attributes = (attrs_)          \
   })
+
+typedef struct Mouse_Event Mouse_Event;
+struct Mouse_Event
+{
+  Widget *widget;
+  mmask_t button;
+  int x, y;
+};
 
 /** checks if the string is null or empty. */
 static inline bool StrEmpty (Input_String *s)
@@ -127,3 +142,6 @@ int GetLineDraw ();
 History *NewHistory ();
 
 void DeleteHistory (History *self);
+
+void ResolveMouseEvent (MEVENT *event, Layout *ui, Mouse_Event *out);
+

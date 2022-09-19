@@ -285,7 +285,7 @@ ProcDraw (WINDOW *win)
 
   const unsigned long cpu_period = ps_cpu_period ();
   const unsigned long total_memory = ps_total_memory ();
-  int command_len = (getmaxx (win) - 2 - 7 - 2 - cpu_and_memory_offset);
+  int command_len = (getmaxx (win) - 1 - 2 - 7 - 2 - cpu_and_memory_offset);
   int prefix_size;
   unsigned row = 2;
   bool colorize_branches;
@@ -306,7 +306,7 @@ ProcDraw (WINDOW *win)
         }
       wmove (win, row, 1);
       PrintN (win, ' ', getmaxx (win) - 2);
-      wmove (win, row, 1);
+      wmove (win, row, 2);
       wprintw (win, "%7d  ", p->pid);
       prefix_size = ProcPrintPrefix (win, p->tree_prefix, p->tree_level,
                                      colorize_branches);
@@ -493,7 +493,7 @@ bool
 ProcHandleInput (int key)
 {
   // If the current mode is A, set it to B otherwise set it to A.
-  #define SwapOrSetSortingType(a, b)         \
+  #define SwapOrSetSortingType(a, b) do {    \
     if (current_sorting_mode == a) {         \
       current_sorting_mode = b;              \
     } else {                                 \
@@ -502,7 +502,8 @@ ProcHandleInput (int key)
     pthread_mutex_lock (&proc_data_mutex);   \
     ps_set_sort (current_sorting_mode);      \
     pthread_mutex_unlock (&proc_data_mutex); \
-    sorting_changed = true;
+    sorting_changed = true;                  \
+  } while (0)
 
   bool sorting_changed = false;
   switch (key)
@@ -565,6 +566,54 @@ ProcHandleInput (int key)
   ProcUpdateProcesses ();
   ProcRefresh (sorting_changed);
   return true;
+}
+
+static bool
+ProcClickHeader (int x)
+{
+  const int cpu_off = getmaxx (proc_widget.win) - 12;
+  const int mem_off = cpu_off + 6;
+  bool sorting_changed = false;
+  if InRange (x, 2, 9)
+    SwapOrSetSortingType (PS_SORT_PID_DESCENDING, PS_SORT_PID_ASCENDING);
+  else if InRange (x, cpu_off, cpu_off + 4)
+    SwapOrSetSortingType (PS_SORT_CPU_DESCENDING, PS_SORT_CPU_ASCENDING);
+  else if InRange (x, mem_off, mem_off + 4)
+    SwapOrSetSortingType (PS_SORT_MEM_DESCENDING, PS_SORT_MEM_ASCENDING);
+  return sorting_changed;
+}
+
+void
+ProcHandleMouse (Mouse_Event *event)
+{
+  bool sorting_changed = false;
+  int maxy;
+  switch (event->button)
+    {
+    case MOUSE_WHEEL_UP:
+      ProcCursorUp ();
+      break;
+
+    case MOUSE_WHEEL_DOWN:
+      ProcCursorDown ();
+      break;
+
+    case BUTTON1_CLICKED:
+      if (event->y == 1)
+        sorting_changed = ProcClickHeader (event->x);
+      else
+        {
+          maxy = getmaxy (proc_widget.win) - 1 - proc_search_active;
+          if InRange (event->y, 2, maxy)
+            ProcSetCursor (proc_view_begin + event->y - 2);
+        }
+      break;
+
+    default:
+      return;
+    }
+  ProcUpdateProcesses ();
+  ProcRefresh (sorting_changed);
   #undef SwapOrSetSortingType
 }
 
