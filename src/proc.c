@@ -117,6 +117,20 @@ ProcSearchUpdateMatches ()
 }
 
 static void
+ProcFitView ()
+{
+  // Expand view if there is more space in the window
+  const unsigned view_space = (getmaxy (proc_widget.win) - 3
+                               - proc_search_active);
+  if (proc_view_size < view_space)
+    ProcSetViewSize (Min (view_space, proc_count));
+  // Move view forward if it goes over the end of the process list
+  const unsigned view_end = proc_view_begin + proc_view_size;
+  if (view_end > proc_count)
+    proc_view_begin = proc_count - proc_view_size;
+}
+
+static void
 ProcUpdateProcesses ()
 {
   VECTOR(Proc_Data*) procs = ps_get_procs ();
@@ -134,6 +148,8 @@ ProcUpdateProcesses ()
 
   if (proc_count < proc_view_size)
     ProcSetViewSize (proc_count);
+  else
+    ProcFitView ();
 
   if (proc_cursor >= proc_count)
     ProcSetCursor (proc_count - 1);
