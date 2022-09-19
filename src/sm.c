@@ -29,9 +29,11 @@ static help_text_type help_text = {
   {"G/End", "Jump to bottom"},
   {"c", "Sort by CPU usage"},
   {"m", "Sort by memort usage"},
-  {"p", "Sort by PID (ascending)"},
-  {"P", "Sort by PID (descending)"},
+  {"p", "Sort by PID"},
+  {"", "  Selecting the same sorting mode again toggles"},
+  {"", "  between descening and ascending sorting."},
   {"f", "Toggle ASCII art process tree"},
+  {"T", "Toggle visibility of kernel threads"},
   {"'/'", "Search processes"},
   {"n", "Select next search result"},
   {"N", "Select previous search result"},
@@ -332,6 +334,7 @@ Usage (FILE *stream)
   fputs ("  -c         Always show CPU graph in range 0~100%\n", stream);
   fputs ("  -f         ASCII art process tree\n", stream);
   fputs ("  -l layout  Specifies the layout string\n", stream);
+  fputs ("  -T         Show kernel threads", stderr);
   fputs ("  -h         Show help message\n", stream);
   fputc ('\n', stream);
   fputs ("If the layout option for -l is '?' the current layout string (either\n", stream);
