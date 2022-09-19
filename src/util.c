@@ -18,11 +18,27 @@ const short C_DISK_FREE = 248;
 const short C_DISK_USED = 77;
 const short C_DISK_ERROR = 2;
 
+static void
+DrawCorners (WINDOW *win)
+{
+  const char *top_left = "╭";
+  const char *top_right = "╮";
+  const char *bottom_left = "╰";
+  const char *bottom_right = "╯";
+  const int x = getmaxx (win) - 1;
+  const int y = getmaxy (win) - 1;
+  mvwaddstr (win, 0, 0, top_left);
+  mvwaddstr (win, 0, x, top_right);
+  mvwaddstr (win, y, 0, bottom_left);
+  mvwaddstr (win, y, x, bottom_right);
+}
+
 void
 DrawWindow (WINDOW *w, const char *title)
 {
   wattron (w, COLOR_PAIR (C_BORDER));
   wborder (w, 0, 0, 0, 0, 0, 0, 0, 0);
+  DrawCorners (w);
   mvwaddch (w, 0, 1, '<');
   waddch (w, ' ');
   mvwaddch (w, 0, 4 + strlen (title), '>');
