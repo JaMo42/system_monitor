@@ -71,6 +71,8 @@ void ps_set_sort (int mode);
 
 void ps_toggle_forest ();
 
+void ps_toggle_kthreads ();
+
 void ps_quit ();
 
 VECTOR(Proc_Data*) ps_get_procs ();

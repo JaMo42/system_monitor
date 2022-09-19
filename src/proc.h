@@ -4,6 +4,10 @@
 
 // Initial forest mode setting
 extern bool proc_forest;
+// Initial kernel thread visiblity
+extern bool proc_kthreads;
+
+extern Widget proc_widget;
 
 void ProcInit (WINDOW *win, unsigned graph_scale);
 void ProcQuit ();
@@ -26,4 +30,3 @@ void ProcBeginSearch ();
 void ProcSearchNext ();
 void ProcSearchPrev ();
 
-extern Widget proc_widget;

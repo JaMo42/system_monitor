@@ -7,6 +7,7 @@
 #define PROC_MAX_SEARCH_SIZE
 
 bool proc_forest = false;
+bool proc_kthreads = false;
 
 Widget proc_widget = WIDGET("processes", Proc);
 
@@ -169,6 +170,8 @@ ProcInit (WINDOW *win, unsigned graph_scale)
   ps_init ();
   if (proc_forest)
     ps_toggle_forest ();
+  if (proc_kthreads)
+    ps_toggle_kthreads ();
   proc_view_begin = proc_cursor = 0;
   ProcSetViewSize (getmaxy (win) - 3);
   ProcUpdateProcesses ();
@@ -540,6 +543,11 @@ ProcHandleInput (int key)
     case 'f':
       pthread_mutex_lock (&proc_data_mutex);
       ps_toggle_forest ();
+      pthread_mutex_unlock (&proc_data_mutex);
+      break;
+    case 'T':
+      pthread_mutex_lock (&proc_data_mutex);
+      ps_toggle_kthreads ();
       pthread_mutex_unlock (&proc_data_mutex);
       break;
     case '/':

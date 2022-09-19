@@ -60,7 +60,7 @@ static Proc_Data* add_or_update (pid_t pid, bool force)
   File_Content cmdline = read_entire_file (dir_fd, "cmdline");
   char *command_line = NULL;
   if (cmdline.size <= 0) {
-    if (force) {
+    if (force || show_kthreads) {
       command_line = get_comm (dir_fd);
     } else {
       close (dir_fd);
@@ -153,6 +153,7 @@ void ps_init ()
   current_generation = 1;
   mem_total = get_total_memory ();
   forest = false;
+  show_kthreads = false;
   sorting_mode = PS_SORT_CPU_DESCENDING;
   sorted_procs = vector_create (Proc_Data*, 50);
   ps_update ();
@@ -240,6 +241,13 @@ void ps_toggle_forest ()
   ps_sort_procs ();
 }
 
+void ps_toggle_kthreads ()
+{
+  show_kthreads = !show_kthreads;
+  ps_update ();
+  ps_sort_procs ();
+}
+
 void ps_quit ()
 {
   vector_free (sorted_procs);
@@ -260,3 +268,4 @@ unsigned long ps_total_memory ()
 {
   return mem_total;
 }
+

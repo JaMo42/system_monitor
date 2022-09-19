@@ -8,4 +8,5 @@ unsigned long mem_total;
 bool forest;
 int sorting_mode;
 VECTOR(Proc_Data*) sorted_procs;
+bool show_kthreads;
 

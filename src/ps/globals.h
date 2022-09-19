@@ -14,4 +14,5 @@ extern unsigned long mem_total;
 extern bool forest;
 extern int sorting_mode;
 extern VECTOR(Proc_Data*) sorted_procs;
+extern bool show_kthreads;
 

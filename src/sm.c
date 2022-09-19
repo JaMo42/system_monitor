@@ -343,7 +343,7 @@ ParseArgs (int argc, char *const *argv)
 {
   char opt;
   unsigned long n;
-  while ((opt = getopt (argc, argv, "ar:hs:cfl:")) != -1)
+  while ((opt = getopt (argc, argv, "ar:hs:cfl:T")) != -1)
     {
       switch (opt)
         {
@@ -366,6 +366,9 @@ ParseArgs (int argc, char *const *argv)
             break;
           case 'l':
             layout = optarg;
+            break;
+          case 'T':
+            proc_kthreads = true;
             break;
           case 'h':
           case '?':
@@ -429,3 +432,4 @@ HelpShow ()
         }
     }
 }
+
