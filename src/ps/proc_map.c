@@ -15,7 +15,7 @@ enum {
   PROC_MAP_TOMB
 };
 
-static bool is_prime (unsigned long long n) {
+static bool is_prime (size_t n) {
   if (n == 0 || n == 1) {
     return false;
   }
@@ -25,7 +25,7 @@ static bool is_prime (unsigned long long n) {
   else if (n%2 == 0 || n%3 == 0) {
     return false;
   }
-  for (unsigned long long i = 5; i*i <= n; i += 6) {
+  for (size_t i = 5; i*i <= n; i += 6) {
     if (n%i == 0 || n%(i + 2) == 0) {
       return false;
     }
@@ -38,10 +38,10 @@ static size_t next_prime (size_t n)
   if (n == 2) {
     return 3ULL;
   } else {
-    const int inc = is_prime (n) ? 2 : 1;
-    n += inc;
-    for (;!is_prime (n); n += inc) {
-    }
+    const size_t inc = is_prime (n) ? 2 : 1;
+    do {
+      n += inc;
+    } while (!is_prime (n));
     return n;
   }
 }
