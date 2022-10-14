@@ -194,15 +194,6 @@ HistoryOlder ()
 }
 
 static inline void
-StrPush (Input_String *s, char ch)
-{
-  if (s->length == LINE_SIZE)
-    return;
-  s->data[s->length++] = ch;
-  s->data[s->length] = '\0';
-}
-
-static inline void
 StrPop (Input_String *s)
 {
   if (s->length > 0)
