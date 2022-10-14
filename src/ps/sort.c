@@ -25,24 +25,22 @@ COMPARATOR (compare_pid_ascending) {
 
 COMPARATOR (compare_cpu_descending) {
   UNPACK ();
-  return SUBSORT ((long)jiffy_list_period (&b->cpu_times)
-                         - (long)jiffy_list_period (&a->cpu_times));
+  return SUBSORT ((intmax_t)b->total_cpu_time - (intmax_t)a->total_cpu_time);
 }
 
 COMPARATOR (compare_cpu_ascending) {
   UNPACK ();
-  return SUBSORT ((long)jiffy_list_period (&a->cpu_times)
-                         - (long)jiffy_list_period (&b->cpu_times));
+  return SUBSORT ((intmax_t)a->total_cpu_time - (intmax_t)b->total_cpu_time);
 }
 
 COMPARATOR (compare_mem_descending) {
   UNPACK ();
-  return SUBSORT ((long)b->memory - (long)a->memory);
+  return SUBSORT ((long)b->total_memory - (long)a->total_memory);
 }
 
 COMPARATOR (compare_mem_ascending) {
   UNPACK ();
-  return SUBSORT ((long)a->memory - (long)b->memory);
+  return SUBSORT ((long)a->total_memory - (long)b->total_memory);
 }
 
 Compare_Function compare_functions[] = {

@@ -34,6 +34,7 @@ static help_text_type help_text = {
   {"", "  between descening and ascending sorting."},
   {"f", "Toggle ASCII art process tree"},
   {"T", "Toggle visibility of kernel threads"},
+  {"S", "Toggle summation of child values"},
   {"'/'", "Search processes"},
   {"n", "Select next search result"},
   {"N", "Select previous search result"},
@@ -365,26 +366,33 @@ ParseArgs (int argc, char *const *argv)
           case 'a':
             cpu_show_avg = true;
             break;
+
           case 'r':
             n = strtoull (optarg, NULL, 10);
             interval.tv_sec = n / 1000L;
             interval.tv_nsec = (n % 1000L) * 1000000L;
             break;
+
           case 's':
             graph_scale = (unsigned)strtoull (optarg, NULL, 10);
             break;
+
           case 'c':
             cpu_scale_height = false;
             break;
+
           case 'f':
             proc_forest = true;
             break;
+
           case 'l':
             layout = optarg;
             break;
+
           case 'T':
             proc_kthreads = true;
             break;
+
           case 'h':
           case '?':
           default:

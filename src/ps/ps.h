@@ -13,6 +13,8 @@ typedef struct Proc_Data {
   unsigned long memory;
   char *command_line;
   VECTOR(struct Proc_Data *) children;
+  unsigned long total_cpu_time;
+  unsigned long total_memory;
   /*** Display info ***/
   // For forest mode, depth in the tree (may be larger than PS_MAX_LEVEL)
   unsigned tree_level;
@@ -72,6 +74,8 @@ void ps_set_sort (int mode);
 void ps_toggle_forest ();
 
 void ps_toggle_kthreads ();
+
+void ps_toggle_sum_children ();
 
 void ps_quit ();
 

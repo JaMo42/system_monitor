@@ -316,9 +316,9 @@ ProcDraw (WINDOW *win)
         waddstr (win, "(commandline not available)");
       }
       wmove (win, row, getmaxx (win) - cpu_and_memory_offset);
-      ProcFormatPercentage (win, jiffy_list_period (&p->cpu_times), cpu_period);
+      ProcFormatPercentage (win, p->total_cpu_time, cpu_period);
       waddstr (win, "  ");
-      ProcFormatPercentage (win, p->memory, total_memory);
+      ProcFormatPercentage (win, p->total_memory, total_memory);
     }
 
   if (proc_search_active)
@@ -549,6 +549,11 @@ ProcHandleInput (int key)
     case 'T':
       pthread_mutex_lock (&proc_data_mutex);
       ps_toggle_kthreads ();
+      pthread_mutex_unlock (&proc_data_mutex);
+      break;
+    case 'S':
+      pthread_mutex_lock (&proc_data_mutex);
+      ps_toggle_sum_children ();
       pthread_mutex_unlock (&proc_data_mutex);
       break;
     case '/':

@@ -154,6 +154,7 @@ void ps_init ()
   mem_total = get_total_memory ();
   forest = false;
   show_kthreads = false;
+  sum_children = true;
   sorting_mode = PS_SORT_CPU_DESCENDING;
   sorted_procs = vector_create (Proc_Data*, 50);
   ps_update ();
@@ -168,6 +169,25 @@ static VECTOR(Proc_Data*) ps_get_toplevel ()
     }
   }
   return toplevel;
+}
+
+static void ps_sum_proc_data (Proc_Data *proc)
+{
+  proc->total_cpu_time = jiffy_list_period (&proc->cpu_times);
+  proc->total_memory = proc->memory;
+  vector_for_each (proc->children, it) {
+    Proc_Data *const p = *it;
+    ps_sum_proc_data (p);
+    proc->total_cpu_time += p->total_cpu_time;
+    proc->total_memory += p->total_memory;
+  }
+}
+
+static void ps_sum_child_data (VECTOR(Proc_Data *) toplevel)
+{
+  vector_for_each (toplevel, it) {
+    ps_sum_proc_data (*it);
+  }
 }
 
 static void ps_sort_procs_forest (VECTOR(Proc_Data*) procs, unsigned level,
@@ -205,11 +225,21 @@ static void ps_sort_procs ()
   vector_clear (sorted_procs);
   if (forest) {
     VECTOR(Proc_Data*) toplevel = ps_get_toplevel ();
+    if (sum_children) {
+      ps_sum_child_data (toplevel);
+    } else {
+      proc_map_for_each (&procs) {
+        it->data->total_cpu_time = jiffy_list_period (&it->data->cpu_times);
+        it->data->total_memory = it->data->memory;
+      }
+    }
     int8_t prefix[PS_MAX_LEVEL];
     ps_sort_procs_forest (toplevel, 0, prefix);
   } else {
     proc_map_for_each (&procs) {
       it->data->tree_level = 0;
+      it->data->total_cpu_time = jiffy_list_period (&it->data->cpu_times);
+      it->data->total_memory = it->data->memory;
       vector_push (sorted_procs, it->data);
     }
     sort_procs (sorted_procs, sorting_mode);
@@ -248,6 +278,12 @@ void ps_toggle_kthreads ()
   ps_sort_procs ();
 }
 
+void ps_toggle_sum_children ()
+{
+  sum_children = !sum_children;
+  ps_sort_procs ();
+}
+
 void ps_quit ()
 {
   vector_free (sorted_procs);
@@ -268,4 +304,3 @@ unsigned long ps_total_memory ()
 {
   return mem_total;
 }
-
