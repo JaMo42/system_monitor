@@ -1,6 +1,6 @@
 CC ?= gcc
 CFLAGS = -Wall -Wextra
-LDFLAGS = -lncurses -lm -pthread
+LDFLAGS = -lm -pthread
 VGFLAGS = --track-origins=yes #--leak-check=full
 
 PREFIX ?= ~/.local/bin
@@ -16,9 +16,20 @@ ifdef PROFILE
 	LDFLAGS += -pg
 endif
 
+# Use -lncursesw on apt based systems and -lncurses otherwise,
+# may not be correct for all systems but works for me on debian and manjaro :^)
+ifneq ($(which apt),"")
+	LDFLAGS += -lncursesw
+else
+	LDFLAGS += -lncurses
+endif
+
 source_files = $(wildcard src/*.c src/canvas/*.c src/ps/*.c) \
                src/nc-help/help.c
 object_files = $(patsubst src/%.c,build/%.o,$(source_files))
+
+foo:
+	echo $(FOO)
 
 all: build_dirs build/stdafx.h.gch sm
 
