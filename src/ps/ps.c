@@ -203,8 +203,10 @@ static void ps_sort_procs_forest (VECTOR(Proc_Data*) procs, unsigned level,
         } else {
           prefix[level - 1] = PS_PREFIX_SIBLING;
         }
+        memcpy ((*it)->tree_prefix, prefix, level);
+      } else {
+        memcpy ((*it)->tree_prefix, prefix, PS_MAX_LEVEL);
       }
-      memcpy ((*it)->tree_prefix, prefix, level);
     }
     vector_push (sorted_procs, (*it));
     if (!vector_empty ((*it)->children)) {
