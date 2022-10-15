@@ -166,9 +166,9 @@ CpuDrawGraphBezir (Canvas *canvas, double x1, double y1, double x2, double y2, s
      0.0 -> straight line, 2.0 -> very shallow at beginning, vertical in the middle.
      Values less than 0.0 or greater than 2.0 will cause it to overlap itself. */
   #define CONTROL_FACTOR ((2.0 + 1.618) / 3.0)
-  const double dx = fabs (x1 - x2);
+  const double dx = (x2 - x1) * 2.0;
   const double dy = fabs (y1 - y2);
-  const double percision = 0.25 / (dx > dy ? dx : dy);
+  const double percision = 0.9 / (dx > dy ? dx : dy);
   /* Control point coordinates.
      Invariant: x2 > x1 */
   const double x1_c = x1 + cpu_graph_scale * CONTROL_FACTOR;
