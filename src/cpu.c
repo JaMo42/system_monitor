@@ -175,17 +175,17 @@ CpuDrawGraphBezir (Canvas *canvas, double x1, double y1, double x2, double y2, s
   const double x2_c = x2 - cpu_graph_scale * CONTROL_FACTOR;
   const double y1_c = y1;
   const double y2_c = y2;
-  double d, x, y;
+  double d, d2, d3, w1, w2, w3, w4, x, y;
   for (d = 0.0; d <= 1.0; d += percision)
     {
-      x = (          pow (1.0 - d, 3.0)             * x1
-           + 3 * d * pow (1.0 - d, 2.0)             * x1_c
-           + 3 *     pow (      d, 2.0) * (1.0 - d) * x2_c
-           +         pow (      d, 3.0)             * x2);
-      y = (          pow (1.0 - d, 3.0)             * y1
-           + 3 * d * pow (1.0 - d, 2.0)             * y1_c
-           + 3 *     pow (      d, 2.0) * (1.0 - d) * y2_c
-           +         pow (      d, 3.0)             * y2);
+      d2 = d * d;
+      d3 = d2 * d;
+      w1 =   -d3 + 3*d2 - 3*d + 1;
+      w2 =  3*d3 - 6*d2 + 3*d    ;
+      w3 = -3*d3 + 3*d2          ;
+      w4 =    d3                 ;
+      x = x1*w1 + x1_c*w2 + x2_c*w3 + x2*w4;
+      y = y1*w1 + y1_c*w2 + y2_c*w3 + y2*w4;
       CanvasSet (canvas, x, y, color);
     }
 }
