@@ -28,9 +28,6 @@ source_files = $(wildcard src/*.c src/canvas/*.c src/ps/*.c) \
                src/nc-help/help.c
 object_files = $(patsubst src/%.c,build/%.o,$(source_files))
 
-foo:
-	echo $(FOO)
-
 all: build_dirs build/stdafx.h.gch sm
 
 build_dirs:
