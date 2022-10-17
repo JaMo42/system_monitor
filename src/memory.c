@@ -1,6 +1,7 @@
 #include "memory.h"
 #include "util.h"
 #include "canvas/canvas.h"
+#include "ps/util.h"
 
 IgnoreInput (Memory);
 IgnoreMouse (Memory);
@@ -47,13 +48,40 @@ MemoryQuit ()
   CanvasDelete (mem_canvas);
 }
 
+static unsigned long
+MemoryAvailable ()
+{
+  static char filebuf[128];
+  int fd;
+  ssize_t s = -1;
+  if ((fd = open ("/proc/meminfo", O_RDONLY)) < 0) {
+    return 0;
+  }
+  s = read (fd, filebuf, sizeof (filebuf) - 1);
+  close (fd);
+  filebuf[s > 0 ? s : 0] = '\0';
+
+  char *p = filebuf;
+  int skiplines = 2;
+  while (skiplines)
+    skiplines -= *p++ == '\n';
+  p += 13;  /* skip "MemAvailable:" */
+  skipspace (&p);
+  return str2u (&p) << 10;
+}
+
 void
 MemoryUpdate ()
 {
   const bool full = mem_samples == mem_max_samples;
   sysinfo (&mem_sysinfo);
-  unsigned long main_used = (mem_sysinfo.totalram - mem_sysinfo.freeram
-                             - mem_sysinfo.bufferram - mem_sysinfo.sharedram);
+  unsigned long main_avail = MemoryAvailable ();
+  unsigned long main_used;
+  if (main_avail)
+    main_used = mem_sysinfo.totalram - main_avail;
+  else
+    main_used = (mem_sysinfo.totalram - mem_sysinfo.freeram
+                 - mem_sysinfo.bufferram - mem_sysinfo.sharedram);
   unsigned long swap_used = mem_sysinfo.totalswap - mem_sysinfo.freeswap;
 
   List_Node *main_node, *swap_node;
