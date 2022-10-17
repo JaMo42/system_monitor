@@ -146,3 +146,7 @@ void DeleteHistory (History *self);
 
 void ResolveMouseEvent (MEVENT *event, Layout *ui, Mouse_Event *out);
 
+/**
+ * Toggle reporting of mouse movement.
+ */
+void ReportMouseMoveEvents (bool yay_or_nay, bool only_if_held);

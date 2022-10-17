@@ -28,6 +28,9 @@ typedef struct {
   double size;
 } Size_Format;
 
+/* Draw a window border */
+void Border (WINDOW *w);
+
 /* Draw a window border and title:
    +-< title >-----+
    |               |

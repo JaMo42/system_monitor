@@ -713,3 +713,27 @@ ResolveMouseEvent (MEVENT *event, Layout *ui, Mouse_Event *out)
   last_mouse_widget = ui;
 }
 
+void
+ReportMouseMoveEvents (bool yay_or_nay, bool only_if_held)
+{
+  move (0, 0); /* enuse we don't scroll output */
+  /* https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-Mouse-Tracking */
+  if (only_if_held)
+    {
+      if (yay_or_nay) {
+        puts ("\x1b[?1002h");
+      } else {
+        puts ("\x1b[?1002l");
+      }
+    }
+  else
+    {
+      if (yay_or_nay) {
+        puts ("\x1b[?1003h");
+      } else {
+        puts ("\x1b[?1003l");
+      }
+    }
+  if (!yay_or_nay)
+    mousemask (ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL); /* why? */
+}

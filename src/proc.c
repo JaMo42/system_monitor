@@ -3,8 +3,7 @@
 #include "sm.h"
 #include "input.h"
 #include "ps/ps.h"
-
-#define PROC_MAX_SEARCH_SIZE
+#include "context_menu.h"
 
 bool proc_forest = false;
 bool proc_kthreads = false;
@@ -31,6 +30,8 @@ static bool proc_search_show;
 static bool proc_search_single_match;
 static int proc_first_match;
 static int proc_last_match;
+
+static Context_Menu proc_context_menu;
 
 static void
 DrawHeader (WINDOW *win)
@@ -159,6 +160,30 @@ ProcUpdateProcesses ()
   ProcSearchUpdateMatches ();
 }
 
+static void
+ProcStop ()
+{
+  kill (proc_cursor_pid, SIGSTOP);
+}
+
+static void
+ProcContinue ()
+{
+  kill (proc_cursor_pid, SIGCONT);
+}
+
+static void
+ProcEnd ()
+{
+  kill (proc_cursor_pid, SIGTERM);
+}
+
+static void
+ProcKill ()
+{
+  kill (proc_cursor_pid, SIGKILL);
+}
+
 void
 ProcInit (WINDOW *win, unsigned graph_scale)
 {
@@ -175,6 +200,13 @@ ProcInit (WINDOW *win, unsigned graph_scale)
   proc_view_begin = proc_cursor = 0;
   ProcSetViewSize (getmaxy (win) - 3);
   ProcUpdateProcesses ();
+  static const char *menu_items[] = {
+    "Stop", "Continue", "End", "Kill", NULL
+  };
+  static void (*functions[]) () = {
+    ProcStop, ProcContinue, ProcEnd, ProcKill
+  };
+  proc_context_menu = ContextMenuCreate (menu_items, functions);
 }
 
 void
@@ -489,6 +521,18 @@ ProcSearchPrev ()
   ProcSetCursor (cursor);
 }
 
+static inline void
+ProcShowContextMenu (int x)
+{
+  if (x == -1)
+    x = getbegx (proc_widget.win) + 11;
+  else
+    x += getbegx (proc_widget.win);
+  const int y = getbegy (proc_widget.win) + 4 + (proc_cursor - proc_view_begin);
+  ContextMenuShow (&proc_context_menu, x, y);
+  wrefresh (proc_widget.win);
+}
+
 bool
 ProcHandleInput (int key)
 {
@@ -565,6 +609,10 @@ ProcHandleInput (int key)
     case 'N':
       ProcSearchPrev ();
       break;
+    case ' ':
+    case '\n':
+      ProcShowContextMenu (-1);
+      break;
     default:
       return false;
     }
@@ -593,6 +641,7 @@ ProcHandleMouse (Mouse_Event *event)
 {
   bool sorting_changed = false;
   int maxy;
+  unsigned cursor_before;
   switch (event->button)
     {
     case MOUSE_WHEEL_UP:
@@ -609,8 +658,13 @@ ProcHandleMouse (Mouse_Event *event)
       else
         {
           maxy = getmaxy (proc_widget.win) - 1 - proc_search_active;
+          cursor_before = proc_cursor;
           if InRange (event->y, 2, maxy)
-            ProcSetCursor (proc_view_begin + event->y - 2);
+            {
+              ProcSetCursor (proc_view_begin + event->y - 2);
+              if (proc_cursor == cursor_before)
+                ProcShowContextMenu (event->x);
+            }
         }
       break;
 

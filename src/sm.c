@@ -57,6 +57,11 @@ struct Widget *all_widgets[] = {
 static struct Widget *widgets[countof (all_widgets)];
 
 pthread_mutex_t draw_mutex;
+
+void *overlay_data = NULL;
+
+void (*DrawOverlay) (void *);
+
 bool (*HandleInput) (int key);
 
 void CursesInit ();
@@ -86,6 +91,8 @@ UpdateThread (void *arg)
       pthread_mutex_lock (&draw_mutex);
       DrawWidgets ();
       CursesUpdate ();
+      if (DrawOverlay)
+        DrawOverlay (overlay_data);
       pthread_mutex_unlock (&draw_mutex);
       nanosleep (&interval, NULL);
     }
@@ -193,6 +200,13 @@ MainHandleInput (int key)
         }
       break;
 
+    case KEY_REFRESH:
+      pthread_mutex_lock (&draw_mutex);
+      DrawBorders ();
+      CursesUpdate ();
+      pthread_mutex_unlock (&draw_mutex);
+      break;
+
     default:
       widgets_for_each ()
         {
@@ -215,7 +229,7 @@ CursesInit ()
   start_color ();
   use_default_colors ();
   keypad (stdscr, TRUE);
-  mousemask (ALL_MOUSE_EVENTS, NULL);
+  mousemask (ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL);
 
   for (int i = 0; i < COLORS; ++i)
     init_pair (i + 1, i, -1);
