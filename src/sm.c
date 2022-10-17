@@ -33,6 +33,7 @@ static help_text_type help_text = {
   {"", "  Selecting the same sorting mode again toggles"},
   {"", "  between descening and ascending sorting."},
   {"f", "Toggle ASCII art process tree"},
+  {"t", "Collapse/expand the selected tree"},
   {"T", "Toggle visibility of kernel threads"},
   {"S", "Toggle summation of child values"},
   {"'/'", "Search processes"},

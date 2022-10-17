@@ -9,10 +9,12 @@ A terminal based graphical system monitor, inspired by [gotop](https://github.co
 ```
 git clone https://github.com/JaMo42/system_monitor
 cd system_monitor
+git submodule init
+git submodule update
 make
 ```
 
-Note: by default the progams links with the `-lncurses` library but on some systems you may need to change it to `-lncursesw`.
+Note: by default the progams links with the `-lncurses` library but on some systems you may need to change it to `-lncursesw` (happens automatically on debian-based distros).
 
 ## Usage
 
@@ -41,9 +43,14 @@ If the layout option for `-l` is `?` the current layout string (either the defau
 - Process sorting
   - `c`: sort by CPU usage (default)
   - `m`: sort by memory usage
-  - `p`: sort by PID (ascending)
-  - `P`: sort by PID (descending)
+  - `p`: sort by PID
+
+  Selecting the same sorting mode again toggles between descending and ascending sorting.
+
 - `f`: toggle process ASCII art tree view
+- 't': collapse/expand the selected tree
+- `T`: toggle visiblity of kernel threads
+- `S`: toggle summation of child processes
 - Process searching
   - `/`: start search
   - `n`: select next search result
@@ -51,8 +58,23 @@ If the layout option for `-l` is `?` the current layout string (either the defau
 - CPU graph
   - `a`: toggle average CPU usage
   - `C`: togle CPU graph range scaling
+- Context menus
+  - `k` and `<Up>`:  up
+  - `j` and `<Down>`: down
+  - `<Space>` and `<Enter>`: confirm
+  - anyting else: cancel
 
 These can be viewed while the application is running by pressing `?`.
+
+### Mouse control
+
+Process viewer:
+
+If the mouse cursor is above the process viewer the scroll wheel moves the process cursor.
+Clicking the `PID`, `CPU%`, or `MEM%` headers chooses that sorting mode or toggles between descending and ascending sorting.
+Clicking a process selects that process, clicking the selected process again opens the context menu.
+Clicking a item in the context menu selects it, clicking outside the menu cancels it.
+The context menu should also highlight the element under the cursor however this may not work in some terminals.
 
 ## Configuration
 
