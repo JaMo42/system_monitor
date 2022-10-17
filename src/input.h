@@ -31,7 +31,8 @@ enum
 
   // Utility/redfinitions
 #undef KEY_BACKSPACE
-  KEY_BACKSPACE = 127,  // May depend on terminal?
+  KEY_BACKSPACE_1 = 127,  // May depend on terminal?
+  KEY_BACKSPACE_2 = 263,
   KEY_ESCAPE = 27,
 #undef KEY_ENTER
   KEY_ENTER = '\n',

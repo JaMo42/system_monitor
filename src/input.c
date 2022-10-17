@@ -448,7 +448,8 @@ GetLineHandleInput (int key)
       GetLineFinish ();
       return true;
 
-    case KEY_BACKSPACE:
+    case KEY_BACKSPACE_1:
+    case KEY_BACKSPACE_2:
       if (S.selection_active)
         {
           DeleteSelection ();
