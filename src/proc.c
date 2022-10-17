@@ -235,11 +235,13 @@ ProcPrintPrefix (WINDOW *win, int8_t *prefix, unsigned level, bool color)
     "│   ",
     "    ",
     "├─ ",
+    "├─ ... ",
     "╰─ ",
+    "╰─ ... ",
     "┆ ",
   };
   // Display width of the prefixes
-  static const int prefix_sizes[] = {4, 4, 3, 3, 2};
+  static const int prefix_sizes[] = {4, 4, 3, 7, 3, 7, 2};
   int width = 0;
   if (color)
     PushStyle (win, 0, C_PROC_BRANCHES);
@@ -536,6 +538,8 @@ ProcShowContextMenu (int x)
 bool
 ProcHandleInput (int key)
 {
+  Proc_Data *proc;
+  bool sorting_changed = false;
   // If the current mode is A, set it to B otherwise set it to A.
   #define SwapOrSetSortingType(a, b) do {    \
     if (current_sorting_mode == a) {         \
@@ -549,7 +553,6 @@ ProcHandleInput (int key)
     sorting_changed = true;                  \
   } while (0)
 
-  bool sorting_changed = false;
   switch (key)
     {
     case KEY_UP:
@@ -612,6 +615,16 @@ ProcHandleInput (int key)
     case ' ':
     case '\n':
       ProcShowContextMenu (-1);
+      break;
+    case 't':
+      proc = ps_get_procs()[proc_cursor];
+      /* Do not allow folding of toplevel processes as it makes the
+         implementation much simpler and is generally not that useful anyways. */
+      if (proc->parent)
+        {
+          proc->tree_folded ^= true;
+          ps_remake_forest ();
+        }
       break;
     default:
       return false;

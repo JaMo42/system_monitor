@@ -34,6 +34,7 @@ static void new_process (int dir_fd, Proc_Data *process, pid_t pid,
   process->memory = stat.resident_memory;
   process->command_line = command_line;
   process->tree_level = 0;
+  process->tree_folded = false;
   process->search_match = false;
 
   if (stat.parent) {
@@ -194,14 +195,23 @@ static void ps_sort_procs_forest (VECTOR(Proc_Data*) procs, unsigned level,
                                   int8_t *prefix)
 {
   sort_procs (procs, sorting_mode);
+  bool folded, has_children;
   vector_for_each (procs, it) {
+    folded = (*it)->tree_folded;
+    has_children = !vector_empty ((*it)->children);
     (*it)->tree_level = level;
     if (level) {
       if (level <= PS_MAX_LEVEL) {
         if (it == vector_end (procs) - 1) {
-          prefix[level - 1] = PS_PREFIX_NO_SIBLING;
+          if (folded && has_children)
+            prefix[level - 1] = PS_PREFIX_NO_SIBLING_FOLDED;
+          else
+            prefix[level - 1] = PS_PREFIX_NO_SIBLING;
         } else {
-          prefix[level - 1] = PS_PREFIX_SIBLING;
+          if (folded && has_children)
+            prefix[level - 1] = PS_PREFIX_SIBLING_FOLDED;
+          else
+            prefix[level - 1] = PS_PREFIX_SIBLING;
         }
         memcpy ((*it)->tree_prefix, prefix, level);
       } else {
@@ -209,7 +219,7 @@ static void ps_sort_procs_forest (VECTOR(Proc_Data*) procs, unsigned level,
       }
     }
     vector_push (sorted_procs, (*it));
-    if (!vector_empty ((*it)->children)) {
+    if (has_children && !folded) {
       if (level && level <= PS_MAX_LEVEL) {
         if (it == vector_end (procs) - 1) {
           prefix[level - 1] = PS_PREFIX_OUTER_NO_SIBLING;
@@ -290,6 +300,13 @@ void ps_quit ()
 {
   vector_free (sorted_procs);
   proc_map_destruct (&procs);
+}
+
+void ps_remake_forest ()
+{
+  if (forest) {
+    ps_sort_procs ();
+  }
 }
 
 VECTOR(Proc_Data*) ps_get_procs ()

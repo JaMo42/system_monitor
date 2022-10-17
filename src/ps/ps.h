@@ -22,6 +22,7 @@ typedef struct Proc_Data {
   // sorting as we want to be able to draw any range of processes and may
   // start drawing within a tree
   int8_t tree_prefix[PS_MAX_LEVEL];
+  bool tree_folded;
   /*** Extra data ***/
   bool search_match;
 } Proc_Data;
@@ -40,18 +41,24 @@ enum {
  *        foo
  *        |- bar
  *     1> |   |- bar1 <3
- *        |   '- bar2 <4
+ *        |   '- bar2 <5
  *        '- baz
  *     2>     '- baz1
- *        ...
+ *              ...
  *               |- at_max_level
- *                5> :  after_max_level
+ *                7> :  after_max_level
  *                   :  after_max_level
+ *        bar
+ *     4> |- ... folded
+ *     6> '- ... folded
+ *
  * 1: PS_PREFIX_OUTER_SIBLING
  * 2: PS_PREFIX_OUTER_NO_SIBLING
  * 3: PS_PREFIX_SIBLING
- * 4: PS_PREFIX_NO_SIBLING
- * 5: PS_PREFIX_MAX_LEVEL
+ * 4: PS_PREFIX_SIBLING_FOLDED
+ * 5: PS_PREFIX_NO_SIBLING
+ * 6: PS_PREFIX_NO_SIBLING_FOLDED
+ * 7: PS_PREFIX_MAX_LEVEL
  *
  * Note: PS_PREFIX_MAX_LEVEL is never stored in the tree_prefix array,
  *       instead tree_level may be greater than PS_MAX_LEVEL in which case
@@ -61,8 +68,10 @@ enum {
   PS_PREFIX_OUTER_SIBLING,
   PS_PREFIX_OUTER_NO_SIBLING,
   PS_PREFIX_SIBLING,
+  PS_PREFIX_SIBLING_FOLDED,
   PS_PREFIX_NO_SIBLING,
-  PS_PREFIX_MAX_LEVEL
+  PS_PREFIX_NO_SIBLING_FOLDED,
+  PS_PREFIX_MAX_LEVEL,
 };
 
 void ps_init ();
@@ -78,6 +87,8 @@ void ps_toggle_kthreads ();
 void ps_toggle_sum_children ();
 
 void ps_quit ();
+
+void ps_remake_forest ();
 
 VECTOR(Proc_Data*) ps_get_procs ();
 
