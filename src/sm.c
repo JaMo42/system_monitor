@@ -185,11 +185,7 @@ MainHandleInput (int key)
       return false;
 
     case '?':
-      pthread_mutex_lock (&draw_mutex);
       HelpShow ();
-      DrawBorders ();
-      CursesUpdate ();
-      pthread_mutex_unlock (&draw_mutex);
       break;
 
     case KEY_MOUSE:
@@ -416,57 +412,80 @@ ParseArgs (int argc, char *const *argv)
     }
 }
 
+static void
+HelpDraw (void *unused)
+{
+  (void)unused;
+  help_draw (&help);
+  DrawWindow (help.window, "Help");
+  help_refresh (&help);
+}
+
 void
 HelpShow ()
 {
   int ch;
-  bool running = true;
+  bool running = true, quit_key_was_resize = false;
   help_resize_offset (&help, stdscr, 2, 2);
+
+  pthread_mutex_lock (&draw_mutex);
   help_draw (&help);
   DrawWindow (help.window, "Help");
   refresh ();
   help_refresh (&help);
+  DrawOverlay = HelpDraw;
+  pthread_mutex_unlock (&draw_mutex);
 
   if (!help_can_scroll (&help))
+    quit_key_was_resize = GetChar () == KEY_RESIZE;
+  else
     {
-      GetChar ();
-      return;
-    }
-
-  while (running)
-    {
-      switch (ch = GetChar ())
+      while (running)
         {
-        case 'j':
-        case KEY_UP:
-          help_move_cursor (&help, -1);
-          break;
-        case 'k':
-        case KEY_DOWN:
-          help_move_cursor (&help, 1);
-          break;
-        case 'g':
-        case KEY_HOME:
-          help_set_cursor (&help, 0);
-          break;
-        case 'G':
-        case KEY_END:
-          help_set_cursor (&help, (unsigned)-1);
-          break;
-        case KEY_RESIZE:
-        case ' ':
-        case '\n':
-        case 'q':
-          running = false;
-          break;
-        }
-      if (running)
-        {
+          switch (ch = GetChar ())
+            {
+            case 'j':
+            case KEY_UP:
+              help_move_cursor (&help, -1);
+              break;
+            case 'k':
+            case KEY_DOWN:
+              help_move_cursor (&help, 1);
+              break;
+            case 'g':
+            case KEY_HOME:
+              help_set_cursor (&help, 0);
+              break;
+            case 'G':
+            case KEY_END:
+              help_set_cursor (&help, (unsigned)-1);
+              break;
+            case KEY_RESIZE:
+              quit_key_was_resize = true;
+              /* FALLTHROUGH */
+            case ' ':
+            case '\n':
+            case 'q':
+              running = false;
+              goto break_out;
+            }
+          pthread_mutex_lock (&draw_mutex);
           help_draw (&help);
           DrawWindow (help.window, "Help");
           refresh ();
           help_refresh (&help);
+          pthread_mutex_unlock (&draw_mutex);
         }
     }
-}
+break_out:;
 
+  pthread_mutex_lock (&draw_mutex);
+  DrawOverlay = NULL;
+  pthread_mutex_unlock (&draw_mutex);
+
+  flushinp ();
+  if (quit_key_was_resize)
+    ungetch (KEY_RESIZE);
+  else
+    ungetch (KEY_REFRESH);
+}

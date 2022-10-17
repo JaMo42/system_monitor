@@ -72,10 +72,9 @@ ContextMenuShow (Context_Menu *menu, int x, int y)
   pthread_mutex_lock (&draw_mutex);
   ContextMenuDraw (&state);
   refresh ();
-  pthread_mutex_unlock (&draw_mutex);
-
   overlay_data = &state;
   DrawOverlay = ContextMenuDraw;
+  pthread_mutex_unlock (&draw_mutex);
 
   ReportMouseMoveEvents (true, false);
   int key;
