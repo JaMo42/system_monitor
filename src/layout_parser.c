@@ -45,11 +45,24 @@ struct Used_Widget
 };
 
 static Token *tokens;
+static Token *first_token;
 static const char *source;
 static const char *source_name;
 static const char *widget_choices;
 static Used_Widget used_widgets_proxy = { .next = NULL };
 static Used_Widget *used_widgets_last = &used_widgets_proxy;
+
+static void
+FreeTokens ()
+{
+  Token *t = first_token, *next;
+  while (t)
+    {
+      next = t->next;
+      free (t);
+      t = next;
+    }
+}
 
 static void
 IndexToPosition (size_t idx, int *line, int *col)
@@ -317,6 +330,7 @@ Tokenize ()
   PUSH (TOK_END, 1);
   last->next = NULL;
   tokens = dummy.next;
+  first_token = dummy.next;
 #undef PUSH
 }
 
@@ -584,6 +598,8 @@ ParseLayoutString (const char *source_, const char *source_name_)
       ErrorShowSource (tokens->begin, tokens->length, "");
       exit (1);
     }
+
+  FreeTokens ();
 
   return layout;
 }
