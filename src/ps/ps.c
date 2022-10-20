@@ -163,7 +163,10 @@ void ps_init ()
 
 static VECTOR(Proc_Data*) ps_get_toplevel ()
 {
-  VECTOR(Proc_Data*) toplevel = vector_create (Proc_Data*, 16);
+  /* This vector is leaked (only) when the program exists,
+     this is not an issue but it will show up in valgrind as a leak. */
+  static VECTOR(Proc_Data*) toplevel = NULL;
+  vector_clear (toplevel);
   proc_map_for_each (&procs) {
     if (it->data->parent == 0) {
       vector_push (toplevel, it->data);
