@@ -4,6 +4,7 @@
 #include "input.h"
 #include "ps/ps.h"
 #include "context_menu.h"
+#include "dialog.h"
 
 bool proc_forest = false;
 bool proc_kthreads = false;
@@ -515,7 +516,13 @@ ProcShowContextMenu (int x)
     }
   if (signal && kill (proc_cursor_pid, signal) == -1)
     {
-      // todo
+      static const char *fmt = "Cannot kill process with PID %d with signal %d:\n%s";
+      const char *error = strerror (errno);
+      int len = snprintf (NULL, 0, fmt, proc_cursor_pid, signal, error) + 1;
+      char *buf = malloc (len);
+      (void)snprintf (buf, len, fmt, proc_cursor_pid, signal, error);
+      ShowPlainMessageBox ("Error", buf);
+      free (buf);
     }
   wrefresh (proc_widget.win);
 }
