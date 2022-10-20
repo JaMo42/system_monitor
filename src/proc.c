@@ -160,30 +160,6 @@ ProcUpdateProcesses ()
   ProcSearchUpdateMatches ();
 }
 
-static void
-ProcStop ()
-{
-  kill (proc_cursor_pid, SIGSTOP);
-}
-
-static void
-ProcContinue ()
-{
-  kill (proc_cursor_pid, SIGCONT);
-}
-
-static void
-ProcEnd ()
-{
-  kill (proc_cursor_pid, SIGTERM);
-}
-
-static void
-ProcKill ()
-{
-  kill (proc_cursor_pid, SIGKILL);
-}
-
 void
 ProcInit (WINDOW *win, unsigned graph_scale)
 {
@@ -201,12 +177,9 @@ ProcInit (WINDOW *win, unsigned graph_scale)
   ProcSetViewSize (getmaxy (win) - 3);
   ProcUpdateProcesses ();
   static const char *menu_items[] = {
-    "Stop", "Continue", "End", "Kill", NULL
+    "Stop", "Continue", "End", "Kill"
   };
-  static void (*functions[]) () = {
-    ProcStop, ProcContinue, ProcEnd, ProcKill
-  };
-  proc_context_menu = ContextMenuCreate (menu_items, functions);
+  proc_context_menu = ContextMenuCreate (menu_items, countof (menu_items));
 }
 
 void
@@ -531,7 +504,19 @@ ProcShowContextMenu (int x)
   else
     x += getbegx (proc_widget.win);
   const int y = getbegy (proc_widget.win) + 4 + (proc_cursor - proc_view_begin);
-  ContextMenuShow (&proc_context_menu, x, y);
+  // Stop, Continue, End, Kill
+  int signal = 0;
+  switch (ContextMenuShow (&proc_context_menu, x, y))
+    {
+    case 0: signal = SIGSTOP; break;
+    case 1: signal = SIGCONT; break;
+    case 2: signal = SIGTERM; break;
+    case 3: signal = SIGKILL; break;
+    }
+  if (signal && kill (proc_cursor_pid, signal) == -1)
+    {
+      // todo
+    }
   wrefresh (proc_widget.win);
 }
 

@@ -9,21 +9,18 @@ typedef struct {
 } Active_Context_Menu;
 
 Context_Menu
-ContextMenuCreate (const char **names, void (**functions) ())
+ContextMenuCreate (const char **names, int count)
 {
-  int len;
+  int len, i;
   Context_Menu menu;
   menu.names = names;
-  menu.functions = functions;
-  menu.count = 0;
+  menu.count = count;
   menu.width = 0;
-  while (*names)
+  for (i = 0; i < count; ++i)
     {
-      len = strlen (*names);
+      len = strlen (names[i]);
       if (len > menu.width)
         menu.width = len;
-      ++menu.count;
-      ++names;
     }
   return menu;
 }
@@ -48,7 +45,7 @@ ContextMenuDraw (void *data)
   state->prev_sel = state->sel;
 }
 
-void
+int
 ContextMenuShow (Context_Menu *menu, int x, int y)
 {
   if (y + menu->count + 2 > LINES)
@@ -149,6 +146,5 @@ ContextMenuShow (Context_Menu *menu, int x, int y)
   else
     ungetch (KEY_REFRESH);
 
-  if (state.sel >= 0)
-    menu->functions[state.sel] ();
+  return state.sel;
 }

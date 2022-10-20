@@ -3,11 +3,10 @@
 
 typedef struct {
   const char **names;
-  void (**functions) ();
   int count;
   int width;
 } Context_Menu;
 
-Context_Menu ContextMenuCreate (const char **names, void (**functions) ());
+Context_Menu ContextMenuCreate (const char **names, int count);
 
-void ContextMenuShow (Context_Menu *menu, int x, int y);
+int ContextMenuShow (Context_Menu *menu, int x, int y);

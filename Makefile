@@ -1,4 +1,4 @@
-CC ?= gcc
+CC = gcc
 CFLAGS = -Wall -Wextra
 LDFLAGS = -lm -pthread
 VGFLAGS = --track-origins=yes #--leak-check=full
