@@ -48,7 +48,7 @@ DrawHeader (WINDOW *win)
   waddstr (win, " PID");
   waddstr (win, pid_indicators[current_sorting_mode]);
 
-  wmove (win, 1, 10);
+  wmove (win, 1, 11);
   waddstr (win, "Command");
 
   wmove (win, 1, cpu_mem_off);
@@ -293,7 +293,7 @@ ProcDraw (WINDOW *win)
 
   const unsigned long cpu_period = ps_cpu_period ();
   const unsigned long total_memory = ps_total_memory ();
-  int command_len = (getmaxx (win) - 1 - 2 - 7 - 2 - cpu_and_memory_offset);
+  int command_len = (getmaxx (win) - 1 - 1 - 2 - 7 - 2 - cpu_and_memory_offset);
   int prefix_size;
   unsigned row = 2;
   bool colorize_branches;
@@ -318,11 +318,7 @@ ProcDraw (WINDOW *win)
       wprintw (win, "%7d  ", p->pid);
       prefix_size = ProcPrintPrefix (win, p->tree_prefix, p->tree_level,
                                      colorize_branches);
-      if (p->command_line) {
-        wprintw (win, "%.*s", command_len - prefix_size, p->command_line);
-      } else {
-        waddstr (win, "(commandline not available)");
-      }
+      waddnstr (win, p->command_line, command_len - prefix_size);
       wmove (win, row, getmaxx (win) - cpu_and_memory_offset);
       ProcFormatPercentage (win, p->total_cpu_time, cpu_period);
       waddstr (win, "  ");
