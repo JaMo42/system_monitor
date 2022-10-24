@@ -81,8 +81,8 @@ ReadConfig ()
     config_ok = true;
     config_file = result.unwrap;
   } else {
-    config_ok = false;
     fprintf (stderr, "Failed to parse config: %s\n", result.error);
+    exit (1);
   }
 }
 
