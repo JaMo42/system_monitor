@@ -14,7 +14,7 @@ git submodule update
 make
 ```
 
-Note: by default the progams links with the `-lncurses` library but on some systems you may need to change it to `-lncursesw` (happens automatically on debian-based distros).
+Note: by default the program links with the `-lncurses` library but on some systems you may need to change it to `-lncursesw` (happens automatically on debian-based distros).
 
 ## Usage
 
@@ -49,7 +49,7 @@ If the layout option for `-l` is `?` the current layout string (either the defau
 
 - `f`: toggle process ASCII art tree view
 - 't': collapse/expand the selected tree
-- `T`: toggle visiblity of kernel threads
+- `T`: toggle visibility of kernel threads
 - `S`: toggle summation of child processes
 - Process searching
   - `/`: start search
@@ -57,12 +57,12 @@ If the layout option for `-l` is `?` the current layout string (either the defau
   - `N`: select previous search result
 - CPU graph
   - `a`: toggle average CPU usage
-  - `C`: togle CPU graph range scaling
+  - `C`: toggle CPU graph range scaling
 - Context menus
   - `k` and `<Up>`:  up
   - `j` and `<Down>`: down
   - `<Space>` and `<Enter>`: confirm
-  - anyting else: cancel
+  - anything else: cancel
 
 These can be viewed while the application is running by pressing `?`.
 
@@ -78,13 +78,52 @@ The context menu should also highlight the element under the cursor however this
 
 ## Configuration
 
-There currently is no config file, only environment variables.
+### File
 
-- `SM_LAYOUT`: the layout string
+The is configured using the file `~/.config/sm.ini`.
+
+Sections and their properties are:
+
+- `sm`
+  - `layout` (string) the layout string
+  - `interval` (number) the update interval
+  - `graph-scale` (number) the graph scale
+
+- `cpu`
+  - `show-average` (bool) show the average CPU usage instead of each processor
+  - `scale-heigh` (bool) show only required height instead of 0 to 100 percent
+
+- `proc` (process viewer)
+  - `forest` (bool) enable forest mode
+  - `kthread` (bool) show kthreads
+
+- `disk`
+  - `vertical` (bool) if true, show filesystems in a column
+  - `mounting-points` (string) comma separated list of mounting points of the filesystems to show
+
+Boolean values can be given as `true`, `yes`, or `1` for true and `false`, `no`, or `0` for false.
+
+Number values are unsigned integers.
+
+String values may be quoted.
+
+### Environment variables
 
 - `SM_DISK_FS`: disk filesystems string; comma-separated list of mounting points
 
 - `SM_DISK_VERTICAL`: if set, the disk usage widget is displayed vertically
+
+### Precedence
+
+The precedence for the different configuration ways is:
+
+- default value
+
+- config file
+
+- environment variable
+
+- commandline option
 
 ## Layout
 

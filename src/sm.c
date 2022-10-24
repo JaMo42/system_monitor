@@ -10,6 +10,7 @@
 #include "nc-help/help.h"
 #include "layout_parser.h"
 #include "input.h"
+#include "config.h"
 
 #define widgets_for_each() \
   for (Widget *const *it = widgets, *w = *it; w != NULL; w = *++it)
@@ -65,6 +66,8 @@ void (*DrawOverlay) (void *);
 
 bool (*HandleInput) (int key);
 
+void LoadConfig ();
+
 void CursesInit ();
 void CursesUpdate ();
 void CursesQuit ();
@@ -103,6 +106,8 @@ UpdateThread (void *arg)
 int
 main (int argc, char *const *argv)
 {
+  ReadConfig ();
+  LoadConfig ();
   ParseArgs (argc, argv);
 
   const bool show_current_layout = layout && strcmp (layout, "?") == 0;
@@ -112,8 +117,12 @@ main (int argc, char *const *argv)
   const char *layout_source;
   if (layout == NULL || *layout == '\0')
     {
-      if ((layout = getenv ("SM_LAYOUT")) && *layout != '\0')
-        layout_source = "SM_LAYOUT";
+      Config_Read_Value *v;
+      if (HaveConfig () && (v = ConfigGet ("sm", "layout")))
+        {
+          layout = v->as_string ();
+          layout_source = "sm.ini";
+        }
       else
         {
           layout = "(rows 33% c[2] (cols (rows m[1] n[0]) p[3]))";
@@ -159,6 +168,39 @@ main (int argc, char *const *argv)
   help_free (&help);
   UIDeleteLayout (ui);
   CursesQuit ();
+  FreeConfig ();
+}
+
+void
+LoadConfig ()
+{
+  if (!HaveConfig ())
+    return;
+  Config_Read_Value *v;
+
+  if ((v = ConfigGet ("sm", "interval")))
+    {
+      unsigned long n = v->as_unsigned ();
+      interval.tv_sec = n / 1000L;
+      interval.tv_nsec = (n % 1000L) * 1000000L;
+    }
+  if ((v = ConfigGet ("sm", "graph-scale")))
+    graph_scale = v->as_unsigned ();
+
+  if ((v = ConfigGet ("cpu", "show-average")))
+    cpu_show_avg = v->as_bool ();
+  if ((v = ConfigGet ("cpu", "scale-height")))
+    cpu_scale_height = v->as_bool ();
+
+  if ((v = ConfigGet ("proc", "forest")))
+    proc_forest  = v->as_bool ();
+  if ((v = ConfigGet ("proc", "show-kernel-threads")))
+    proc_kthreads = v->as_bool ();
+
+  if ((v = ConfigGet ("disk", "vertical")))
+    disk_vertical = v->as_bool ();
+  if ((v = ConfigGet ("disk", "mounting-points")))
+    disk_fs = v->as_string ();
 }
 
 void

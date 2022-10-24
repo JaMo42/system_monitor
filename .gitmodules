@@ -4,3 +4,9 @@
 [submodule "src/c-vector"]
 	path = src/c-vector
 	url = https://github.com/JaMo42/c-vector
+[submodule "src/rb-tree"]
+	path = src/rb-tree
+	url = https://github.com/JaMo42/rb-tree
+[submodule "src/ini"]
+	path = src/ini
+	url = https://github.com/JaMo42/ini

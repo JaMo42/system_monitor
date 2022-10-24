@@ -14,6 +14,7 @@
 #include <inttypes.h>
 #include <errno.h>
 
+#include <strings.h>
 #include <sys/types.h>
 #include <sys/sysinfo.h>
 #include <unistd.h>
@@ -28,6 +29,7 @@
 #include <ncurses.h>
 
 #include "c-vector/vector.h"
+#include "ini/ini.h"
 
 #include "list.h"
 

@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra
+CFLAGS = -Wall -Wextra -Isrc/rb-tree
 LDFLAGS = -lm -pthread
 VGFLAGS = --track-origins=yes #--leak-check=full
 
@@ -25,7 +25,7 @@ else
 endif
 
 source_files = $(wildcard src/*.c src/canvas/*.c src/ps/*.c) \
-               src/nc-help/help.c
+               src/nc-help/help.c src/rb-tree/rb_tree.c src/ini/ini.c
 object_files = $(patsubst src/%.c,build/%.o,$(source_files))
 
 all: build_dirs build/stdafx.h.gch sm
@@ -35,6 +35,8 @@ build_dirs:
 	@mkdir -p build/nc-help
 	@mkdir -p build/canvas
 	@mkdir -p build/ps
+	@mkdir -p build/rb-tree
+	@mkdir -p build/ini
 
 build/stdafx.h.gch: src/stdafx.h
 	$(CC) -o $@ $<

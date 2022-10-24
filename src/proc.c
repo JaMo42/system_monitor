@@ -512,7 +512,7 @@ ProcShowContextMenu (int x)
     }
   if (signal && kill (proc_cursor_pid, signal) == -1)
     {
-      static const char *fmt = "Cannot kill process with PID %d with signal %d:\n%s";
+      static const char *fmt = "Cannot kill process with PID %d with signal %d: \n%s";
       const char *error = strerror (errno);
       int len = snprintf (NULL, 0, fmt, proc_cursor_pid, signal, error) + 1;
       char *buf = malloc (len);
