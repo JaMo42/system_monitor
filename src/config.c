@@ -66,8 +66,7 @@ ReadConfig ()
   const char *const path = "/.config/sm.ini";
   const size_t len = strlen (home) + strlen (path) + 1;
   char *pathname = malloc (len);
-  strncpy (pathname, home, len);
-  strncat (pathname, path, len);
+  snprintf (pathname, len, "%s%s", home, path);
   FILE *fp = fopen (pathname, "r");
   free (pathname);
   if (!fp) {
