@@ -1,5 +1,6 @@
+INCLUDE_DIRS = -Isrc/rb-tree
 CC = gcc
-CFLAGS = -Wall -Wextra -Isrc/rb-tree
+CFLAGS = -Wall -Wextra $(INCLUDE_DIRS)
 LDFLAGS = -lm -pthread
 VGFLAGS = --track-origins=yes #--leak-check=full
 
@@ -39,7 +40,7 @@ build_dirs:
 	@mkdir -p build/ini
 
 build/stdafx.h.gch: src/stdafx.h
-	$(CC) -o $@ $<
+	$(CC) $(INCLUDE_DIRS) -o $@ $<
 
 build/%.o: src/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
