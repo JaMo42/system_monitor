@@ -324,6 +324,13 @@ ProcDraw (WINDOW *win)
       waddstr (win, "  ");
       ProcFormatPercentage (win, p->total_memory, total_memory);
     }
+  wattrset (win, A_NORMAL);
+  const unsigned row_end = getmaxy (win) - 1;
+  for (; row < row_end; ++row)
+    {
+      wmove (win, row, 1);
+      PrintN (win, ' ', getmaxx (win) - 2);
+    }
 
   if (proc_search_active)
     GetLineDraw ();
