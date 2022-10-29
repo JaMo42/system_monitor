@@ -4,12 +4,12 @@ static Ini config_file;
 
 static bool config_ok;
 
-const Ini_Table *config_current_table;
+static const Ini_Table *config_current_table;
 
-const char *config_current_table_name = NULL;
-const char *config_current_name;
+static const char *config_current_table_name = NULL;
+static const char *config_current_name = NULL;
 
-Ini_String config_value_string;
+static Ini_String config_value_string;
 
 static bool AsBool ();
 static const char * AsString ();
@@ -36,9 +36,9 @@ AsBool ()
       || strcasecmp (config_value_string.data, "yes") == 0
       || strcasecmp (config_value_string.data, "1") == 0)
     return true;
-  if (strcasecmp (config_value_string.data, "true") == 0
-      || strcasecmp (config_value_string.data, "yes") == 0
-      || strcasecmp (config_value_string.data, "1") == 0)
+  if (strcasecmp (config_value_string.data, "false") == 0
+      || strcasecmp (config_value_string.data, "no") == 0
+      || strcasecmp (config_value_string.data, "0") == 0)
     return false;
   ConfigInvalidValue ();
 }
@@ -112,5 +112,6 @@ ConfigGet (const char *table, const char *name)
   config_value_string = ini_table_get (config_current_table, name);
   if (config_value_string.data == NULL)
     return NULL;
+  config_current_name = name;
   return &config_read_value_instance;
 }
