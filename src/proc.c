@@ -325,7 +325,7 @@ ProcDraw (WINDOW *win)
       ProcFormatPercentage (win, p->total_memory, total_memory);
     }
   wattrset (win, A_NORMAL);
-  const unsigned row_end = getmaxy (win) - 1;
+  const unsigned row_end = getmaxy (win) - 1 - proc_search_active;
   for (; row < row_end; ++row)
     {
       wmove (win, row, 1);
