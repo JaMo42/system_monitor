@@ -212,7 +212,7 @@ ProcPrintPrefix (WINDOW *win, int8_t *prefix, unsigned level, bool color)
     "├─ ... ",
     "╰─ ",
     "╰─ ... ",
-    "┆ ",
+    "╎ ",
   };
   // Display width of the prefixes
   static const int prefix_sizes[] = {4, 4, 3, 7, 3, 7, 2};
