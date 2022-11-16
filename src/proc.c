@@ -65,18 +65,23 @@ DrawHeader (WINDOW *win)
 static inline void
 ProcSetCursor (unsigned cursor)
 {
-  if (cursor < proc_cursor && cursor < proc_view_begin + 1)
-    proc_view_begin = cursor ? cursor - 1 : 0;
-  else if (cursor > proc_cursor)
-    {
-      if (cursor > proc_view_begin + proc_view_size - 2)
-        {
-          const bool not_end = (cursor != proc_count - 1);
-          proc_view_begin = cursor - proc_view_size + 1 + not_end;
-        }
-      if (proc_view_begin + proc_view_size > proc_count)
-        proc_view_begin = proc_count - proc_view_size;
-    }
+  // Lines visible above/below the cursor
+  const unsigned lines_before = 5;
+  // Top
+  if (cursor < lines_before)
+    proc_view_begin = 0;
+  // Bottom
+  else if (cursor >= proc_count - lines_before)
+    proc_view_begin = proc_count - proc_view_size;
+  // Scrolling up
+  else if (cursor < proc_cursor && cursor < proc_view_begin + lines_before)
+    proc_view_begin = cursor - lines_before;
+  // Scrolling down
+  else if (cursor > proc_cursor
+           && cursor >= proc_view_begin + proc_view_size - lines_before)
+    proc_view_begin = cursor - proc_view_size + lines_before + 1;
+  if (proc_view_begin + proc_view_size > proc_count)
+    proc_view_begin = proc_count - proc_view_size;
   proc_cursor = cursor;
   proc_cursor_pid = ps_get_procs ()[cursor]->pid;
 }
