@@ -319,31 +319,33 @@ AdjustView ()
 {
   const int L = S.input->length;
   const bool cursor_at_end = S.cursor == L;
+  // Characters visible before/after the cursor
+  const int visible_before = 5;
   if (L < S.width + !cursor_at_end)
     {
       S.view_begin = 0;
       S.view_end = L;
     }
-  else if (S.cursor < more_left.size + 2)
+  else if (S.cursor < more_left.size + visible_before + 1)
     {
       S.view_begin = 0;
       S.view_end = S.width - more_right.size;
     }
-  else if (S.cursor < S.view_begin + 1)
+  else if (S.cursor < S.view_begin + visible_before)
     {
-      S.view_begin = S.cursor - 1;
+      S.view_begin = S.cursor - visible_before;
       S.view_end = Min (S.view_begin - more_left.size + S.width, L);
       if (S.view_end != L)
         S.view_end -= more_right.size;
     }
-  else if (S.cursor >= L - (more_right.size + 2))
+  else if (S.cursor >= L - (more_right.size + visible_before + 1))
     {
       S.view_end = L;
       S.view_begin = S.view_end - S.width + more_left.size + cursor_at_end;
     }
-  else if (S.cursor > S.view_end - 2)
+  else if (S.cursor > S.view_end - visible_before - 1)
     {
-      S.view_end = S.cursor + 2;
+      S.view_end = S.cursor + visible_before + 1;
       S.view_begin = Max (S.view_end + more_right.size - S.width, 0);
       if (S.view_begin != 0)
         S.view_begin += more_left.size;
