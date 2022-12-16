@@ -31,6 +31,7 @@ static bool proc_search_show;
 static bool proc_search_single_match;
 static int proc_first_match;
 static int proc_last_match;
+static pid_t proc_cursor_pid_before_search;
 
 static Context_Menu proc_context_menu;
 
@@ -429,12 +430,26 @@ ProcSearchFinish (Input_String *s)
   proc_search_active = false;
   proc_search_string = s;
   proc_time_passed = 2000;
+  if (StrEmpty (s))
+    {
+      VECTOR(Proc_Data*) procs = ps_get_procs ();
+      for (size_t i = 0; i < proc_count; ++i)
+        {
+          if (procs[i]->pid == proc_cursor_pid_before_search)
+            {
+              proc_cursor = i;
+              proc_cursor_pid = proc_cursor_pid_before_search;
+              break;
+            }
+        }
+    }
   ProcRefresh (false);
 }
 
 void
 ProcBeginSearch ()
 {
+  proc_cursor_pid_before_search = proc_cursor_pid;
   proc_search_active = true;
   ProcSetViewSize (proc_view_size - 1);
   WINDOW *win = proc_widget.win;
