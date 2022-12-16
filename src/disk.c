@@ -80,7 +80,9 @@ DiskInit (WINDOW *win, unsigned graph_scale)
       || !*disk_fs)
     disk_fs = "/";
   DiskParseFsString ((char *)disk_fs);
-  disk_vertical = !!getenv ("SM_DISK_VERTICAL");
+  if (getenv ("SM_DISK_VERTICAL") != NULL) {
+    disk_vertical = true;
+  }
   WidgetFixedSize (&disk_widget, true);
   DiskUpdate ();
   DiskDraw (win);
