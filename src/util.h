@@ -60,3 +60,8 @@ char* StringPush (char *buf, const char *s);
 void PushStyle (WINDOW *win, attr_t attributes, short color);
 
 void PopStyle (WINDOW *win);
+
+/** Prints a padded percentage without adding uneccessary spaces.
+    The given coordinates are the leftmost cell and the printed text is at most
+    4 characters wide ("100%"). */
+void PrintPercentage(WINDOW *win, int x, int y, double p);

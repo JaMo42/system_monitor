@@ -2,13 +2,11 @@
 #include "util.h"
 #include "canvas/canvas.h"
 #include "ps/util.h"
+#include "graph.h"
 
 IgnoreMouse (Cpu);
 Widget cpu_widget = WIDGET("cpu", Cpu);
 
-static List **cpu_usages;
-static unsigned cpu_max_samples;
-static unsigned cpu_samples;
 static int cpu_count;
 
 bool cpu_show_avg = false;
@@ -19,32 +17,35 @@ static int cpu_graph_scale = 5;
 static size_t *cpu_last_total_jiffies;
 static size_t *cpu_last_work_jiffies;
 
+static Graph cpu_graph;
+static Graph cpu_avg_graph;
+
 void
 CpuInit (WINDOW *win, unsigned graph_scale)
 {
   cpu_count = get_nprocs_conf ();
-  cpu_usages = (List **)malloc (sizeof (List *) * (cpu_count + 1));
-  for (int i= 0; i <= cpu_count; ++i)
-    cpu_usages[i] = list_create ();
-  cpu_max_samples = MAX_SAMPLES (win, graph_scale);
-  cpu_samples = 0;
   cpu_last_total_jiffies = calloc (cpu_count + 1, sizeof (size_t));
   cpu_last_work_jiffies = calloc (cpu_count + 1, sizeof (size_t));
   cpu_show_avg = cpu_show_avg || cpu_count > 8;
   cpu_graph_scale = graph_scale;
   CpuDrawBorder (win);
   cpu_canvas = CanvasCreate (win);
+
+  GraphConstruct(&cpu_graph, GRAPH_KIND_BEZIR, cpu_count, graph_scale);
+  GraphSetDynamicRange(&cpu_graph, 0.1);
+  GraphConstruct(&cpu_avg_graph, GRAPH_KIND_BEZIR, 1, graph_scale);
+  GraphSetColors(&cpu_avg_graph, C_CPU_AVG, -1);
+  GraphSetDynamicRange(&cpu_avg_graph, 0.1);
 }
 
 void
 CpuQuit ()
 {
-  for (int i = 0; i <= cpu_count; ++i)
-    list_delete (cpu_usages[i]);
-  free (cpu_usages);
   free (cpu_last_total_jiffies);
   free (cpu_last_work_jiffies);
   CanvasDelete (cpu_canvas);
+  GraphDestroy(&cpu_graph);
+  GraphDestroy(&cpu_avg_graph);
 }
 
 static double
@@ -80,114 +81,17 @@ CpuPollUsage (int id, FILE *stat)
 void
 CpuUpdate ()
 {
-  const bool full = cpu_samples == cpu_max_samples;
   FILE *stat = fopen ("/proc/stat", "r");
-
   for (int i = 0; i <= cpu_count; ++i)
     {
       const double usage = CpuPollUsage (i, stat);
-      if (likely (full))
-        list_rotate_left (cpu_usages[i])->f = usage;
-      else
-        list_push_back (cpu_usages[i])->f = usage;
+      if (i == 0) {
+        GraphAddSample(&cpu_avg_graph, 0, usage);
+      } else {
+        GraphAddSample(&cpu_graph, i-1, usage);
+      }
     }
-  if (unlikely (!full))
-    ++cpu_samples;
   fclose (stat);
-}
-
-static void
-CpuDrawGraph (int id, short color, double max_percent,
-              void (*DrawLine) (Canvas *, double, double, double, double, short))
-{
-  double last_x = -1.0, last_y = -1.0;
-
-  double x = (cpu_max_samples - cpu_samples) * cpu_graph_scale;
-  double y;
-
-  list_for_each (cpu_usages[id], u)
-    {
-      x += cpu_graph_scale;
-      y = ((double)cpu_canvas->height
-           - (((double)cpu_canvas->height - 0.25) * (u->f / max_percent)));
-
-      if (likely (last_y >= 0.0))
-        {
-          DrawLine (cpu_canvas,
-                    (last_x - cpu_graph_scale)*2.0, last_y*4.0 - 1,
-                    (x - cpu_graph_scale)*2.0, y*4.0 - 1,
-                    color);
-        }
-      last_x = x;
-      last_y = y;
-    }
-}
-
-static double
-CpuMaxPercent ()
-{
-  if (!cpu_scale_height)
-    return 1.0;
-  double max = 0.0;
-  if (cpu_show_avg)
-    {
-      list_for_each (cpu_usages[0], s)
-        {
-          if (s->f > max)
-            max = s->f;
-        }
-    }
-  else
-    {
-      for (int i = 1; i <= cpu_count; ++i)
-        {
-          list_for_each (cpu_usages[i], s)
-            {
-              if (s->f > max)
-                max = s->f;
-            }
-        }
-    }
-  max = round (max * 10.0) / 10.0 + 0.1;
-  if (max > 1.0)
-    max = 1.0;
-  return max;
-}
-
-static void
-CpuDrawGraphBezir (Canvas *canvas, double x1, double y1, double x2, double y2, short color)
-{
-  if (x1 == x2)
-    {
-      CanvasDrawLine (canvas, x1, y1, x2, y2, color);
-      return;
-    }
-  /* Arbitrary constant that defined how squiggly(?) the bezir curbe will be;
-     0.0 -> straight line, 2.0 -> very shallow at beginning, vertical in the middle.
-     Values less than 0.0 or greater than 2.0 will cause it to overlap itself. */
-  #define CONTROL_FACTOR ((2.0 + 1.618) / 3.0)
-  const double dx = (x2 - x1) * 2.0;
-  const double dy = fabs (y1 - y2);
-  const double percision = 0.9 / (dx > dy ? dx : dy);
-  /* Control point coordinates.
-     Invariant: x2 > x1 */
-  const double x1_c = x1 + cpu_graph_scale * CONTROL_FACTOR;
-  const double x2_c = x2 - cpu_graph_scale * CONTROL_FACTOR;
-  const double y1_c = y1;
-  const double y2_c = y2;
-  double d, d2, d3, w1, w2, w3, w4, x, y;
-  for (d = 0.0; d <= 1.0; d += percision)
-    {
-      d2 = d * d;
-      d3 = d2 * d;
-      w1 =   -d3 + 3*d2 - 3*d + 1;
-      w2 =  3*d3 - 6*d2 + 3*d    ;
-      w3 = -3*d3 + 3*d2          ;
-      w4 =    d3                 ;
-      x = x1*w1 + x1_c*w2 + x2_c*w3 + x2*w4;
-      y = y1*w1 + y1_c*w2 + y2_c*w3 + y2*w4;
-      CanvasSet (canvas, x, y, color);
-    }
 }
 
 #define COLOR(i) ((i) < 8 ? C_CPU_GRAPHS[i] : ((i + 10) % 256))
@@ -195,25 +99,21 @@ CpuDrawGraphBezir (Canvas *canvas, double x1, double y1, double x2, double y2, s
 void
 CpuDraw (WINDOW *win)
 {
+  double lo, hi;
   CanvasClear (cpu_canvas);
-
-  const double max_percent = CpuMaxPercent ();
   if (cpu_show_avg)
-    CpuDrawGraph (0, C_CPU_AVG, max_percent, CpuDrawGraphBezir);
+    GraphDraw(&cpu_avg_graph, cpu_canvas, &lo, &hi);
   else
-    {
-      for (int i = cpu_count; i > 0; --i)
-        CpuDrawGraph (i, COLOR (i - 1), max_percent, CpuDrawGraphBezir);
-    }
-
+    GraphDraw(&cpu_graph, cpu_canvas, &lo, &hi);
   CanvasDraw (cpu_canvas, win);
 
   const int width = getmaxx (win);
   const int height = getmaxy (win);
   if (cpu_show_avg)
     {
+      const double u = GraphLastSample(&cpu_avg_graph, 0);
       wattron (win, COLOR_PAIR (C_CPU_AVG));
-      mvwprintw (win, 2, 3, "AVRG %d%%", (int)(cpu_usages[0]->back->f * 100.f));
+      mvwprintw (win, 2, 3, "AVRG %d%%", (int)(u * 100.f));
       wattroff (win, COLOR_PAIR (C_CPU_AVG));
     }
   else
@@ -221,27 +121,26 @@ CpuDraw (WINDOW *win)
       const int rows = height - 4;
       for (int i = 0; i < cpu_count; ++i)
         {
+          const int y = 2 + i % rows;
+          const int x = 3 + i / rows * 10;
+          const double u = GraphLastSample(&cpu_graph, i);
           wattron (win, COLOR_PAIR (COLOR (i)));
-          mvwprintw (win, 2 + i % rows, 3 + i / rows * 10, "CPU%d %d%%", i,
-                     (int)(cpu_usages[i + 1]->back->f * 100.f));
+          mvwprintw (win, y, x, "CPU%d %d%%", i, (int)(u * 100.f));
           wattroff (win, COLOR_PAIR (COLOR (i)));
         }
     }
-  mvwprintw (win, 1, width - 5, "%3d%%", (int)(max_percent*100.0+0.5));
-  mvwaddstr (win, height - 2, width - 3, "0%");
+  PrintPercentage(win, width - 5, 1, hi);
+  PrintPercentage(win, width - 5, height - 2, lo);
 }
 
 void
 CpuResize (WINDOW *win)
 {
   wclear (win);
-
   CanvasResize (cpu_canvas, win);
-
-  cpu_max_samples = MAX_SAMPLES (win, cpu_graph_scale);
-  for (int i = 0; i <= cpu_count; ++i)
-    list_shrink (cpu_usages[i], cpu_max_samples);
-  cpu_samples = cpu_usages[0]->count;
+  const Rectangle viewport = { 1, 1, cpu_canvas->width, cpu_canvas->height };
+  GraphSetViewport(&cpu_graph, viewport);
+  GraphSetViewport(&cpu_avg_graph, viewport);
 }
 
 void
@@ -275,10 +174,19 @@ CpuHandleInput (int key)
     {
     case 'C':
       cpu_scale_height = !cpu_scale_height;
+      if (cpu_scale_height) {
+        GraphSetDynamicRange(&cpu_graph, 0.1);
+        GraphSetDynamicRange(&cpu_avg_graph, 0.1);
+      } else {
+        GraphSetFixedRange(&cpu_graph, 0.0, 1.0);
+        GraphSetFixedRange(&cpu_avg_graph, 0.0, 1.0);
+      }
       break;
+
     case 'a':
       cpu_show_avg = !cpu_show_avg;
       break;
+
     default:
       return false;
     }

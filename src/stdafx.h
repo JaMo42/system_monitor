@@ -13,6 +13,7 @@
 #include <ctype.h>
 #include <inttypes.h>
 #include <errno.h>
+#include <float.h>
 
 #include <strings.h>
 #include <sys/types.h>

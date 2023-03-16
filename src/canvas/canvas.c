@@ -145,10 +145,15 @@ CanvasDrawLine (Canvas *c, double x1_, double y1_, double x2_, double y2_,
       x = (double)x1;
       y = (double)y1;
 
+      if (xd != 0) {
+        x += (double)(i * xd) / r * xs;
+        // Note: this clipping is specialized for the graph drawing so we only
+        // need check the X coordinate.
+        if (x < 0)
+          continue;
+      }
       if (yd != 0)
         y += (double)(i * yd) / r * ys;
-      if (xd != 0)
-        x += (double)(i * xd) / r * xs;
 
       CanvasSet (c, x, y, color);
     }
@@ -179,28 +184,38 @@ CanvasDrawLineFill (Canvas *c, double x1_, double y1_, double x2_, double y2_,
       x = (double)x1;
       y = (double)y1;
 
+      if (xd != 0) {
+        x += (double)(i * xd) / r * xs;
+        if (x < 0)
+            continue;
+      }
+
       if (yd != 0)
         y += (double)(i * yd) / r * ys;
-      if (xd != 0)
-        x += (double)(i * xd) / r * xs;
 
       for (size_t yy = c->height * 4; yy >= (size_t)y; --yy)
         CanvasSet (c, x, yy, color);
     }
 }
+
 void
 CanvasDrawRect (Canvas *c, double x1_, double y1_, double x2_,
                 double y2_, short color)
 {
+  // Like in `CanvasDrawLine` this is specific to the graph drawing where only
+  // the the left x can be negative.
+  if (x1_ < 0.0) {
+    x1_ = 0.0;
+  }
   const size_t x1 = NORMALIZE (x1_);
   const size_t y1 = NORMALIZE (y1_);
   const size_t x2 = NORMALIZE (x2_);
   const size_t y2 = NORMALIZE (y2_);
 
   const size_t xs = CANVAS_MAX (CANVAS_MIN (x1, x2), 0);
-  const size_t xe = CANVAS_MIN (CANVAS_MAX (x1, x2), c->width*2);
+  const size_t xe = CANVAS_MIN (CANVAS_MAX (x1, x2), c->width*2 - 1);
   const size_t ys = CANVAS_MAX (CANVAS_MIN (y1, y2), 0);
-  const size_t ye = CANVAS_MIN (CANVAS_MAX (y1, y2), c->height*4);
+  const size_t ye = CANVAS_MIN (CANVAS_MAX (y1, y2), c->height*4 - 1);
 
   for (size_t y = ys; y <= ye; ++y)
     {

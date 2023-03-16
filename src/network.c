@@ -1,6 +1,7 @@
 #include "network.h"
 #include "util.h"
 #include "canvas/canvas.h"
+#include "graph.h"
 
 extern struct timespec interval;
 
@@ -8,12 +9,8 @@ IgnoreInput (Network);
 IgnoreMouse (Network);
 Widget net_widget = WIDGET("network", Network);
 
-List *net_receive;
-List *net_transmit;
 unsigned long net_receive_total;
 unsigned long net_transmit_total;
-unsigned net_max_samples;
-unsigned net_samples;
 
 Canvas *net_canvas;
 int net_graph_scale = 5;
@@ -24,8 +21,9 @@ static struct {
 } *net_interfaces;
 static unsigned net_interface_count;
 static double net_period;
-static uintmax_t net_receive_max;
-static uintmax_t net_transmit_max;
+
+static Graph net_recv_graph;
+static Graph net_send_graph;
 
 static void
 NetworkGetInterfaces ()
@@ -67,17 +65,19 @@ NetworkGetInterfaces ()
 void
 NetworkInit (WINDOW *win, unsigned graph_scale)
 {
-  net_receive = list_create ();
-  net_transmit = list_create ();
   net_receive_total = 0;
   net_transmit_total = 0;
-  net_max_samples = MAX_SAMPLES (win, graph_scale);
-  net_samples = 0;
   NetworkGetInterfaces ();
   net_period = (double)interval.tv_sec + interval.tv_nsec / 1.0e9;
+  GraphConstruct(&net_recv_graph, GRAPH_KIND_BLOCKS, 1, graph_scale);
+  GraphSetColors(&net_recv_graph, C_NET_RECEIVE, -1);
+  GraphSetDynamicRange(&net_recv_graph, 0.1);
+  GraphConstruct(&net_send_graph, GRAPH_KIND_BLOCKS, 1, graph_scale);
+  GraphSetColors(&net_send_graph, C_NET_TRANSMIT, -1);
+  GraphSetDynamicRange(&net_send_graph, 0.1);
   NetworkUpdate ();
-  net_receive_max = 0;
-  net_transmit_max = 0;
+  list_clear(net_recv_graph.samples[0]);
+  list_clear(net_send_graph.samples[0]);
   net_graph_scale = graph_scale;
   NetworkDrawBorder (win);
   net_canvas = CanvasCreate (win);
@@ -86,8 +86,8 @@ NetworkInit (WINDOW *win, unsigned graph_scale)
 void
 NetworkQuit ()
 {
-  list_delete (net_receive);
-  list_delete (net_transmit);
+  GraphDestroy(&net_recv_graph);
+  GraphDestroy(&net_send_graph);
   for (unsigned i = 0; i < net_interface_count; ++i)
     {
       free (net_interfaces[i].name);
@@ -104,25 +104,9 @@ NetworkGetBytes (FILE *f)
   return strtoul (buf, NULL, 10);
 }
 
-static inline void
-NetworkAddValue (List *l, uintmax_t v, bool full, uintmax_t *m)
-{
-  if (likely (full))
-    list_rotate_left (l)->u = v;
-  else
-    list_push_back (l)->u = v;
-  *m = 0;
-  list_for_each (l, it)
-    {
-      if (it->u > *m)
-        *m = it->u;
-    }
-}
-
 void
 NetworkUpdate ()
 {
-  const bool full = net_samples == net_max_samples;
   unsigned long prev_receive = net_receive_total;
   unsigned long prev_transmit = net_transmit_total;
   FILE *f;
@@ -146,59 +130,16 @@ NetworkUpdate ()
   double receive_period = net_receive_total - prev_receive;
   double transmit_period = net_transmit_total - prev_transmit;
 
-  NetworkAddValue (net_receive, receive_period * net_period, full,
-                   &net_receive_max);
-  NetworkAddValue (net_transmit, transmit_period * net_period, full,
-                   &net_transmit_max);
-
-  if (unlikely (!full))
-    ++net_samples;
-}
-
-static void
-NetworkDrawGraph (List *values, uintmax_t max, unsigned y_off,
-                  unsigned height, short color)
-{
-  double x = (net_max_samples - net_samples) * net_graph_scale;
-  double y;
-  const double scale = 1.0 / max * height;
-
-  list_for_each (values, v)
-    {
-      x += net_graph_scale;
-      y = y_off - (double)v->u * scale;
-
-      if (likely (y >= 0.0))
-        {
-          CanvasDrawRect (net_canvas, x * 2.0, y_off * 4 - 1,
-                          (x - net_graph_scale) * 2.0, y * 4.0 - 1, color);
-        }
-    }
-}
-
-static void
-NetworkFlatline (unsigned y, short color)
-{
-  CanvasDrawLine (net_canvas, 0, y*4 - 1, net_canvas->width * 2, y*4 - 1, color);
+  GraphAddSample(&net_recv_graph, 0, receive_period * net_period);
+  GraphAddSample(&net_send_graph, 0, transmit_period * net_period);
 }
 
 void
 NetworkDraw (WINDOW *win)
 {
   CanvasClear (net_canvas);
-
-  if (net_receive_max)
-    NetworkDrawGraph (net_receive, net_receive_max, net_canvas->height / 2,
-                      net_canvas->height / 4, C_NET_RECEIVE);
-  else
-    NetworkFlatline (net_canvas->height / 2, C_NET_RECEIVE);
-
-  if (net_transmit_max)
-    NetworkDrawGraph (net_transmit, net_transmit_max, net_canvas->height,
-                      net_canvas->height / 4, C_NET_TRANSMIT);
-  else
-    NetworkFlatline (net_canvas->height, C_NET_TRANSMIT);
-
+  GraphDraw(&net_recv_graph, net_canvas, NULL, NULL);
+  GraphDraw(&net_send_graph, net_canvas, NULL, NULL);
   CanvasDraw (net_canvas, win);
 
   wmove (win, 2, 3);
@@ -209,7 +150,7 @@ NetworkDraw (WINDOW *win)
   wmove (win, 3, 3);
   waddstr (win, "RX/s:    ");
   wattron (win, COLOR_PAIR (C_NET_RECEIVE));
-  FormatSize (win, net_receive->back->u, true);
+  FormatSize (win, (size_t)GraphLastSample(&net_recv_graph, 0), true);
   waddstr (win, "/s");
   wattroff (win, COLOR_PAIR (C_NET_RECEIVE));
 
@@ -221,7 +162,7 @@ NetworkDraw (WINDOW *win)
   wmove (win, getmaxy (win) / 2 + 2, 3);
   waddstr (win, "TX/s:    ");
   wattron (win, COLOR_PAIR (C_NET_TRANSMIT));
-  FormatSize (win, net_transmit->back->u, true);
+  FormatSize (win, (size_t)GraphLastSample(&net_send_graph, 0), true);
   waddstr (win, "/s");
   wattroff (win, COLOR_PAIR (C_NET_TRANSMIT));
 }
@@ -233,10 +174,20 @@ NetworkResize (WINDOW *win)
 
   CanvasResize (net_canvas, win);
 
-  net_max_samples = MAX_SAMPLES (win, net_max_samples);
-  list_shrink (net_receive, net_max_samples);
-  list_shrink (net_transmit, net_max_samples);
-  net_samples = net_receive->count;
+  const int width = getmaxx(win) - 2;
+  const int height = getmaxy(win) - 2;
+  const int mid = (height + 1) / 2;
+  const int graph_height = mid * 2 / 3;
+  const int y1 = 1 + (mid - graph_height);
+  const int y2 = 1 + (height - graph_height);
+  GraphSetViewport(
+    &net_recv_graph,
+    (Rectangle) { 1, y1, width, graph_height }
+  );
+  GraphSetViewport(
+    &net_send_graph,
+    (Rectangle) { 1, y2, width, graph_height }
+  );
 }
 
 void

@@ -45,8 +45,6 @@ PlainMessageBoxDraw (void *win)
   wrefresh (win);
 }
 
-#include "icecream.h"
-
 void
 ShowPlainMessageBox (const char *title, const char *message)
 {

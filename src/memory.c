@@ -2,22 +2,20 @@
 #include "util.h"
 #include "canvas/canvas.h"
 #include "ps/util.h"
+#include "graph.h"
 
 IgnoreInput (Memory);
 IgnoreMouse (Memory);
 Widget mem_widget = WIDGET("memory", Memory);
 
-static List *mem_main_usage;
-static List *mem_swap_usage;
-static unsigned long mem_main_total;
-static unsigned long mem_swap_total;
-static unsigned mem_max_samples;
-static unsigned mem_samples;
 
+static Graph mem_graph;
 static Canvas *mem_canvas;
 static int mem_graph_scale = 5;
 
 static struct sysinfo mem_sysinfo;
+static unsigned long mem_main_total;
+static unsigned long mem_swap_total;
 
 static void
 MemoryGetTotal ()
@@ -30,21 +28,19 @@ MemoryGetTotal ()
 void
 MemoryInit (WINDOW *win, unsigned graph_scale)
 {
-  mem_main_usage = list_create ();
-  mem_swap_usage = list_create ();
-  mem_max_samples = MAX_SAMPLES (win, graph_scale);
-  mem_samples = 0;
   MemoryGetTotal ();
   mem_graph_scale = graph_scale;
   MemoryDrawBorder (win);
   mem_canvas = CanvasCreate (win);
+  GraphConstruct(&mem_graph, GRAPH_KIND_STRAIGHT, 2, graph_scale);
+  GraphSetFixedRange(&mem_graph, 0.0, 1.0);
+  GraphSetColors(&mem_graph, C_MEM_MAIN, C_MEM_SWAP, -1);
 }
 
 void
 MemoryQuit ()
 {
-  list_delete (mem_main_usage);
-  list_delete (mem_swap_usage);
+  GraphDestroy(&mem_graph);
   CanvasDelete (mem_canvas);
 }
 
@@ -73,7 +69,6 @@ MemoryAvailable ()
 void
 MemoryUpdate ()
 {
-  const bool full = mem_samples == mem_max_samples;
   sysinfo (&mem_sysinfo);
   unsigned long main_avail = MemoryAvailable ();
   unsigned long main_used;
@@ -84,76 +79,35 @@ MemoryUpdate ()
                  - mem_sysinfo.bufferram - mem_sysinfo.sharedram);
   unsigned long swap_used = mem_sysinfo.totalswap - mem_sysinfo.freeswap;
 
-  List_Node *main_node, *swap_node;
-  if (likely (full))
-    {
-      main_node = list_rotate_left (mem_main_usage);
-      swap_node = list_rotate_left (mem_swap_usage);
-    }
-  else
-    {
-      main_node = list_push_back (mem_main_usage);
-      swap_node = list_push_back (mem_swap_usage);
-    }
-  main_node->f = (double)main_used / (double)mem_main_total;
-  swap_node->f = (double)swap_used / (double)mem_swap_total;
-
-  if (unlikely (!full))
-    ++mem_samples;
-}
-
-static void
-MemoryDrawGraph (List *l, short color)
-{
-  double last_x = -1.0, last_y = -1.0;
-
-  double x = (mem_max_samples - mem_samples) * mem_graph_scale;
-  double y;
-
-  list_for_each (l, u)
-    {
-      x += mem_graph_scale;
-      y = (double)mem_canvas->height - (((double)mem_canvas->height - 0.25) * u->f);
-
-      if (likely (last_y >= 0.0))
-        {
-          CanvasDrawLine (mem_canvas,
-                          (last_x - mem_graph_scale)*2.0, last_y*4.0 - 1,
-                          (x - mem_graph_scale)*2.0, y*4.0 - 1,
-                          color);
-        }
-      last_x = x;
-      last_y = y;
-    }
+  GraphAddSample(&mem_graph, 0, (double)main_used / (double)mem_main_total);
+  GraphAddSample(&mem_graph, 1, (double)swap_used / (double)mem_swap_total);
 }
 
 void
 MemoryDraw (WINDOW *win)
 {
   CanvasClear (mem_canvas);
-
-  MemoryDrawGraph (mem_swap_usage, C_MEM_SWAP);
-  MemoryDrawGraph (mem_main_usage, C_MEM_MAIN);
-
+  GraphDraw(&mem_graph, mem_canvas, NULL, NULL);
   CanvasDraw (mem_canvas, win);
 
-  const double main_use = mem_main_usage->back->f * mem_main_total;
-  const double swap_use = mem_swap_usage->back->f * mem_swap_total;
+  const double main_current = GraphLastSample(&mem_graph, 0);
+  const double swap_current = GraphLastSample(&mem_graph, 1);
+  const double main_use = main_current * mem_main_total;
+  const double swap_use = swap_current * mem_swap_total;
 
   const int width = getmaxx (win) - 2;
 
-#define PRINT(line, lower, title, upper)                 \
-  wattron (win, COLOR_PAIR (C_MEM_##upper));             \
-  wmove (win, line, 3);                                  \
-  wprintw (win, #title " %3d%%",                         \
-           (int)(mem_##lower##_usage->back->f * 100.0)); \
-  if (width > 26)                                        \
-    {                                                    \
-      waddch (win, ' ');                                 \
-      FormatSize (win, lower##_use, true);               \
-      waddch (win, '/');                                 \
-      FormatSize (win, mem_##lower##_total, false);      \
-    }                                                    \
+#define PRINT(line, lower, title, upper)                          \
+  wattron (win, COLOR_PAIR (C_MEM_##upper));                      \
+  wmove (win, line, 3);                                           \
+  wprintw (win, #title " %3d%%", (int)(lower##_current * 100.0)); \
+  if (width > 26)                                                 \
+    {                                                             \
+      waddch (win, ' ');                                          \
+      FormatSize (win, lower##_use, true);                        \
+      waddch (win, '/');                                          \
+      FormatSize (win, mem_##lower##_total, false);               \
+    }                                                             \
   wattroff (win, COLOR_PAIR (C_MEM_##upper))
 
   PRINT (2, main, Main, MAIN);
@@ -165,13 +119,11 @@ void
 MemoryResize (WINDOW *win)
 {
   wclear (win);
-
   CanvasResize (mem_canvas, win);
-
-  mem_max_samples = MAX_SAMPLES (win, mem_graph_scale);
-  list_shrink (mem_main_usage, mem_max_samples);
-  list_shrink (mem_swap_usage, mem_max_samples);
-  mem_samples = mem_main_usage->count;
+  GraphSetViewport(
+    &mem_graph,
+    (Rectangle) { 1, 1, getmaxx(win) - 2, getmaxy(win) - 2}
+  );
 }
 
 void

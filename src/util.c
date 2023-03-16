@@ -141,3 +141,14 @@ PopStyle (WINDOW *win)
 {
   wattrset (win, push_syle_backup);
 }
+
+void
+PrintPercentage(WINDOW *win, int x, int y, double p)
+{
+    int percent = (int)(p * 100.0 + 0.5);
+    if (percent > 100) {
+        percent = 100;
+    }
+    x += (percent < 10) + (percent < 100);
+    mvwprintw(win, y, x, "%d%%", percent);
+}
