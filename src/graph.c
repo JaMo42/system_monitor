@@ -186,6 +186,13 @@ void GraphSetDynamicRange(Graph *self, double step) {
     self->range_step = step;
 }
 
+void GraphSetScale(Graph *self, unsigned scale, bool update_max_samples) {
+    self->scale = scale;
+    if (update_max_samples) {
+        GraphSetViewport(self, self->viewport);
+    }
+}
+
 void GraphAddSample(Graph *self, size_t source, double sample) {
     List *list = self->samples[source];
     if (likely(list->count == self->max_samples)) {

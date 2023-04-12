@@ -32,6 +32,7 @@ void GraphDestroy(Graph *self);
 void GraphSetViewport(Graph *self, Rectangle viewport);
 void GraphSetFixedRange(Graph *self, double lo, double hi);
 void GraphSetDynamicRange(Graph *self, double step);
+void GraphSetScale(Graph *self, unsigned scale, bool update_max_samples);
 void GraphAddSample(Graph *self, size_t source, double sample);
 void GraphDraw(Graph *self, Canvas *canvas, double *lo_out, double *hi_out);
 /** Overwrites the default colors for any number of sources, terminated by -1. */
