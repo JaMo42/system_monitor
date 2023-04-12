@@ -177,11 +177,12 @@ NetworkResize (WINDOW *win)
   const int width = getmaxx(win) - 2;
   const int height = getmaxy(win) - 2;
   const int mid = (height + 1) / 2;
-  const int graph_height = Max(mid -3, 1);
+  const int graph_height = Max(mid - 3, 1);
   const int y1 = 1 + (mid - graph_height);
   const int y2 = 1 + (height - graph_height);
-  GraphSetScale(&net_recv_graph, (graph_height + 1) / 2, false);
-  GraphSetScale(&net_send_graph, (graph_height + 1) / 2, false);
+  const int scale = (graph_height + 3) / 4 * (2 - (graph_height == 1));
+  GraphSetScale(&net_recv_graph, scale, false);
+  GraphSetScale(&net_send_graph, scale, false);
   GraphSetViewport(
     &net_recv_graph,
     (Rectangle) { 1, y1, width, graph_height }

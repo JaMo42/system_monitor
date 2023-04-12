@@ -87,7 +87,7 @@ static void DrawBlocks(const GraphDrawContext *restrict ctx) {
     if (ctx->fill) {
         // See `GraphDraw` about the `- 1`.
         const double bottom = (ctx->viewport.y - 1 + ctx->viewport.height) * 4.0 - 1.0;
-        CanvasDrawRect(ctx->canvas, ctx->x1, bottom, ctx->x2, ctx->y2, ctx->color);
+        CanvasDrawRect(ctx->canvas, ctx->x1, bottom, ctx->x2 - 1, ctx->y2, ctx->color);
     } else {
         //CanvasDrawLine(ctx->canvas, ctx->x1, ctx->y1, ctx->x2, ctx->y1, ctx->color);
         //CanvasDrawLine(ctx->canvas, ctx->x2, ctx->y1, ctx->x2, ctx->y2, ctx->color);
