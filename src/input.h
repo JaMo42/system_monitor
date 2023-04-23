@@ -29,7 +29,7 @@ enum
   KEY_SHIFT_END,
   KEY_CTRL_DC,
 
-  // Utility/redfinitions
+  // Utility/re-definitions
 #undef KEY_BACKSPACE
   KEY_BACKSPACE_1 = 127,  // May depend on terminal?
   KEY_BACKSPACE_2 = 263,

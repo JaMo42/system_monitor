@@ -4,7 +4,7 @@
 
 // Initial forest mode setting
 extern bool proc_forest;
-// Initial kernel thread visiblity
+// Initial kernel thread visibility
 extern bool proc_kthreads;
 
 extern Widget proc_widget;

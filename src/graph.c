@@ -41,9 +41,9 @@ static void DrawBezir(const GraphDrawContext *restrict ctx) {
         CanvasDrawLine(canvas, x1, y1, x2, y2, color);
         return;
     }
-    // TODO: we still get holes in thse sometimes, should probably reduce the
+    // TODO: we still get holes in these sometimes, should probably reduce the
     // number of points we calculate and then draw straight lines between those.
-    /* Arbitrary constant that defined how squiggly(?) the bezir curbe will be;
+    /* Arbitrary constant that defined how squiggly(?) the bezir curve will be;
        0.0 -> straight line, 2.0 -> very shallow at beginning, vertical in the
        middle. Values less than 0.0 or greater than 2.0 will cause it to overlap
        itself. */
@@ -89,8 +89,6 @@ static void DrawBlocks(const GraphDrawContext *restrict ctx) {
         const double bottom = (ctx->viewport.y - 1 + ctx->viewport.height) * 4.0 - 1.0;
         CanvasDrawRect(ctx->canvas, ctx->x1, bottom, ctx->x2 - 1, ctx->y2, ctx->color);
     } else {
-        //CanvasDrawLine(ctx->canvas, ctx->x1, ctx->y1, ctx->x2, ctx->y1, ctx->color);
-        //CanvasDrawLine(ctx->canvas, ctx->x2, ctx->y1, ctx->x2, ctx->y2, ctx->color);
         for (double xx = Max(0.0, ctx->x1); xx <= ctx->x2; ++xx) {
             CanvasSet(ctx->canvas, xx, ctx->y2, ctx->color);
         }
@@ -223,7 +221,7 @@ void GraphDraw(Graph *self, Canvas *canvas, double *lo_out, double *hi_out) {
     } else {
         GraphGetRange(self, &lowest_sample, &highest_sample);
         // FIXME: for now we don't need to scale to bottom end of the range
-        // but for proper supportd we'd need to be able a fixed/dynamic value
+        // but for proper support we'd need to be able a fixed/dynamic value
         // for the start and end separately.
         lowest_sample = 0.0;
     }
@@ -243,7 +241,7 @@ void GraphDraw(Graph *self, Canvas *canvas, double *lo_out, double *hi_out) {
     const double height = self->viewport.height;
     const DrawLineFn DrawLine = GraphKindLineDrawer(self->kind);
     // This `- 1` is specific to how all the graphs are currently used but it
-    // saves us from needing to differentionate between window space and canvas
+    // saves us from needing to differentiate between window space and canvas
     // space.
     double scaled_sample;
     for (int i = self->n_sources - 1; i >= 0; --i) {

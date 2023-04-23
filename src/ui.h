@@ -26,7 +26,7 @@ typedef struct Layout
 } Layout;
 
 
-/** whether there are no widgtes that fit the current screen size. */
+/** whether there are no widgets that fit the current screen size. */
 extern bool ui_too_small;
 
 /** whether the relative size may be adjusted to fir both children. */

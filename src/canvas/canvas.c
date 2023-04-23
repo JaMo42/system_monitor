@@ -3,7 +3,7 @@
 #include <string.h>
 #include <math.h>
 
-/* Apparenly this isn't included by <ncurses.h> */
+/* Apparently this isn't included by <ncurses.h> */
 extern int waddnwstr(WINDOW *win, const wchar_t *wstr, int n);
 
 #define NORMALIZE(x) (size_t)round ((double)(x))

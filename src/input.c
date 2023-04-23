@@ -35,7 +35,7 @@ static struct Get_Line_State
   /* Whether there is a selection */
   bool selection_active;
   /** Cursor position when Ctrl+A is used as the actual cursor position gets
-      moved to mark the slection but the view does not change. */
+      moved to mark the selection but the view does not change. */
   int cursor_before;
   /** Range to show for @ref GetLineDraw */
   int view_begin, view_end;
@@ -718,7 +718,7 @@ ResolveMouseEvent (MEVENT *event, Layout *ui, Mouse_Event *out)
 void
 ReportMouseMoveEvents (bool yay_or_nay, bool only_if_held)
 {
-  move (0, 0); /* enuse we don't scroll output */
+  move (0, 0); /* ensure we don't scroll output */
   /* https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-Mouse-Tracking */
   if (only_if_held)
     {

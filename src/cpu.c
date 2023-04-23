@@ -147,7 +147,7 @@ void
 CpuMinSize (int *width_return, int *height_return)
 {
   // This is only checked at startup and since showing the average CPU usage
-  // can be toggeled we cannot allow the widget to be smaller if it's enabled.
+  // can be toggled we cannot allow the widget to be smaller if it's enabled.
   #define LABELS 2+4*(4+1+3+3)
   //              \ \  \ \ \ \_ space between labels
   //               \ \  \ \ \__ percentage (2 digits)
