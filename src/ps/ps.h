@@ -51,6 +51,7 @@ enum {
  *        bar
  *     4> |- ... folded
  *     6> '- ... folded
+ *     8> ... baz
  *
  * 1: PS_PREFIX_OUTER_SIBLING
  * 2: PS_PREFIX_OUTER_NO_SIBLING
@@ -59,12 +60,17 @@ enum {
  * 5: PS_PREFIX_NO_SIBLING
  * 6: PS_PREFIX_NO_SIBLING_FOLDED
  * 7: PS_PREFIX_MAX_LEVEL
+ * 8: PS_PREFIX_TOP_FOLDED
  *
  * Note: PS_PREFIX_MAX_LEVEL is never stored in the tree_prefix array,
  *       instead tree_level may be greater than PS_MAX_LEVEL in which case
  *       PS_PREFIX_MAX_LEVEL is an implied value for the excess elements.
  */
 enum {
+  /* PS_PREFIX_TOP is just an empty prefix, it's used so we can use the same
+     logic for printing toplevel prefixes as we used for the other prefixes. */
+  PS_PREFIX_TOP,
+  PS_PREFIX_TOP_FOLDED,
   PS_PREFIX_OUTER_SIBLING,
   PS_PREFIX_OUTER_NO_SIBLING,
   PS_PREFIX_SIBLING,

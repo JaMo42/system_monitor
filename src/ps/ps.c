@@ -220,6 +220,9 @@ static void ps_sort_procs_forest (VECTOR(Proc_Data*) procs, unsigned level,
       } else {
         memcpy ((*it)->tree_prefix, prefix, PS_MAX_LEVEL);
       }
+    } else {
+      int p = (folded && has_children) ? PS_PREFIX_TOP_FOLDED : PS_PREFIX_TOP;
+      (*it)->tree_prefix[0] = p;
     }
     vector_push (sorted_procs, (*it));
     if (has_children && !folded) {

@@ -212,6 +212,8 @@ static int
 ProcPrintPrefix (WINDOW *win, int8_t *prefix, unsigned level, bool color)
 {
   static const char *prefixes[] = {
+    "",
+    "... ",
     "│   ",
     "    ",
     "├─ ",
@@ -221,11 +223,16 @@ ProcPrintPrefix (WINDOW *win, int8_t *prefix, unsigned level, bool color)
     "╎ ",
   };
   // Display width of the prefixes
-  static const int prefix_sizes[] = {4, 4, 3, 7, 3, 7, 2};
+  static const int prefix_sizes[] = {0, 4, 4, 4, 3, 7, 3, 7, 2};
   int width = 0;
   if (color)
     PushStyle (win, 0, C_PROC_BRANCHES);
-  if (level < PS_MAX_LEVEL)
+  if (level == 0)
+    {
+      width = prefix_sizes[prefix[0]];
+      waddstr(win, prefixes[prefix[0]]);
+    }
+  else if (level < PS_MAX_LEVEL)
     {
       for (unsigned i = 0; i < level; ++i)
         {
@@ -632,14 +639,11 @@ ProcHandleInput (int key)
       ProcShowContextMenu (-1);
       break;
     case 't':
+      pthread_mutex_lock (&proc_data_mutex);
       proc = ps_get_procs()[proc_cursor];
-      /* Do not allow folding of toplevel processes as it makes the
-         implementation much simpler and is generally not that useful anyways. */
-      if (proc->parent)
-        {
-          proc->tree_folded ^= true;
-          ps_remake_forest ();
-        }
+      proc->tree_folded = !proc->tree_folded;
+      ps_remake_forest();
+      pthread_mutex_unlock (&proc_data_mutex);
       break;
     default:
       return false;
