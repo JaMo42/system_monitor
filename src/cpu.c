@@ -10,7 +10,7 @@ Widget cpu_widget = WIDGET("cpu", Cpu);
 static int cpu_count;
 
 bool cpu_show_avg = false;
-bool cpu_scale_height = true;
+bool cpu_scale_height = false;
 static Canvas *cpu_canvas;
 static int cpu_graph_scale = 5;
 
@@ -32,10 +32,15 @@ CpuInit (WINDOW *win, unsigned graph_scale)
   cpu_canvas = CanvasCreate (win);
 
   GraphConstruct(&cpu_graph, GRAPH_KIND_BEZIR, cpu_count, graph_scale);
-  GraphSetDynamicRange(&cpu_graph, 0.1);
   GraphConstruct(&cpu_avg_graph, GRAPH_KIND_BEZIR, 1, graph_scale);
   GraphSetColors(&cpu_avg_graph, C_CPU_AVG, -1);
-  GraphSetDynamicRange(&cpu_avg_graph, 0.1);
+  if (cpu_show_avg ) {
+    GraphSetDynamicRange(&cpu_graph, 0.1);
+    GraphSetDynamicRange(&cpu_avg_graph, 0.1);
+  } else {
+    GraphSetFixedRange(&cpu_graph, 0.0, 1.0);
+    GraphSetFixedRange(&cpu_avg_graph, 0.0, 1.0);
+  }
 }
 
 void

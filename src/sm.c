@@ -431,7 +431,7 @@ ParseArgs (int argc, char *const *argv)
             break;
 
           case 'c':
-            cpu_scale_height = false;
+            cpu_scale_height = true;
             break;
 
           case 'f':

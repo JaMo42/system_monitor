@@ -151,7 +151,7 @@ void ps_init ()
   proc_map_construct (&procs, proc_data_alloc, proc_data_free,
                       proc_data_remove);
   jiffy_list_construct (&cpu_times, get_total_cpu ());
-  current_generation = 1;
+  current_generation = INVALID_GENERATION + 1;
   mem_total = get_total_memory ();
   forest = false;
   show_kthreads = false;
