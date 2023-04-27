@@ -87,6 +87,21 @@ ProcSetCursor (unsigned cursor)
   proc_cursor_pid = ps_get_procs ()[cursor]->pid;
 }
 
+/** Re-sets the cursor position to point to its last process id. */
+static inline void
+ProcUpdateCursor()
+{
+    const unsigned cursor_position_in_view = proc_cursor - proc_view_begin;
+    VECTOR(Proc_Data*) procs = ps_get_procs();
+    for (unsigned i = 0; i < (unsigned)vector__size(procs); ++i) {
+        if (procs[i]->pid == proc_cursor_pid) {
+            proc_view_begin = Max(0u, i - cursor_position_in_view);
+            ProcSetCursor(i);
+            break;
+        }
+    }
+}
+
 static inline void
 ProcSetViewSize (unsigned size)
 {
@@ -149,7 +164,7 @@ ProcUpdateProcesses ()
     {
       if (procs[i]->pid == proc_cursor_pid)
         {
-          proc_view_begin = i - cursor_position_in_view;
+          proc_view_begin = Max(0u, i - cursor_position_in_view);
           ProcSetCursor (i);
           break;
         }
@@ -227,7 +242,7 @@ ProcPrintPrefix (WINDOW *win, int8_t *prefix, unsigned level, bool color)
   int width = 0;
   if (color)
     PushStyle (win, 0, C_PROC_BRANCHES);
-  if (level == 0)
+  if (level == 0 && proc_forest)
     {
       width = prefix_sizes[prefix[0]];
       waddstr(win, prefixes[prefix[0]]);
@@ -612,7 +627,9 @@ ProcHandleInput (int key)
       break;
     case 'f':
       pthread_mutex_lock (&proc_data_mutex);
+      proc_forest = !proc_forest;
       ps_toggle_forest ();
+      ProcUpdateCursor();
       pthread_mutex_unlock (&proc_data_mutex);
       break;
     case 'T':

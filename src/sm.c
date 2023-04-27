@@ -261,7 +261,7 @@ CursesInit ()
 {
   setlocale (LC_ALL, "");
   initscr ();
-  curs_set (false);
+  curs_set (FALSE);
   noecho ();
   cbreak ();
   nodelay (stdscr, FALSE);
