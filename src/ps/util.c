@@ -47,7 +47,7 @@ File_Content read_file (int dir_fd, const char *filename, int n)
     s = read (fd, file_content_buf, n);
     close (fd);
   }
-  file_content_buf[s > 0 ? s : 0] = '\n';
+  file_content_buf[s > 0 ? s : 0] = '\0';
   return (File_Content) {
     .data = file_content_buf,
     .size = s

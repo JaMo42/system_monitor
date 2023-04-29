@@ -1,6 +1,7 @@
 #pragma once
 #include "../stdafx.h"
 #include "jiffy_list.h"
+#include "command_line.h"
 
 #define PS_MAX_LEVEL 8U
 
@@ -11,7 +12,7 @@ typedef struct Proc_Data {
   Jiffy_List cpu_times;
   unsigned long start_time;
   unsigned long memory;
-  char *command_line;
+  Command_Line command_line;
   VECTOR(struct Proc_Data *) children;
   unsigned long total_cpu_time;
   unsigned long total_memory;

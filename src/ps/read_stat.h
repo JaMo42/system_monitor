@@ -19,10 +19,6 @@ bool readstat (int dif_fd, Proc_Stat *stat_out);
  */
 bool readstat_update (int dif_fd, Proc_Stat *stat_out);
 
-char* parse_commandline (File_Content *cmdline);
-
-char* get_comm (int dir_fd);
-
 unsigned long get_total_cpu ();
 
 /** Returns total memory in KB */

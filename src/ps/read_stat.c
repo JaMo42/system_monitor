@@ -38,30 +38,6 @@ bool readstat_update (int dir_fd, Proc_Stat *stat_out)
   return true;
 }
 
-char* parse_commandline (File_Content *cmdline)
-{
-  char *s = malloc (cmdline->size + 1);
-  memcpy (s, cmdline->data, cmdline->size);
-  for (int i = 0; i < cmdline->size; ++i) {
-    if (s[i] == '\0') {
-      s[i] = ' ';
-    }
-  }
-  s[cmdline->size] = '\0';
-  return s;
-}
-
-char* get_comm (int dir_fd)
-{
-  File_Content f = read_entire_file (dir_fd, "comm");
-  char *s = malloc (f.size + 3);
-  s[0] = '[';
-  memcpy (s + 1, f.data, f.size);
-  s[f.size] = ']';
-  s[f.size + 1] = '\0';
-  return s;
-}
-
 unsigned long get_total_cpu ()
 {
   int dir_fd = open ("/proc", O_RDONLY|O_DIRECTORY);

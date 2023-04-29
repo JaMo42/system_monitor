@@ -6,6 +6,7 @@
 extern bool proc_forest;
 // Initial kernel thread visibility
 extern bool proc_kthreads;
+extern bool proc_command_only;
 
 extern Widget proc_widget;
 

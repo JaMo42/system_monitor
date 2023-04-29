@@ -23,7 +23,7 @@ static void update_process (int dir_fd, Proc_Data *process)
 }
 
 static void new_process (int dir_fd, Proc_Data *process, pid_t pid,
-                         char *command_line)
+                         Command_Line command_line)
 {
   Proc_Stat stat;
   readstat (dir_fd, &stat);
@@ -59,10 +59,13 @@ static Proc_Data* add_or_update (pid_t pid, bool force)
   int dir_fd = open (pathname, O_RDONLY|O_DIRECTORY);
   Proc_Map_Insert_Result insert_result;
   File_Content cmdline = read_entire_file (dir_fd, "cmdline");
-  char *command_line = NULL;
+  Command_Line command_line;
+  bool have_command_line = false;
   if (cmdline.size <= 0) {
     if (force || show_kthreads) {
-      command_line = get_comm (dir_fd);
+      cmdline = read_entire_file(dir_fd, "comm");
+      commandline_from_comm(&command_line, cmdline);
+      have_command_line = true;
     } else {
       close (dir_fd);
       return NULL;
@@ -72,8 +75,8 @@ static Proc_Data* add_or_update (pid_t pid, bool force)
   const uint8_t bucket_generation = *insert_result.generation;
   *insert_result.generation = current_generation;
   if (insert_result.is_new) {
-    if (!command_line) {
-      command_line = parse_commandline (&cmdline);
+    if (!have_command_line) {
+      commandline_from_file(&command_line, cmdline);
     }
     new_process (dir_fd, insert_result.value, pid, command_line);
   } else if (bucket_generation != current_generation) {
@@ -110,7 +113,7 @@ static Proc_Data* proc_data_alloc ()
   Proc_Data *d = malloc (sizeof (Proc_Data));
   d->pid = 0;
   d->parent = 0;
-  d->command_line = NULL;
+  d->command_line = COMMANDLINE_ZEROED;
   d->children = NULL;
   return d;
 }
@@ -118,7 +121,7 @@ static Proc_Data* proc_data_alloc ()
 static void proc_data_free (Proc_Data *d)
 {
   vector_free (d->children);
-  free (d->command_line);
+  commandline_free(&d->command_line);
   free (d);
 }
 

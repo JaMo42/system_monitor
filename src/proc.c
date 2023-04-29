@@ -9,6 +9,7 @@
 
 bool proc_forest = false;
 bool proc_kthreads = false;
+bool proc_command_only = false;
 
 Widget proc_widget = WIDGET("processes", Proc);
 
@@ -171,9 +172,8 @@ ProcSearchUpdateMatches ()
   VECTOR(Proc_Data*) procs = ps_get_procs ();
   for (i = 0; i < vector__size (procs); ++i)
     {
-      procs[i]->search_match = (strstr (procs[i]->command_line,
-                                        proc_search_string->data)
-                                != NULL);
+      procs[i]->search_match = commandline_contains(&procs[i]->command_line,
+                                                    proc_search_string->data);
       if (procs[i]->search_match)
         {
           ++count;
@@ -305,30 +305,23 @@ ProcPrintPrefix (WINDOW *win, int8_t *prefix, unsigned level, bool color)
 }
 
 static void
-ProcFormatPercentage (WINDOW *win, unsigned long value, unsigned long max_value)
+ProcFormatPercentage (WINDOW *win, unsigned long value, unsigned long max_value, bool mask_color)
 {
   if (max_value == 0)
     {
       waddstr (win, "   ?");
       return;
     }
-  unsigned long p = value * 1000UL / max_value;
+  const unsigned long p = value * 1000UL / max_value;
+  const bool color = !mask_color && p > 900;
+  if (color)
+    wattron (win, COLOR_PAIR (C_PROC_HIGH_PERCENT));
   if (p > 999)
-    {
-      wattron (win, COLOR_PAIR (C_PROC_HIGH_PERCENT));
-      waddstr (win, " 100");
-      wattroff (win, COLOR_PAIR (C_PROC_HIGH_PERCENT));
-    }
+    waddstr (win, " 100");
   else
-    {
-      if (p > 900) {
-        wattron (win, COLOR_PAIR (C_PROC_HIGH_PERCENT));
-      }
-      wprintw (win, "%2u.%u", (unsigned)(p / 10), (unsigned)(p % 10));
-      if (p > 900) {
-        wattroff (win, COLOR_PAIR (C_PROC_HIGH_PERCENT));
-      }
-    }
+    wprintw (win, "%2u.%u", (unsigned)(p / 10), (unsigned)(p % 10));
+  if (color)
+    wattroff (win, COLOR_PAIR (C_PROC_HIGH_PERCENT));
 }
 
 static void
@@ -359,20 +352,25 @@ ProcDraw (WINDOW *win)
   int prefix_size;
   unsigned row = 2;
   bool colorize_branches;
+  bool mask_color;
   VECTOR(Proc_Data*) procs = ps_get_procs ();
   const unsigned end = proc_view_begin + proc_view_size;
   for (unsigned i = proc_view_begin; i < end; ++i, ++row)
     {
       Proc_Data *const p = procs[i];
       colorize_branches = false;
+      mask_color = true;
       if (i == proc_cursor)
         wattrset (win, COLOR_PAIR (C_PROC_CURSOR));
       else if (proc_search_show && p->search_match)
         wattrset (win, COLOR_PAIR (C_PROC_HIGHLIGHT));
       else
         {
+          // TODO: this now only sets the color for the pid, cpu and memory
+          // usage which could get their own colors.
           wattrset (win, COLOR_PAIR (C_PROC_PROCESSES));
           colorize_branches = true;
+          mask_color = false;
         }
       wmove (win, row, 1);
       PrintN (win, ' ', getmaxx (win) - 2);
@@ -380,11 +378,17 @@ ProcDraw (WINDOW *win)
       wprintw (win, "%7d  ", p->pid);
       prefix_size = ProcPrintPrefix (win, p->tree_prefix, p->tree_level,
                                      colorize_branches);
-      waddnstr (win, p->command_line, command_len - prefix_size);
+      commandline_print(
+        &p->command_line,
+        win,
+        proc_command_only,
+        command_len - prefix_size,
+        mask_color
+      );
       wmove (win, row, getmaxx (win) - cpu_and_memory_offset);
-      ProcFormatPercentage (win, p->total_cpu_time, cpu_period);
+      ProcFormatPercentage (win, p->total_cpu_time, cpu_period, mask_color);
       waddstr (win, "  ");
-      ProcFormatPercentage (win, p->total_memory, total_memory);
+      ProcFormatPercentage (win, p->total_memory, total_memory, mask_color);
     }
   wattrset (win, A_NORMAL);
   const unsigned row_end = getmaxy (win) - 1 - proc_search_active;

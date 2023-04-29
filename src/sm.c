@@ -193,6 +193,8 @@ LoadConfig ()
     proc_forest  = v->as_bool ();
   if ((v = ConfigGet ("proc", "show-kernel-threads")))
     proc_kthreads = v->as_bool ();
+  if ((v = ConfigGet ("proc", "command-only")))
+    proc_command_only = v->as_bool ();
 
   if ((v = ConfigGet ("disk", "vertical")))
     disk_vertical = v->as_bool ();
