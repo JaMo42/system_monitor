@@ -16,7 +16,7 @@ typedef struct Widget
   int fixed_size;
   bool hidden;
   bool exists;
-  void (*Init) (WINDOW *win, unsigned graph_scale);
+  void (*Init) (WINDOW *win);
   void (*Quit) ();
   void (*Update) ();
   void (*Draw) (WINDOW *win);

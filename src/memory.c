@@ -11,7 +11,6 @@ Widget mem_widget = WIDGET("memory", Memory);
 
 static Graph mem_graph;
 static Canvas *mem_canvas;
-static int mem_graph_scale = 5;
 
 static struct sysinfo mem_sysinfo;
 static unsigned long mem_main_total;
@@ -26,13 +25,15 @@ MemoryGetTotal ()
 }
 
 void
-MemoryInit (WINDOW *win, unsigned graph_scale)
+MemoryInit (WINDOW *win)
 {
   MemoryGetTotal ();
-  mem_graph_scale = graph_scale;
   MemoryDrawBorder (win);
   mem_canvas = CanvasCreate (win);
-  GraphConstruct(&mem_graph, GRAPH_KIND_STRAIGHT, 2, graph_scale);
+  unsigned graph_scale = DEFAULT_GRAPH_SCALE;
+  Graph_Kind graph_kind = GRAPH_KIND_STRAIGHT;
+  GetGraphOptions(mem_widget.name, &graph_kind, &graph_scale);
+  GraphConstruct(&mem_graph, graph_kind, 2, graph_scale);
   GraphSetFixedRange(&mem_graph, 0.0, 1.0);
   GraphSetColors(&mem_graph, C_MEM_MAIN, C_MEM_SWAP, -1);
 }

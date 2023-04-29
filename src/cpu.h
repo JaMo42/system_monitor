@@ -7,7 +7,7 @@ extern bool cpu_scale_height;
 
 extern Widget cpu_widget;
 
-void CpuInit (WINDOW *win, unsigned graph_scale);
+void CpuInit (WINDOW *win);
 void CpuQuit ();
 void CpuUpdate ();
 void CpuDraw (WINDOW *win);

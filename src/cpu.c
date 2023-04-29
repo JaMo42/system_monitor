@@ -12,7 +12,6 @@ static int cpu_count;
 bool cpu_show_avg = false;
 bool cpu_scale_height = false;
 static Canvas *cpu_canvas;
-static int cpu_graph_scale = 5;
 
 static size_t *cpu_last_total_jiffies;
 static size_t *cpu_last_work_jiffies;
@@ -21,18 +20,20 @@ static Graph cpu_graph;
 static Graph cpu_avg_graph;
 
 void
-CpuInit (WINDOW *win, unsigned graph_scale)
+CpuInit (WINDOW *win)
 {
   cpu_count = get_nprocs_conf ();
   cpu_last_total_jiffies = calloc (cpu_count + 1, sizeof (size_t));
   cpu_last_work_jiffies = calloc (cpu_count + 1, sizeof (size_t));
   cpu_show_avg = cpu_show_avg || cpu_count > 8;
-  cpu_graph_scale = graph_scale;
   CpuDrawBorder (win);
   cpu_canvas = CanvasCreate (win);
 
-  GraphConstruct(&cpu_graph, GRAPH_KIND_BEZIR, cpu_count, graph_scale);
-  GraphConstruct(&cpu_avg_graph, GRAPH_KIND_BEZIR, 1, graph_scale);
+  unsigned graph_scale = DEFAULT_GRAPH_SCALE;
+  Graph_Kind graph_kind = GRAPH_KIND_BEZIR;
+  GetGraphOptions(cpu_widget.name, &graph_kind, &graph_scale);
+  GraphConstruct(&cpu_graph, graph_kind, cpu_count, graph_scale);
+  GraphConstruct(&cpu_avg_graph, graph_kind, 1, graph_scale);
   GraphSetColors(&cpu_avg_graph, C_CPU_AVG, -1);
   if (cpu_show_avg ) {
     GraphSetDynamicRange(&cpu_graph, 0.1);

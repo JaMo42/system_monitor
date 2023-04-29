@@ -9,11 +9,12 @@ IgnoreInput (Network);
 IgnoreMouse (Network);
 Widget net_widget = WIDGET("network", Network);
 
-unsigned long net_receive_total;
-unsigned long net_transmit_total;
+bool net_auto_scale = false;
 
-Canvas *net_canvas;
-int net_graph_scale = 5;
+static unsigned long net_receive_total;
+static unsigned long net_transmit_total;
+
+static Canvas *net_canvas;
 
 static struct {
   char *name;
@@ -63,22 +64,24 @@ NetworkGetInterfaces ()
 }
 
 void
-NetworkInit (WINDOW *win, unsigned graph_scale)
+NetworkInit (WINDOW *win)
 {
   net_receive_total = 0;
   net_transmit_total = 0;
   NetworkGetInterfaces ();
   net_period = (double)interval.tv_sec + interval.tv_nsec / 1.0e9;
-  GraphConstruct(&net_recv_graph, GRAPH_KIND_BLOCKS, 1, graph_scale);
+  unsigned graph_scale = DEFAULT_GRAPH_SCALE;
+  Graph_Kind graph_kind = GRAPH_KIND_BLOCKS;
+  GetGraphOptions(net_widget.name, &graph_kind, &graph_scale);
+  GraphConstruct(&net_recv_graph, graph_kind, 1, graph_scale);
   GraphSetColors(&net_recv_graph, C_NET_RECEIVE, -1);
   GraphSetDynamicRange(&net_recv_graph, 0.1);
-  GraphConstruct(&net_send_graph, GRAPH_KIND_BLOCKS, 1, graph_scale);
+  GraphConstruct(&net_send_graph, graph_kind, 1, graph_scale);
   GraphSetColors(&net_send_graph, C_NET_TRANSMIT, -1);
   GraphSetDynamicRange(&net_send_graph, 0.1);
   NetworkUpdate ();
   list_clear(net_recv_graph.samples[0]);
   list_clear(net_send_graph.samples[0]);
-  net_graph_scale = graph_scale;
   NetworkDrawBorder (win);
   net_canvas = CanvasCreate (win);
 }
@@ -180,9 +183,12 @@ NetworkResize (WINDOW *win)
   const int graph_height = Max(mid - 3, 1);
   const int y1 = 1 + (mid - graph_height);
   const int y2 = 1 + (height - graph_height);
-  const int scale = (graph_height + 3) / 4 * (2 - (graph_height == 1));
-  GraphSetScale(&net_recv_graph, scale, false);
-  GraphSetScale(&net_send_graph, scale, false);
+  if (net_auto_scale)
+    {
+      const int scale = (graph_height + 3) / 4 * (2 - (graph_height == 1));
+      GraphSetScale(&net_recv_graph, scale, false);
+      GraphSetScale(&net_send_graph, scale, false);
+    }
   GraphSetViewport(
     &net_recv_graph,
     (Rectangle) { 1, y1, width, graph_height }

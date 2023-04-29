@@ -70,9 +70,8 @@ DiskForceUpdate ()
 }
 
 void
-DiskInit (WINDOW *win, unsigned graph_scale)
+DiskInit (WINDOW *win)
 {
-  (void)graph_scale;
   DiskDrawBorder (win);
   disk_canvas = CanvasCreateSized (ceil (disk_radius) + 1,
                                    ceil (disk_radius / 2));

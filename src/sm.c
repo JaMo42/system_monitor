@@ -16,7 +16,6 @@
   for (Widget *const *it = widgets, *w = *it; w != NULL; w = *++it)
 
 struct timespec interval = { .tv_sec = 0, .tv_nsec = 500000000L };
-static unsigned graph_scale = 8;
 static const char *layout = NULL;
 Layout *ui;
 
@@ -184,8 +183,6 @@ LoadConfig ()
       interval.tv_sec = n / 1000L;
       interval.tv_nsec = (n % 1000L) * 1000000L;
     }
-  if ((v = ConfigGet ("sm", "graph-scale")))
-    graph_scale = v->as_unsigned ();
 
   if ((v = ConfigGet ("cpu", "show-average")))
     cpu_show_avg = v->as_bool ();
@@ -201,6 +198,9 @@ LoadConfig ()
     disk_vertical = v->as_bool ();
   if ((v = ConfigGet ("disk", "mounting-points")))
     disk_fs = v->as_string ();
+
+  if ((v = ConfigGet("net", "auto-scale")))
+    net_auto_scale = v->as_bool();
 }
 
 void
@@ -305,7 +305,7 @@ void
 InitWidgets ()
 {
   widgets_for_each ()
-    w->Init (w->win, graph_scale);
+    w->Init (w->win);
 }
 
 void
@@ -396,7 +396,6 @@ Usage (FILE *stream)
   fputs ("Options:\n", stream);
   fputs ("  -a         Show average CPU usage\n", stream);
   fputs ("  -r millis  Update interval in milliseconds\n", stream);
-  fputs ("  -s scale   Graph scale\n", stream);
   fputs ("  -c         Always show CPU graph in range 0~100%\n", stream);
   fputs ("  -f         ASCII art process tree\n", stream);
   fputs ("  -l layout  Specifies the layout string\n", stream);
@@ -424,10 +423,6 @@ ParseArgs (int argc, char *const *argv)
             n = strtoull (optarg, NULL, 10);
             interval.tv_sec = n / 1000L;
             interval.tv_nsec = (n % 1000L) * 1000000L;
-            break;
-
-          case 's':
-            graph_scale = (unsigned)strtoull (optarg, NULL, 10);
             break;
 
           case 'c':

@@ -65,3 +65,6 @@ void PopStyle (WINDOW *win);
     The given coordinates are the leftmost cell and the printed text is at most
     4 characters wide ("100%"). */
 void PrintPercentage(WINDOW *win, int x, int y, double p);
+
+// asprintf is not declared for me, even with _GNU_SOURCE...
+char *Format(const char *fmt, ...);

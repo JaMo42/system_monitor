@@ -5,7 +5,7 @@
 extern bool disk_vertical;
 extern const char *disk_fs;
 
-void DiskInit (WINDOW *win, unsigned graph_scale);
+void DiskInit (WINDOW *win);
 void DiskQuit ();
 void DiskUpdate ();
 void DiskDraw (WINDOW *win);

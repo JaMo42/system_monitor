@@ -152,3 +152,15 @@ PrintPercentage(WINDOW *win, int x, int y, double p)
     x += (percent < 10) + (percent < 100);
     mvwprintw(win, y, x, "%d%%", percent);
 }
+
+char *Format(const char *fmt, ...) {
+    va_list ap1, ap2;
+    va_start(ap1, fmt);
+    va_copy(ap2, ap1);
+    int size = vsnprintf(NULL, 0, fmt, ap1);
+    char *buf = malloc(size);
+    vsprintf(buf, fmt, ap2);
+    va_end(ap1);
+    va_end(ap2);
+    return buf;
+}

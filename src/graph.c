@@ -1,4 +1,7 @@
 #include "graph.h"
+#include "config.h"
+#include "dialog.h"
+#include "util.h"
 
 /// Context for drawing a single graph.
 typedef struct {
@@ -37,7 +40,7 @@ static void DrawBezir(const GraphDrawContext *restrict ctx) {
     const double x2 = ctx->x2;
     const double y2 = ctx->y2;
     const short color = ctx->color;
-    if (x1 == x2) {
+    if ((x2 - x1) < 1.0 || fabs(y1 - y2) < 1.0) {
         CanvasDrawLine(canvas, x1, y1, x2, y2, color);
         return;
     }
@@ -109,6 +112,35 @@ static DrawLineFn GraphKindLineDrawer(Graph_Kind kind) {
         case GRAPH_KIND_BLOCKS: return DrawBlocks;
     }
     __builtin_unreachable();
+}
+
+static void GraphKindFromString(const char *s, Graph_Kind *out) {
+    static const struct {
+        const char *s;
+        Graph_Kind k;
+    } VALID_PAIRS[] = {
+        {"straight", GRAPH_KIND_STRAIGHT},
+        {"bezir", GRAPH_KIND_BEZIR},
+        {"blocks", GRAPH_KIND_BLOCKS}
+    };
+    for (size_t i = 0; i < countof(VALID_PAIRS); ++i) {
+        if (strcasecmp(s, VALID_PAIRS[i].s) == 0) {
+            *out = VALID_PAIRS[i].k;
+        }
+    }
+    fprintf(stderr, "invalid graph kind: %s\n", s);
+}
+
+void GetGraphOptions(const char *domain, Graph_Kind *kind_out, unsigned *scale_out) {
+    if (!HaveConfig ())
+        return;
+    Config_Read_Value *v;
+    if ((v = ConfigGet(domain, "graph-kind"))) {
+        GraphKindFromString(v->as_string(), kind_out);
+    }
+    if ((v = ConfigGet(domain, "graph-scale"))) {
+        *scale_out = v->as_unsigned();
+    }
 }
 
 void GraphConstruct(Graph *self, Graph_Kind kind, size_t n_sources, unsigned scale) {

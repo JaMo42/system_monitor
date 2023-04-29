@@ -183,9 +183,8 @@ ProcUpdateProcesses ()
 }
 
 void
-ProcInit (WINDOW *win, unsigned graph_scale)
+ProcInit (WINDOW *win)
 {
-  (void)graph_scale;
   proc_time_passed = 1001;
   DrawWindow (win, "Processes");
   DrawHeader (win);

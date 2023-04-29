@@ -4,7 +4,7 @@
 
 extern Widget mem_widget;
 
-void MemoryInit (WINDOW *win, unsigned graph_scale);
+void MemoryInit (WINDOW *win);
 void MemoryQuit ();
 void MemoryUpdate ();
 void MemoryDraw (WINDOW *win);

@@ -9,7 +9,7 @@ extern bool proc_kthreads;
 
 extern Widget proc_widget;
 
-void ProcInit (WINDOW *win, unsigned graph_scale);
+void ProcInit (WINDOW *win);
 void ProcQuit ();
 void ProcUpdate ();
 void ProcDraw (WINDOW *win);
