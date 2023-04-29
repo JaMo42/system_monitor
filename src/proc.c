@@ -265,8 +265,17 @@ ProcUpdate () {
     return;
   proc_time_passed = 0;
   pthread_mutex_lock (&proc_data_mutex);
+  const size_t cursor = proc_cursor;
   ps_update ();
   ProcUpdateProcesses ();
+  // XXX: bandaid fix because I have no clue why the cursor keeps escaping
+  // sometimes (it seems to always go to 4294967294 but we just check any
+  // invalid value).
+  if (proc_cursor >= proc_count)
+    {
+        proc_cursor = Min(cursor, proc_count-1);
+        proc_cursor_pid = ps_get_procs()[proc_cursor]->pid;
+    }
   pthread_mutex_unlock (&proc_data_mutex);
 }
 
