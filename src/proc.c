@@ -5,6 +5,7 @@
 #include "ps/ps.h"
 #include "context_menu.h"
 #include "dialog.h"
+#include "config.h"
 
 bool proc_forest = false;
 bool proc_kthreads = false;
@@ -34,6 +35,52 @@ static int proc_last_match;
 static pid_t proc_cursor_pid_before_search;
 
 static Context_Menu proc_context_menu;
+
+static const char **proc_prefixes = NULL;
+static const int *proc_prefix_widths = NULL;
+
+static void
+ProcSetPrefixes()
+{
+  static const char *NORMAL_PREFIXES[] = {
+    "",
+    "... ",
+    "│   ",
+    "    ",
+    "├─ ",
+    "├─ ... ",
+    "╰─ ",
+    "╰─ ... ",
+    "╎ ",
+  };
+  static const int NORMAL_PREFIX_SIZES[] = {0, 4, 4, 4, 3, 7, 3, 7, 2};
+  static const char *NARROW_PREFIXES[] = {
+    "",
+    "+ ",
+    "│ ",
+    "  ",
+    "├ ",
+    "├ + ",
+    "╰ ",
+    "╰ + ",
+    "╎ ",
+  };
+  static const int NARROW_PREFIX_SIZES[] = {0, 2, 2, 2, 2, 4, 2, 4, 2};
+  bool narrow = false;
+  Config_Read_Value *v = NULL;
+  if ((v = ConfigGet("proc", "narrow-trees")))
+    narrow = v->as_bool();
+  if (narrow)
+    {
+      proc_prefixes = NARROW_PREFIXES;
+      proc_prefix_widths = NARROW_PREFIX_SIZES;
+    }
+  else
+    {
+      proc_prefixes = NORMAL_PREFIXES;
+      proc_prefix_widths = NORMAL_PREFIX_SIZES;
+    }
+}
 
 static void
 DrawHeader (WINDOW *win)
@@ -185,6 +232,7 @@ ProcUpdateProcesses ()
 void
 ProcInit (WINDOW *win)
 {
+  ProcSetPrefixes();
   proc_time_passed = 1001;
   DrawWindow (win, "Processes");
   DrawHeader (win);
@@ -225,44 +273,31 @@ ProcUpdate () {
 static int
 ProcPrintPrefix (WINDOW *win, int8_t *prefix, unsigned level, bool color)
 {
-  static const char *prefixes[] = {
-    "",
-    "... ",
-    "│   ",
-    "    ",
-    "├─ ",
-    "├─ ... ",
-    "╰─ ",
-    "╰─ ... ",
-    "╎ ",
-  };
-  // Display width of the prefixes
-  static const int prefix_sizes[] = {0, 4, 4, 4, 3, 7, 3, 7, 2};
   int width = 0;
   if (color)
     PushStyle (win, 0, C_PROC_BRANCHES);
   if (level == 0 && proc_forest)
     {
-      width = prefix_sizes[prefix[0]];
-      waddstr(win, prefixes[prefix[0]]);
+      width = proc_prefix_widths[prefix[0]];
+      waddstr(win, proc_prefixes[prefix[0]]);
     }
   else if (level < PS_MAX_LEVEL)
     {
       for (unsigned i = 0; i < level; ++i)
         {
-          width += prefix_sizes[prefix[i]];
-          waddstr (win, prefixes[prefix[i]]);
+          width += proc_prefix_widths[prefix[i]];
+          waddstr (win, proc_prefixes[prefix[i]]);
         }
     }
   else
     {
       for (unsigned i = 0; i < PS_MAX_LEVEL-1; ++i)
         {
-          width += prefix_sizes[prefix[i]];
-          waddstr (win, prefixes[prefix[i]]);
+          width += proc_prefix_widths[prefix[i]];
+          waddstr (win, proc_prefixes[prefix[i]]);
         }
-      width += prefix_sizes[PS_PREFIX_MAX_LEVEL];
-      waddstr (win, prefixes[PS_PREFIX_MAX_LEVEL]);
+      width += proc_prefix_widths[PS_PREFIX_MAX_LEVEL];
+      waddstr (win, proc_prefixes[PS_PREFIX_MAX_LEVEL]);
     }
   if (color)
     PopStyle (win);
