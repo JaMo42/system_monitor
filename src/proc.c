@@ -211,7 +211,7 @@ ProcUpdateProcesses ()
     {
       if (procs[i]->pid == proc_cursor_pid)
         {
-          proc_view_begin = Max(0u, i - cursor_position_in_view);
+          proc_view_begin = (unsigned)Max(0, (int)i - (int)cursor_position_in_view);
           ProcSetCursor (i);
           break;
         }
@@ -265,17 +265,8 @@ ProcUpdate () {
     return;
   proc_time_passed = 0;
   pthread_mutex_lock (&proc_data_mutex);
-  const size_t cursor = proc_cursor;
   ps_update ();
   ProcUpdateProcesses ();
-  // XXX: bandaid fix because I have no clue why the cursor keeps escaping
-  // sometimes (it seems to always go to 4294967294 but we just check any
-  // invalid value).
-  if (proc_cursor >= proc_count)
-    {
-        proc_cursor = Min(cursor, proc_count-1);
-        proc_cursor_pid = ps_get_procs()[proc_cursor]->pid;
-    }
   pthread_mutex_unlock (&proc_data_mutex);
 }
 
