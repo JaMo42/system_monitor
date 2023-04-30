@@ -81,24 +81,40 @@ enum {
   PS_PREFIX_MAX_LEVEL,
 };
 
+/** Initializes the process snapshot library.  Must be called before any of the
+    other functions. */
 void ps_init ();
 
+/** Reads process information. */
 void ps_update ();
 
+/** Sets thr sorting mode and sorts the processes accordingly, if the new mode
+    is different from the last. */
 void ps_set_sort (int mode);
 
+/** Toggles sorting processes into trees and sorts the processes accordingly. */
 void ps_toggle_forest ();
 
+/** Toggles inclusion of kernel threads.  This causes an update and a sort as
+    kernel threads are completely removed from the internal record if disabled. */
 void ps_toggle_kthreads ();
 
+/** Toggles summation of of cpu and memory usage in forest mode.  This also
+    causes a sort. */
 void ps_toggle_sum_children ();
 
+/** Releases all memory held by the library. */
 void ps_quit ();
 
+/** Sorts the processes only if forest mode is enabled. */
 void ps_remake_forest ();
 
+/** Returns a reference to the sorted process list. This is zero-cost. */
 VECTOR(Proc_Data*) ps_get_procs ();
 
+/** Gets the total recorded CPU time period.  This is the divisor to get
+    percentage CPU usage, given a work period as dividend. */
 unsigned long ps_cpu_period ();
 
+/** Returns the total amount of main memory. */
 unsigned long ps_total_memory ();

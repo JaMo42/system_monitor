@@ -13,10 +13,16 @@ typedef struct {
     chtype *command;
 } Command_Line;
 
-void commandline_from_file(Command_Line *self, File_Content content);
+/** Initializes the command line with the data from the `cmdline` file. */
+void commandline_from_cmdline(Command_Line *self, File_Content content);
 
+/** Initializes the command line with the data from the `comm` file. */
 void commandline_from_comm(Command_Line *self, File_Content comm);
 
+/** Prints the command line to the given window.  If `command_only` is `true`
+    the path of the command is skipped.  If `mask_color` is true only the
+    characters are printed, using the current attributes of the window.  At most
+    `width` characters are written. */
 void commandline_print(
     const Command_Line *self,
     WINDOW *win,

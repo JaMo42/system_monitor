@@ -1,6 +1,7 @@
 #include "command_line.h"
 #include "../util.h"
 
+/** Gets the start and end (1 past the last) indices of the comand name. */
 static void commandline_get_command_range(char *cmdline, int *command_start, int *command_end) {
     bool ignore = false;
     char c;
@@ -17,7 +18,7 @@ static void commandline_get_command_range(char *cmdline, int *command_start, int
     }
 }
 
-void commandline_from_file(Command_Line *self, File_Content content) {
+void commandline_from_cmdline(Command_Line *self, File_Content content) {
     self->data = malloc((content.size + 1) * sizeof(chtype));
     chtype *writeptr = self->data;
     char c;

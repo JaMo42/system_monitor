@@ -9,11 +9,13 @@
 
 static Proc_Data* add_or_update (pid_t pid, bool force);
 
+/** Checks if the name of a directory entry looks like a process ID. */
 static bool is_pid_dir (const struct dirent *entry)
 {
   return entry->d_type == DT_DIR && isdigit (entry->d_name[0]);
 }
 
+/** Updates the CPU and memory info of an already recorded process. */
 static void update_process (int dir_fd, Proc_Data *process)
 {
   Proc_Stat stat;
@@ -22,6 +24,7 @@ static void update_process (int dir_fd, Proc_Data *process)
   process->memory = stat.resident_memory;
 }
 
+/** Adds a new process to the record. */
 static void new_process (int dir_fd, Proc_Data *process, pid_t pid,
                          Command_Line command_line)
 {
@@ -52,6 +55,8 @@ static void new_process (int dir_fd, Proc_Data *process, pid_t pid,
   }
 }
 
+/** Either adds or updates a process.  This should always be used over
+    `update_process` and `new_process` which are called by this function. */
 static Proc_Data* add_or_update (pid_t pid, bool force)
 {
   char pathname[6+MAX_PID_LEN+1] = "/proc/";
@@ -76,7 +81,7 @@ static Proc_Data* add_or_update (pid_t pid, bool force)
   *insert_result.generation = current_generation;
   if (insert_result.is_new) {
     if (!have_command_line) {
-      commandline_from_file(&command_line, cmdline);
+      commandline_from_cmdline(&command_line, cmdline);
     }
     new_process (dir_fd, insert_result.value, pid, command_line);
   } else if (bucket_generation != current_generation) {
@@ -86,6 +91,8 @@ static Proc_Data* add_or_update (pid_t pid, bool force)
   return insert_result.value;
 }
 
+/** Updates the process record, adding or updating processes.  This does not
+    erase outdated processes. */
 static void update_procs ()
 {
   struct dirent *entry;
@@ -101,6 +108,7 @@ static void update_procs ()
   closedir (proc_dir);
 }
 
+/** Unparents all children of the given process. */
 static void unparent_children_of (Proc_Data *d)
 {
   vector_for_each (d->children, it) {
@@ -125,6 +133,7 @@ static void proc_data_free (Proc_Data *d)
   free (d);
 }
 
+/** Removes the child with the given pid from the process. */
 static void remove_child (Proc_Data *parent, pid_t child)
 {
   const int end = (int)vector_size (parent->children);
@@ -138,6 +147,8 @@ static void remove_child (Proc_Data *parent, pid_t child)
     }
 }
 
+/** Handles removal of a process from the record.  Unparents all of its
+    children and removes it self from the children of its parent. */
 static void proc_data_remove (Proc_Data *d)
 {
   unparent_children_of (d);
@@ -164,6 +175,8 @@ void ps_init ()
   ps_update ();
 }
 
+/** Returns a list of processes without parents.  This returns a reference to
+    an internal vector which is leaked when the program terminates. */
 static VECTOR(Proc_Data*) ps_get_toplevel ()
 {
   /* This vector is leaked (only) when the program exists,
@@ -178,6 +191,7 @@ static VECTOR(Proc_Data*) ps_get_toplevel ()
   return toplevel;
 }
 
+/** Sums up the cpu and memory usage of the given process. */
 static void ps_sum_proc_data (Proc_Data *proc)
 {
   proc->total_cpu_time = jiffy_list_period (&proc->cpu_times);
@@ -190,6 +204,7 @@ static void ps_sum_proc_data (Proc_Data *proc)
   }
 }
 
+/** Sums up the cpu and memory usage of all given processes. */
 static void ps_sum_child_data (VECTOR(Proc_Data *) toplevel)
 {
   vector_for_each (toplevel, it) {
@@ -197,6 +212,8 @@ static void ps_sum_child_data (VECTOR(Proc_Data *) toplevel)
   }
 }
 
+/** Sorts processes into trees.  On the first call this should be called with
+    all the toplevel proceses. */
 static void ps_sort_procs_forest (VECTOR(Proc_Data*) procs, unsigned level,
                                   int8_t *prefix)
 {
@@ -241,6 +258,7 @@ static void ps_sort_procs_forest (VECTOR(Proc_Data*) procs, unsigned level,
   }
 }
 
+/** Sorts the process list. */
 static void ps_sort_procs ()
 {
   vector_clear (sorted_procs);
