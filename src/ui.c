@@ -491,9 +491,9 @@ UIGetMinSize (Layout *self)
 }
 
 void
-UIUpdateSizeInfo (Layout *self)
+UIUpdateSizeInfo (Layout *self, bool force_update)
 {
-  bool changed = self->type == UI_WIDGET;
+  bool changed = force_update || self->type == UI_WIDGET;
   UIForEachWidget (self, &changed, UI_VISITOR (w, changed) (
     const int width = w->min_width, height = w->min_height;
     const int fixed = w->type == UI_WIDGET ? w->widget->fixed_size : FIXED_SIZE_NO;

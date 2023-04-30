@@ -54,8 +54,10 @@ void UIResize (Layout *self, unsigned width, unsigned height);
 /** sets the appropriate minimum size and priority for non-widget nodes. */
 void UIGetMinSize (Layout *self);
 
-/** refreshes all widget size information and triggers a resize */
-void UIUpdateSizeInfo (Layout *self);
+/** refreshes all widget size information and triggers a resize.  By default
+    the resize is only triggered if anything changed, it can be forced using the
+    `force_update` parameter. */
+void UIUpdateSizeInfo (Layout *self, bool force_update);
 
 /** gets all widgets present in the given layout and marks them as existent. */
 void UICollectWidgets (const Layout *self, Widget **widgets_out);

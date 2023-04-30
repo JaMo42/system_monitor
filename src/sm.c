@@ -146,7 +146,7 @@ main (int argc, char *const *argv)
   CursesInit ();
   UIConstruct (ui);
   InitWidgets ();
-  UIUpdateSizeInfo (ui);
+  UIUpdateSizeInfo (ui, true);
   CursesUpdate ();
   help_init (&help, help_text);
 
