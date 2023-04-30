@@ -71,4 +71,3 @@ Proc_Map_Bucket *proc_map_begin (Proc_Map *self);
 Proc_Map_Bucket *proc_map_next (Proc_Map_Bucket *it);
 #define proc_map_for_each(self_) \
   for (Proc_Map_Bucket *it = proc_map_begin (self_); it; it = proc_map_next (it))
-

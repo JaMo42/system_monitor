@@ -31,4 +31,3 @@ void ProcSetSort (const char *mode);
 void ProcBeginSearch ();
 void ProcSearchNext ();
 void ProcSearchPrev ();
-

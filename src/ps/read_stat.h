@@ -23,4 +23,3 @@ unsigned long get_total_cpu ();
 
 /** Returns total memory in KB */
 unsigned long get_total_memory ();
-

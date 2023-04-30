@@ -215,4 +215,3 @@ Proc_Map_Bucket *proc_map_next (Proc_Map_Bucket *it)
     ++it;
   return it->data ? it : NULL;
 }
-

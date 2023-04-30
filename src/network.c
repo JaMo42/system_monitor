@@ -216,4 +216,3 @@ NetworkDrawBorder (WINDOW *win)
 {
   DrawWindow (win, "Network");
 }
-

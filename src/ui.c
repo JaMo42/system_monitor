@@ -537,4 +537,3 @@ UIFindWidgetContaining (Layout *self, int x, int y)
   else
     return UIFindWidgetContaining (self->elems[1], x, y);
 }
-

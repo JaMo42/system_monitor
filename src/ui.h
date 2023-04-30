@@ -64,4 +64,3 @@ void UICollectWidgets (const Layout *self, Widget **widgets_out);
 
 /** gets the widget containing the given point. */
 Layout* UIFindWidgetContaining (Layout *self, int x, int y);
-
