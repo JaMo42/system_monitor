@@ -120,12 +120,16 @@ static void GraphKindFromString(const char *s, Graph_Kind *out) {
         Graph_Kind k;
     } VALID_PAIRS[] = {
         {"straight", GRAPH_KIND_STRAIGHT},
+        {"line", GRAPH_KIND_STRAIGHT},
         {"bezir", GRAPH_KIND_BEZIR},
-        {"blocks", GRAPH_KIND_BLOCKS}
+        {"curve", GRAPH_KIND_BEZIR},
+        {"blocks", GRAPH_KIND_BLOCKS},
+        {"block", GRAPH_KIND_BLOCKS},
     };
     for (size_t i = 0; i < countof(VALID_PAIRS); ++i) {
         if (strcasecmp(s, VALID_PAIRS[i].s) == 0) {
             *out = VALID_PAIRS[i].k;
+            return;
         }
     }
     fprintf(stderr, "invalid graph kind: %s\n", s);

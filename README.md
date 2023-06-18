@@ -22,7 +22,6 @@ Note: by default the program links with the `-lncurses` library but on some syst
 
 - `-a` show average CPU usage
 - `-r rate` update rate in milliseconds
-- `-s scale` horizontal graph scale
 - `-c` always show CPU graph in range 0~100%
 - `-f` ASCII art process tree (like the `--forest` option for `ps`)
 - `-l layout` specifies the [layout](#layout)
@@ -106,6 +105,17 @@ Boolean values can be given as `true`, `yes`, or `1` for true and `false`, `no`,
 Number values are unsigned integers.
 
 String values may be quoted.
+
+### Graph shapes
+
+The graph shape of the `cpu`, `memory`, and `network` widgets can be configured using these options inside their section:
+
+- `graph-kind` (string) one of:
+    - `straight`, `line` straight lines between data points (default for `network`)
+    - `bezir`, `curve` bezir curves between data points (default for `cpu`)
+    - `blocks`, `block` draw data points as blocks (default for `memory`)
+
+- `graph-scale` (number) horizontal graph scale (default is `8`)
 
 ### Environment variables
 
