@@ -22,10 +22,6 @@
 
 typedef void (*UI_Visitor) (const Layout *, void *);
 
-/** creates a lambda with the same signature as the `UI_Visitor` type. */
-#define UI_VISITOR(l_, d_) \
-  lambda (void, const Layout *l_, void *d_ __attribute__((unused)))
-
 bool ui_too_small;
 bool ui_strict_size = false;
 
@@ -114,13 +110,18 @@ UIAddWidget (Layout *l, Widget *w, int priority)
     l->priority = priority;
 }
 
+static void
+UIHideVisitor(const Layout *w, void *_)
+{
+  (void)_;
+  w->widget->hidden = true;
+}
+
 /** hides all widgets in the given layout. */
 static void
 UIHide (const Layout *self)
 {
-  UIForEachWidget (self, NULL, UI_VISITOR (w, _) (
-    w->widget->hidden = true;
-  ));
+  UIForEachWidget (self, NULL, UIHideVisitor);
 }
 
 /**
@@ -363,25 +364,31 @@ UICheckSize (const Layout *self, int width, int height)
   return true;
 }
 
+typedef struct {
+  const Layout *best;
+  const int width;
+  const int height;
+} UIBestFitData;
+
+static void
+UIBestFitVisitor(const Layout *w, void *data_p)
+{
+  UIBestFitData *data = data_p;
+  if (data->best && data->best->priority > w->priority)
+    return;
+  if (data->width >= w->min_width && data->height >= w->min_height)
+    data->best = w;
+}
+
 void
 UIBestFit (Layout *self, Layout **best_return, int width, int height)
 {
-  struct data {
-    const Layout *best;
-    const int width;
-    const int height;
-  } data = {
+  UIBestFitData data = {
     .best = NULL,
     .width = width,
     .height = height
   };
-  UIForEachWidget (self, &data, UI_VISITOR (w, data_p) (
-    struct data *data = data_p;
-    if (data->best && data->best->priority > w->priority)
-      return;
-    if (data->width >= w->min_width && data->height >= w->min_height)
-      data->best = w;
-  ));
+  UIForEachWidget (self, &data, UIBestFitVisitor);
   *best_return = (Layout *)data.best;
 }
 
@@ -421,6 +428,13 @@ UIResizeWindows (Layout *l, int width, int height)
   return NULL;
 }
 
+static void
+UIConstructVisitor(const Layout *w, void *_)
+{
+  (void)_;
+  w->widget->win = newwin(1, 1, 0, 0);
+}
+
 void
 UIConstruct (Layout *self)
 {
@@ -431,10 +445,20 @@ UIConstruct (Layout *self)
     }
   else
     {
-      UIForEachWidget (self, NULL, UI_VISITOR (w, _) (
-        w->widget->win = newwin (1, 1, 0, 0);
-      ));
+      UIForEachWidget (self, NULL, UIConstructVisitor);
       UIResizeWindows (self, COLS, LINES);
+    }
+}
+
+
+static void
+UIResizeVisitor(const Layout *w, void *_)
+{
+  (void)_;
+  if (!w->widget->hidden)
+    {
+      w->widget->Resize (w->widget->win);
+      w->widget->DrawBorder (w->widget->win);
     }
 }
 
@@ -448,13 +472,7 @@ UIResize (Layout *self, unsigned width, unsigned height)
       show_only->DrawBorder (show_only->win);
     }
   else
-    UIForEachWidget (self, NULL, UI_VISITOR (w, _) (
-      if (!w->widget->hidden)
-        {
-          w->widget->Resize (w->widget->win);
-          w->widget->DrawBorder (w->widget->win);
-        }
-    ));
+    UIForEachWidget (self, NULL, UIResizeVisitor);
 }
 
 void
@@ -490,26 +508,29 @@ UIGetMinSize (Layout *self)
     }
 }
 
+static void
+UIUpdateSizeInfoVisitor(const Layout *w, void *changed)
+{
+  const int width = w->min_width, height = w->min_height;
+  const int fixed = w->type == UI_WIDGET ? w->widget->fixed_size : FIXED_SIZE_NO;
+  Layout *mut = (Layout *)w;
+
+  w->widget->MinSize (&mut->min_width, &mut->min_height);
+  mut->min_width += 2;
+  mut->min_height += 2;
+  if (w->type == UI_WIDGET && w->widget->fixed_size == FIXED_SIZE_SET)
+    w->widget->fixed_size = FIXED_SIZE_YES;
+
+  if (w->min_width != width || w->min_height != height
+      || fixed != (w->type == UI_WIDGET ? w->widget->fixed_size : FIXED_SIZE_NO))
+    *(bool *)changed = true;
+}
+
 void
 UIUpdateSizeInfo (Layout *self, bool force_update)
 {
   bool changed = force_update || self->type == UI_WIDGET;
-  UIForEachWidget (self, &changed, UI_VISITOR (w, changed) (
-    const int width = w->min_width, height = w->min_height;
-    const int fixed = w->type == UI_WIDGET ? w->widget->fixed_size : FIXED_SIZE_NO;
-    Layout *mut = (Layout *)w;
-
-    w->widget->MinSize (&mut->min_width, &mut->min_height);
-    mut->min_width += 2;
-    mut->min_height += 2;
-    if (w->type == UI_WIDGET && w->widget->fixed_size == FIXED_SIZE_SET)
-      w->widget->fixed_size = FIXED_SIZE_YES;
-
-    if (w->min_width != width || w->min_height != height
-        || fixed != (w->type == UI_WIDGET ? w->widget->fixed_size : FIXED_SIZE_NO))
-      *(bool *)changed = true;
-  ));
-
+  UIForEachWidget (self, &changed, UIUpdateSizeInfoVisitor);
   if (changed)
     {
       UIGetMinSize (self);
@@ -517,13 +538,17 @@ UIUpdateSizeInfo (Layout *self, bool force_update)
     }
 }
 
+static void
+UICollectWidgetsVisitor(const Layout *w, void *data)
+{
+  w->widget->exists = true;
+  *(*(Widget ***)data)++ = w->widget;
+}
+
 void
 UICollectWidgets (const Layout *self, Widget **widgets_out)
 {
-  UIForEachWidget (self, &widgets_out, UI_VISITOR (w, data) (
-    w->widget->exists = true;
-    *(*(Widget ***)data)++ = w->widget;
-  ));
+  UIForEachWidget (self, &widgets_out, UICollectWidgetsVisitor);
 }
 
 Layout *

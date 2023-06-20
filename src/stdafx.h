@@ -62,16 +62,4 @@
 
 #define countof(arr) (sizeof (arr) / sizeof (*(arr)))
 
-/**
- * creates a local function and returns a pointer to it.
- *
- * Usage:
- *
- *     lambda (int, int a, int b) (
- *       return a + b;
- *     )
- */
-#define lambda(return_type_, ...) ({ return_type_ f_ (__VA_ARGS__) lambda_2
-#define lambda_2(...) { __VA_ARGS__ } f_; })
-
 #endif /* !STDAFX_H */
