@@ -6,6 +6,12 @@ VGFLAGS = --track-origins=yes #--leak-check=full
 
 PREFIX ?= ~/.local/bin
 
+# For the future, currently this cannot handle the executable stack required by
+# the current UI code.
+#ifneq (, $(shell which mold))
+#	LDFLAGS += -fuse-ld=mold
+#endif
+
 ifdef DEBUG
 	CFLAGS += -O0 -g
 else

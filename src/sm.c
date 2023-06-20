@@ -7,6 +7,7 @@
 #include "network.h"
 #include "proc.h"
 #include "disk.h"
+#include "temp.h"
 #include "nc-help/help.h"
 #include "layout_parser.h"
 #include "input.h"
@@ -52,6 +53,7 @@ struct Widget *all_widgets[] = {
   &net_widget,
   &proc_widget,
   &disk_widget,
+  &temp_widget,
   NULL
 };
 // Widgets used in the layout
@@ -203,6 +205,11 @@ LoadConfig ()
 
   if ((v = ConfigGet("net", "auto-scale")))
     net_auto_scale = v->as_bool();
+
+  if ((v = ConfigGet("temp", "filter")))
+    temp_filter = v->as_string();
+  if ((v = ConfigGet("temp", "show-average")))
+    temp_show_average = v->as_bool();
 }
 
 void

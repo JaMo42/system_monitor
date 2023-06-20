@@ -100,6 +100,12 @@ Sections and their properties are:
   - `vertical` (bool) if true, show filesystems in a column
   - `mounting-points` (string) comma separated list of mounting points of the filesystems to show
 
+- `temp`
+  - `filter` (string) comma or semicolon separated whitelist of temperature zones (like `thermal_zone0`) or types (like `acpitz`) to show.
+  If empty (the default) zones are not filtered.
+  Example: `acpitz,thermal_zone1,thermal_zone2` is equivalent to `acpitz;thermal_zone1;thermal_zone2`.
+  - `show-average` (bool) show the average of all zones
+
 Boolean values can be given as `true`, `yes`, or `1` for true and `false`, `no`, or `0` for false.
 
 Number values are unsigned integers.
@@ -156,14 +162,14 @@ cols:          "cols" | "columns" | "vertical"
 percent-first: <number> "%"
 child:         widget | layout
 widget:        widget-name "[" priority "]"
-widget-name:   "cpu" | "memory" | "network" | "processes" | "disk_usage"
+widget-name:   "cpu" | "memory" | "network" | "processes" | "disk_usage" | "temperature"
 priority:      <number>
 ```
 
 
 `percent-first` is the relative size of the first child of the layout (top for rows, left for columns). If omitted it defaults to 50%, if the given value is greater than 100% it becomes 100%.
 
-The `widget-name` can be abbreviated to any length as long as it's not ambiguous (this is why the default layout-string just uses single letters).
+The `widget-name` can be abbreviated to any length as long as it's not ambiguous.
 
 The `priority` is used to decide which widgets to hide first when the window is too small.
 
