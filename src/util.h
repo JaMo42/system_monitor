@@ -26,6 +26,7 @@ extern const short C_PROC_ARG;
 extern const short C_DISK_FREE;
 extern const short C_DISK_USED;
 extern const short C_DISK_ERROR;
+extern const short C_BATTERY_FILL;
 
 typedef struct {
   const char *unit;
@@ -72,3 +73,8 @@ void PrintPercentage(WINDOW *win, int x, int y, double p);
 
 // asprintf is not declared for me, even with _GNU_SOURCE...
 char *Format(const char *fmt, ...);
+
+/** Reads up to 31 characters from a file.  The returned pointer points to an
+    internal buffer.  If trim_end is true the last character is replaced by
+    the null terminator instead of placing it one after the last character. */
+char *ReadSmallFile(const char *pathname, bool trim_end);

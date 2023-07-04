@@ -21,6 +21,7 @@ const short C_PROC_ARG = 61;
 const short C_DISK_FREE = 248;
 const short C_DISK_USED = 77;
 const short C_DISK_ERROR = 2;
+const short C_BATTERY_FILL = 252;
 
 void
 Border (WINDOW *w)
@@ -162,9 +163,21 @@ char *Format(const char *fmt, ...) {
     va_start(ap1, fmt);
     va_copy(ap2, ap1);
     int size = vsnprintf(NULL, 0, fmt, ap1);
-    char *buf = malloc(size);
+    char *buf = malloc(size + 1);
     vsprintf(buf, fmt, ap2);
     va_end(ap1);
     va_end(ap2);
+    return buf;
+}
+
+char *ReadSmallFile(const char *pathname, bool trim_end) {
+    static char buf[32];
+    int fd;
+    int c = -1;
+    if ((fd = open(pathname, O_RDONLY)) >= 0) {
+      c = read(fd, buf, sizeof(buf) - 1);
+      close(fd);
+    }
+    buf[c < 0 ? 0 : c - trim_end] = '\0';
     return buf;
 }

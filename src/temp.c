@@ -37,16 +37,6 @@ static int TempCompareZone(const void *a, const void *b) {
     return ((ThermalZone *)a)->number - ((ThermalZone *)b)->number;
 }
 
-static char *TempRead(const char *pathname) {
-    static char buf[32];
-    int fd = open(pathname, O_RDONLY);
-    int c = read(fd, buf, sizeof(buf) - 1);
-    // this is used to read exactly two files, both containing a final newline
-    // which we don't want so we use `c - 1` here to overwrite that newline.
-    buf[c < 0 ? 0 : c - 1] = '\0';
-    return buf;
-}
-
 static void TempDiscover(VECTOR(char *) filter) {
     const char *BASE_PATH = "/sys/class/thermal";
     DIR *dir = opendir(BASE_PATH);
@@ -55,7 +45,7 @@ static void TempDiscover(VECTOR(char *) filter) {
     while ((entry = readdir(dir))) {
         if (strncmp(entry->d_name, CHECK, sizeof(CHECK) - 1) == 0) {
             char *path = Format("%s/%s/type", BASE_PATH, entry->d_name);
-            char *type = TempRead(path);
+            char *type = ReadSmallFile(path, true);
             if (TempFilter(entry->d_name, filter) || TempFilter(type, filter)) {
                 memcpy(path + strlen(path) - 4, "temp", 4);
                 vector_emplace_back(
@@ -120,7 +110,7 @@ void TempQuit() {
 void TempUpdate() {
     uint64_t total = 0;
     vector_for_each(zones, zone) {
-        const int sample = atoi(TempRead(zone->temp_path));
+        const int sample = atoi(ReadSmallFile(zone->temp_path, true));
         const int whole = sample / 1000;
         const int decimal = sample % 1000 / 100;
         total += sample / 100;

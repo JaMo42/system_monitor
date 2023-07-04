@@ -8,6 +8,7 @@
 #include "proc.h"
 #include "disk.h"
 #include "temp.h"
+#include "battery.h"
 #include "nc-help/help.h"
 #include "layout_parser.h"
 #include "input.h"
@@ -54,6 +55,7 @@ struct Widget *all_widgets[] = {
   &proc_widget,
   &disk_widget,
   &temp_widget,
+  &battery_widget,
   NULL
 };
 // Widgets used in the layout
@@ -210,6 +212,13 @@ LoadConfig ()
     temp_filter = v->as_string();
   if ((v = ConfigGet("temp", "show-average")))
     temp_show_average = v->as_bool();
+
+  if ((v = ConfigGet("battery", "battery")))
+    battery_battery = v->as_string();
+  if ((v = ConfigGet("battery", "slim")))
+    battery_slim = v->as_bool();
+  if ((v = ConfigGet("battery", "show_status")))
+    battery_show_status = v->as_string();
 }
 
 void
@@ -281,8 +290,10 @@ CursesInit ()
 
   for (int i = 0; i < COLORS; ++i)
     init_pair (i + 1, i, -1);
+  // These values encroach on the normal colors starting from 254
   init_pair (C_PROC_CURSOR, 0, 76);
   init_pair (C_PROC_HIGHLIGHT, 0, 81);
+  init_pair (C_BATTERY_FILL, 15, 27);
 }
 
 void
@@ -411,8 +422,7 @@ Usage (FILE *stream)
   fputs ("  -T         Show kernel threads", stderr);
   fputs ("  -h         Show help message\n", stream);
   fputc ('\n', stream);
-  fputs ("If the layout option for -l is '?' the current layout string (either\n", stream);
-  fputs ("the default or the SM_LAYOUT environment variable) gets printed.\n", stream);
+  fputs ("If the layout option for -l is '?' the default layout string gets printed.\n", stream);
 }
 
 void

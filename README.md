@@ -106,6 +106,15 @@ Sections and their properties are:
   Example: `acpitz,thermal_zone1,thermal_zone2` is equivalent to `acpitz;thermal_zone1;thermal_zone2`.
   - `show-average` (bool) show the average of all zones
 
+- `battery`
+  - `battery` (string) the battery to display (one of the directories from /sys/class/power_supply).
+    The default is `BAT0`.
+  - `slim` (bool) if true, use 1 as minimum height instead of 3.
+    Note: I recommend always setting the size of the battery widget in the layout to 0% to enforce the minimum size.
+  - `show_status` (string) comma separated list of battery statuses to show.
+    The default is `Charging,Not charging`.
+    See the `/sys/class/power_supply/<supply_name>/status` section here for valid values: https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-power.
+
 Boolean values can be given as `true`, `yes`, or `1` for true and `false`, `no`, or `0` for false.
 
 Number values are unsigned integers.
@@ -143,9 +152,9 @@ The precedence for the different configuration ways is:
 
 ## Layout
 
-A custom layout can be specified via the `SM_LAYOUT` environment variable or the `-l` argument (overrides environment variable).
+A custom layout can be specified via the `-l` argument.
 
-If neither is specified the default is `(rows 33% c[2] (cols (rows m[1] n[0]) p[3]))`.
+If not specified the default is `(rows 33% c[2] (cols (rows m[1] n[0]) p[3]))`.
 
 Another example: `strict (cols 66% cpu[3] (rows 33% mem[1] (rows net[0] proc[2])))`.
 
