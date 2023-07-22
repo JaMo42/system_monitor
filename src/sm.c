@@ -419,7 +419,7 @@ Usage (FILE *stream)
   fputs ("  -c         Always show CPU graph in range 0~100%\n", stream);
   fputs ("  -f         ASCII art process tree\n", stream);
   fputs ("  -l layout  Specifies the layout string\n", stream);
-  fputs ("  -T         Show kernel threads", stderr);
+  fputs ("  -T         Show kernel threads\n", stderr);
   fputs ("  -h         Show help message\n", stream);
   fputc ('\n', stream);
   fputs ("If the layout option for -l is '?' the default layout string gets printed.\n", stream);
