@@ -65,12 +65,11 @@ static Proc_Data* add_or_update (pid_t pid, bool force)
   Proc_Map_Insert_Result insert_result;
   File_Content cmdline = read_entire_file (dir_fd, "cmdline");
   Command_Line command_line;
-  bool have_command_line = false;
+  bool cmdline_is_comm = false;
   if (cmdline.size <= 0) {
     if (force || show_kthreads) {
       cmdline = read_entire_file(dir_fd, "comm");
-      commandline_from_comm(&command_line, cmdline);
-      have_command_line = true;
+      cmdline_is_comm = true;
     } else {
       close (dir_fd);
       return NULL;
@@ -80,7 +79,9 @@ static Proc_Data* add_or_update (pid_t pid, bool force)
   const uint8_t bucket_generation = *insert_result.generation;
   *insert_result.generation = current_generation;
   if (insert_result.is_new) {
-    if (!have_command_line) {
+    if (cmdline_is_comm) {
+      commandline_from_comm(&command_line, cmdline);
+    } else {
       commandline_from_cmdline(&command_line, cmdline);
     }
     new_process (dir_fd, insert_result.value, pid, command_line);

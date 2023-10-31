@@ -1,4 +1,4 @@
-INCLUDE_DIRS = -Isrc/rb-tree
+INCLUDE_DIRS = -Isrc/rb-tree -Isrc/c-vector
 CC = gcc
 CFLAGS = -Wall -Wextra $(INCLUDE_DIRS)
 LDFLAGS = -lm -pthread
