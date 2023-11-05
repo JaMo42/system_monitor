@@ -79,6 +79,9 @@ static Proc_Data* add_or_update (pid_t pid, bool force)
   const uint8_t bucket_generation = *insert_result.generation;
   *insert_result.generation = current_generation;
   if (insert_result.is_new) {
+    // In `cmdline` it contains a trailing null byte and in `comm` a trailing
+    // linefeed, we want neither of those.
+    --cmdline.size;
     if (cmdline_is_comm) {
       commandline_from_comm(&command_line, cmdline);
     } else {
