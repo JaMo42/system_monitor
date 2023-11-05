@@ -246,7 +246,7 @@ ProcInit (WINDOW *win)
   ProcSetViewSize (getmaxy (win) - 3);
   ProcUpdateProcesses ();
   static const char *menu_items[] = {
-    "Stop", "Continue", "End", "Kill"
+    "View full command", "Stop", "Continue", "End", "Kill"
   };
   proc_context_menu = ContextMenuCreate (menu_items, countof (menu_items));
 }
@@ -592,10 +592,18 @@ ProcShowContextMenu (int x)
   int signal = 0;
   switch (ContextMenuShow (&proc_context_menu, x, y))
     {
-    case 0: signal = SIGSTOP; break;
-    case 1: signal = SIGCONT; break;
-    case 2: signal = SIGTERM; break;
-    case 3: signal = SIGKILL; break;
+    case 0: {
+        Proc_Data *process = ps_get_procs()[proc_cursor];
+        char *title = Format("Commandline of %d", process->pid);
+        ShowPlainMessageBox(title, process->command_line.str);
+        free(title);
+        return;
+    }
+
+    case 1: signal = SIGSTOP; break;
+    case 2: signal = SIGCONT; break;
+    case 3: signal = SIGTERM; break;
+    case 4: signal = SIGKILL; break;
     }
   if (signal && kill (proc_cursor_pid, signal) == -1)
     {
