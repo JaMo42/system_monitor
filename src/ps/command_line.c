@@ -71,6 +71,9 @@ void commandline_from_comm(Command_Line *self, File_Content content) {
     }
     self->data[content.size] = ']' | COLOR_PAIR(C_PROC_PATH);
     self->data[content.size + 1] = 0;
+    self->str = malloc(content.size + 1);
+    memcpy(self->str, content.data, content.size);
+    self->str[content.size] = 0;
 }
 
 void commandline_print(
