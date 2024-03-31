@@ -23,6 +23,34 @@ const short C_DISK_USED = 77;
 const short C_DISK_ERROR = 2;
 const short C_BATTERY_FILL = 252;
 
+void DrawRect(WINDOW *win, int x, int y, int width, int height) {
+    const char *const vertical = "│";
+    const char *const horizontal = "─";
+    const char *const top_left = "╭";
+    const char *const top_right = "╮";
+    const char *const bottom_left = "╰";
+    const char *const bottom_right = "╯";
+    int i;
+    wmove(win, y, x);
+    waddstr(win, top_left);
+    for (i = 1; i < width - 1; ++i) {
+        waddstr(win, horizontal);
+    }
+    waddstr(win, top_right);
+    for (i = 1; i < height - 1; ++i) {
+        wmove(win, y + i, x);
+        waddstr(win, vertical);
+        wmove(win, y + i, x + width - 1);
+        waddstr(win, vertical);
+    }
+    wmove(win, y + height - 1, x);
+    waddstr(win, bottom_left);
+    for (i = 1; i < width - 1; ++i) {
+        waddstr(win, horizontal);
+    }
+    waddstr(win, bottom_right);
+}
+
 void
 Border (WINDOW *w)
 {

@@ -1,6 +1,7 @@
 #include "dialog.h"
 #include "util.h"
 #include "sm.h"
+#include "input.h"
 
 typedef struct { int lines, cols; } Dimensions;
 
@@ -42,14 +43,14 @@ static void
 PlainMessageBoxDraw (void *win)
 {
   redrawwin ((WINDOW *)win);
-  wrefresh (win);
+  wrefresh ((WINDOW *)win);
 }
 
 void
 ShowPlainMessageBox (const char *title, const char *message)
 {
   const Dimensions dim = WrappedTextDimensions (message, (int)(0.9 * COLS) - 2);
-  const int width = Max (dim.cols, title ? (int)strlen (title) + 8: 3);
+  const int width = Max (dim.cols, title ? (int)strlen (title) + 8 : 3);
   const int height = dim.lines;
   int line;
   bool quit_key_was_resize;
@@ -97,4 +98,108 @@ ShowPlainMessageBox (const char *title, const char *message)
     ungetch (KEY_RESIZE);
   else
     ungetch (KEY_REFRESH);
+}
+
+typedef struct {
+    WINDOW *win;
+    const char *str;
+    bool secret;
+} InputBoxState;
+
+static void InputBoxDraw(void *pstate) {
+    InputBoxState *state = pstate;
+    redrawwin(state->win);
+    wrefresh(state->win);
+}
+
+static void InputBoxChange(Input_String *_string, bool text_changed) {
+    (void)_string;
+    if (!text_changed) {
+        return;
+    }
+    //InputBoxState *state = overlay_data;
+    GetLineDraw();
+    InputBoxDraw(overlay_data);
+}
+
+static void InputBoxFinish(Input_String *string) {
+    InputBoxState *state = overlay_data;
+    state->str = string->data;
+}
+
+const char* ShowInputBox(const char *title, const char *label, bool secret) {
+    const Dimensions dim = WrappedTextDimensions (label, (int)(0.9 * COLS) - 2);
+    int width = Max(Max (dim.cols, title ? (int)strlen (title) + 8 : 3), 20);
+    const int height = dim.lines + 3;
+    int entryx = 2;
+    const int entryy = 1 + dim.lines + 1;
+
+    WINDOW *win = newwin (
+        height + 2,
+        width + 2,
+        (LINES - (height + 2)) / 2,
+        (COLS - (width + 2)) / 2
+    );
+
+    InputBoxState state = {
+        .win = win,
+        .str = NULL,
+        .secret = secret,
+    };
+
+    if (title) {
+        DrawWindow(win, title);
+    } else {
+        wattron(win, COLOR_PAIR(C_BORDER));
+        Border(win);
+        wattroff(win, COLOR_PAIR(C_BORDER));
+    }
+    for (int line = 1; *label; ++line) {
+        wmove(win, line, 1);
+        PrintLine(win, &label, width);
+    }
+    DrawRect(win, entryx - 1, entryy - 1, width, 3);
+    wmove(win, entryy, entryx);
+    if (secret) {
+        waddstr(win, "🔐");
+        ++entryx;
+        --width;
+    }
+
+    pthread_mutex_lock(&draw_mutex);
+    InputBoxDraw((void*)&state);
+    refresh();
+    overlay_data = &state;
+    DrawOverlay = InputBoxDraw;
+    pthread_mutex_unlock(&draw_mutex);
+
+    GetLineBegin(
+        win,
+        entryx + 1,
+        entryy,
+        false,
+        width - 3,
+        NULL,
+        InputBoxChange,
+        InputBoxFinish,
+        true
+    );
+
+    int ch;
+    while (state.str == NULL) {
+        ch = GetChar();
+        if (ch == KEY_RESIZE) {
+            HandleResize();
+        }
+        HandleInput(ch);
+    }
+
+    pthread_mutex_lock(&draw_mutex);
+    DrawOverlay = NULL;
+    overlay_data = NULL;
+    pthread_mutex_unlock(&draw_mutex);
+    delwin(win);
+    ungetch(KEY_REFRESH);
+
+    return state.str;
 }

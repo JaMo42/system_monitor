@@ -5,3 +5,5 @@
 /// @param title if not NULL, the title to show on the box window
 /// @param message the message to show
 void ShowPlainMessageBox (const char *title, const char *message);
+
+const char* ShowInputBox(const char *title, const char *label, bool secret);

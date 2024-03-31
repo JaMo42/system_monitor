@@ -21,6 +21,7 @@ static struct Get_Line_State
   History *history;
   Get_Line_Change_Callback change_callback;
   Get_Line_Finish_Callback finish_callback;
+  bool secret;
 
   /**** State ****/
 
@@ -300,7 +301,7 @@ GetLineDraw ()
         wattron (S.window, A_REVERSE);
       else if (i == selection_end)
         wattroff (S.window, A_REVERSE);
-      waddch (S.window, *p++);
+      waddch (S.window, S.secret ? '*' : *p++);
     }
   if (selection_end >= S.view_end)
     wattroff (S.window, A_REVERSE);
@@ -625,7 +626,7 @@ GetLineHandleInput (int key)
 void
 GetLineBegin (WINDOW *win, int x, int y, bool move_y_on_resize, int width,
               History *history, Get_Line_Change_Callback change_callback,
-              Get_Line_Finish_Callback finish_callback)
+              Get_Line_Finish_Callback finish_callback, bool secret)
 {
   Input_String *input;
   if (history)
@@ -648,6 +649,7 @@ GetLineBegin (WINDOW *win, int x, int y, bool move_y_on_resize, int width,
     .history = history,
     .change_callback = change_callback,
     .finish_callback = finish_callback,
+    .secret = secret,
 
     .input = input,
     .cursor = 0,

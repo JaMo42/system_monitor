@@ -5,6 +5,8 @@ LDFLAGS = -lm -pthread
 VGFLAGS = --track-origins=yes #--leak-check=full
 
 PREFIX ?= ~/.local/bin
+# Install path to use in mod_and_install since it has to be run as root so we can't use ~
+_SU_INSTALL_PATH = $(shell echo "`pwd | cut -d/ -f1-3`/`echo $(PREFIX) | cut -d/ -f3-`")
 
 ifneq (, $(shell which mold))
 	LDFLAGS += -fuse-ld=mold
@@ -67,4 +69,12 @@ cg: sm
 install: sm
 	cp sm $(PREFIX)/sm
 
-.PHONY: clean vg
+mod: sm
+	@echo "Warning: Giving sm root permissions under normal execution from now on."
+	chown root sm
+	chmod +s sm
+
+mod_and_install: mod
+	cp sm $(_SU_INSTALL_PATH)/sm
+
+.PHONY: clean vg cg install mod mod_and_install

@@ -33,6 +33,9 @@ typedef struct {
   double size;
 } Size_Format;
 
+/* Draw a rectangle */
+void DrawRect(WINDOW *win, int x, int y, int width, int height);
+
 /* Draw a window border */
 void Border (WINDOW *w);
 

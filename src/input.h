@@ -125,10 +125,11 @@ int GetChar ();
  * @param change_callback: function to call when text changes or should be
  *                         redrawn
  * @param finish_callback: function to call with the final string
+ * @param secret: whether to hide the input
  */
 void GetLineBegin (WINDOW *win, int x, int y, bool move_y_on_resize, int width,
                    History *history, Get_Line_Change_Callback change_callback,
-                   Get_Line_Finish_Callback finish_callback);
+                   Get_Line_Finish_Callback finish_callback, bool secret);
 
 /**
  * draws the current get-line text.

@@ -40,6 +40,23 @@ static Context_Menu proc_context_menu;
 static const char **proc_prefixes = NULL;
 static const int *proc_prefix_widths = NULL;
 
+enum {
+    PROC_CTX_VIEW_FULL_COMMAND,
+    PROC_CTX_DEBUG,
+    PROC_CTX_STOP,
+    PROC_CTX_CONTINUE,
+    PROC_CTX_END,
+    PROC_CTX_KILL,
+};
+
+#define PROC_ENUM_CONTEXT_MENU(o) \
+    o(PROC_CTX_VIEW_FULL_COMMAND, "View full command") \
+    o(PROC_CTX_DEBUG, "Debug") \
+    o(PROC_CTX_STOP, "Stop") \
+    o(PROC_CTX_CONTINUE, "Continue") \
+    o(PROC_CTX_END, "End") \
+    o(PROC_CTX_KILL, "Kill")
+
 static void
 ProcSetPrefixes()
 {
@@ -246,7 +263,9 @@ ProcInit (WINDOW *win)
   ProcSetViewSize (getmaxy (win) - 3);
   ProcUpdateProcesses ();
   static const char *menu_items[] = {
-    "View full command", "Stop", "Continue", "End", "Kill"
+    #define O(n, s) s,
+    PROC_ENUM_CONTEXT_MENU(O)
+    #undef O
   };
   proc_context_menu = ContextMenuCreate (menu_items, countof (menu_items));
 }
@@ -516,7 +535,8 @@ ProcBeginSearch ()
   const int x = 9;  // '|Search: '
   const int y = getmaxy (win) - 2;
   GetLineBegin (win, x, y, true, getmaxx (win) - x - 2,
-                proc_search_history, ProcSearchUpdate, ProcSearchFinish);
+                proc_search_history, ProcSearchUpdate, ProcSearchFinish,
+                false);
   wmove (win, y, 1);
   wattron (win, A_BOLD);
   waddstr (win, "Search: ");
@@ -581,6 +601,82 @@ ProcSearchPrev ()
 }
 
 static inline void
+ProcDebug(Proc_Data *proc) {
+    enum {
+        E_OK,
+        E_FORK,
+        E_EXECLP,
+    };
+    const char *msg[] = {
+        [E_FORK] = "Failed to fork",
+        [E_EXECLP] = "Failed to execute gdb",
+    };
+    // Max PID is 2^22 = 4_194_304
+    char pidarg[8];
+    snprintf(pidarg, sizeof(pidarg), "%d", proc->pid);
+    pthread_mutex_lock(&draw_mutex);
+    endwin();
+    int stat, error = E_OK;
+    signal(SIGINT, SIG_IGN);
+    const pid_t pid = fork();
+    switch (pid) {
+    case -1:
+        error = E_FORK;
+        return;
+
+    case 0:
+        if (geteuid() == 0) {
+            execlp("gdb", "gdb", "-p", pidarg, NULL);
+        } else {
+            execlp("sudo", "sudo", "-k", "gdb", "--", "-p", pidarg, NULL);
+        }
+        perror("execlp");
+        _exit(1);
+
+    default:
+        waitpid(pid, &stat, 0);
+        if (!WIFEXITED(stat) || WEXITSTATUS(stat) != 0) {
+            error = E_EXECLP;
+        }
+        break;
+    }
+    signal(SIGINT, SIG_DFL);
+    initscr();
+    ungetch(KEY_REFRESH);
+    pthread_mutex_unlock(&draw_mutex);
+    if (error != E_OK) {
+        ShowPlainMessageBox("Error", msg[error]);
+    }
+}
+
+static inline void
+ProcKill(Proc_Data *proc, int signal) {
+    // Since we have the debug action now, the program may be ran with
+    // superuser privileges through the setuid bit, in which case we would
+    // want to use the normal users permissions for killing.
+    // If the program is actually ran by the superuser this does not affect
+    // anything.
+    const gid_t real_gid = getgid();
+    const gid_t privileged_gid = getegid();
+    const uid_t real_uid = getuid();
+    const uid_t privileged_uid = geteuid();
+    assert(setegid(real_gid) == 0);
+    assert(seteuid(real_uid) == 0);
+    if (signal && kill (proc->pid, signal) == -1) {
+        char *buf = Format(
+            "Cannot kill process with PID %d with signal %d: \n%s",
+            proc->pid,
+            signal,
+            strerror(errno)
+        );
+        ShowPlainMessageBox("Error", buf);
+        free(buf);
+    }
+    assert(setegid(privileged_gid) == 0);
+    assert(seteuid(privileged_uid) == 0);
+}
+
+static void
 ProcShowContextMenu (int x)
 {
   if (x == -1)
@@ -588,11 +684,10 @@ ProcShowContextMenu (int x)
   else
     x += getbegx (proc_widget.win);
   const int y = getbegy (proc_widget.win) + 4 + (proc_cursor - proc_view_begin);
-  // Stop, Continue, End, Kill
   int signal = 0;
   switch (ContextMenuShow (&proc_context_menu, x, y))
     {
-    case 0: {
+    case PROC_CTX_VIEW_FULL_COMMAND: {
         Proc_Data *process = ps_get_procs()[proc_cursor];
         char *title = Format("Commandline of %d", process->pid);
         ShowPlainMessageBox(title, process->command_line.str);
@@ -600,21 +695,19 @@ ProcShowContextMenu (int x)
         return;
     }
 
-    case 1: signal = SIGSTOP; break;
-    case 2: signal = SIGCONT; break;
-    case 3: signal = SIGTERM; break;
-    case 4: signal = SIGKILL; break;
+    case PROC_CTX_DEBUG: {
+        ProcDebug(ps_get_procs()[proc_cursor]);
+        return;
     }
-  if (signal && kill (proc_cursor_pid, signal) == -1)
-    {
-      static const char *fmt = "Cannot kill process with PID %d with signal %d: \n%s";
-      const char *error = strerror (errno);
-      int len = snprintf (NULL, 0, fmt, proc_cursor_pid, signal, error) + 1;
-      char *buf = malloc (len);
-      (void)snprintf (buf, len, fmt, proc_cursor_pid, signal, error);
-      ShowPlainMessageBox ("Error", buf);
-      free (buf);
+
+    case PROC_CTX_STOP: signal = SIGSTOP; break;
+    case PROC_CTX_CONTINUE: signal = SIGCONT; break;
+    case PROC_CTX_END: signal = SIGTERM; break;
+    case PROC_CTX_KILL: signal = SIGKILL; break;
     }
+
+  if (signal)
+    ProcKill(ps_get_procs()[proc_cursor], signal);
   wrefresh (proc_widget.win);
 }
 

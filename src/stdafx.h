@@ -1,6 +1,8 @@
 #ifndef STDAFX_H
 #define STDAFX_H
 
+#define _GNU_SOURCE
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -14,6 +16,7 @@
 #include <inttypes.h>
 #include <errno.h>
 #include <float.h>
+#include <assert.h>
 
 #include <strings.h>
 #include <sys/types.h>
@@ -26,6 +29,7 @@
 #include <sys/statvfs.h>
 #include <fcntl.h>
 #include <dirent.h>
+#include <sys/wait.h>
 
 #include <ncurses.h>
 

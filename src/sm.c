@@ -278,6 +278,7 @@ void
 CursesInit ()
 {
   setlocale (LC_ALL, "");
+  //def_shell_mode();
   initscr ();
   curs_set (FALSE);
   noecho ();
@@ -294,6 +295,8 @@ CursesInit ()
   init_pair (C_PROC_CURSOR, 0, 76);
   init_pair (C_PROC_HIGHLIGHT, 0, 81);
   init_pair (C_BATTERY_FILL, 15, 27);
+
+  //def_prog_mode();
 }
 
 void
