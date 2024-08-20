@@ -61,6 +61,8 @@ struct Widget *all_widgets[] = {
 // Widgets used in the layout
 static struct Widget *widgets[countof (all_widgets)];
 
+struct Widget *bottom_right_widget = NULL;
+
 pthread_mutex_t draw_mutex;
 
 void *overlay_data = NULL;
@@ -151,6 +153,7 @@ main (int argc, char *const *argv)
   UIConstruct (ui);
   InitWidgets ();
   UIUpdateSizeInfo (ui, true);
+  DrawBorders();
   CursesUpdate ();
   help_init (&help, help_text);
 
@@ -226,12 +229,14 @@ HandleResize ()
 {
   pthread_mutex_lock (&draw_mutex);
   UIResize (ui, COLS, LINES);
+  bottom_right_widget = UIBottomRightVisibleWidget(ui);
   if (ui_too_small)
     {
       TooSmall ();
       UpdateWidgets ();
     }
   CursesResize ();
+  DrawHelpInfo();
   pthread_mutex_unlock (&draw_mutex);
 }
 
@@ -356,6 +361,15 @@ DrawBorders ()
       if (!w->hidden)
         w->DrawBorder (w->win);
     }
+  DrawHelpInfo();
+}
+
+void
+DrawHelpInfo() {
+  if (bottom_right_widget) {
+    DrawWindowInfo2(bottom_right_widget->win, "Press ? for help");
+    wrefresh(bottom_right_widget->win);
+  }
 }
 
 void

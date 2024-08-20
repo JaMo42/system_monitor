@@ -5,7 +5,9 @@
 
 extern Layout *ui;
 
-extern struct Widget *all_widgets[];
+extern Widget *all_widgets[];
+
+extern Widget *bottom_right_widget;
 
 extern pthread_mutex_t draw_mutex;
 
@@ -18,3 +20,5 @@ extern bool (*HandleInput) (int);
 bool MainHandleInput (int key);
 
 void HandleResize ();
+
+void DrawHelpInfo();

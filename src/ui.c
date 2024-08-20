@@ -562,3 +562,20 @@ UIFindWidgetContaining (Layout *self, int x, int y)
   else
     return UIFindWidgetContaining (self->elems[1], x, y);
 }
+
+bool UIIsVisible(Layout *self) {
+  if (self->type == UI_WIDGET)
+    return !self->widget->hidden;
+  return UIIsVisible(self->elems[0]) || UIIsVisible(self->elems[1]);
+}
+
+Layout* UIBottomRightVisibleNode(Layout* self, Layout* prev) {
+  if (self->type == UI_WIDGET)
+    return self->widget->hidden ? prev : self;
+  bool second_is_visible = UIIsVisible(self->elems[1]);
+  return UIBottomRightVisibleNode(self->elems[second_is_visible], self);
+}
+
+Widget* UIBottomRightVisibleWidget(Layout* self) {
+  return UIBottomRightVisibleNode(self, NULL)->widget;
+}

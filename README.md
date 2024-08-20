@@ -46,8 +46,9 @@ If the layout option for `-l` is `?` the current layout string (either the defau
 
   Selecting the same sorting mode again toggles between descending and ascending sorting.
 
+- Space/Enter: Open the context menu for the currently selected process
 - `f`: toggle process ASCII art tree view
-- 't': collapse/expand the selected tree
+- `t`: collapse/expand the selected tree
 - `T`: toggle visibility of kernel threads
 - `S`: toggle summation of child processes
 - Process searching

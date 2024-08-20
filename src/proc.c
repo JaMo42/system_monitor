@@ -354,7 +354,11 @@ ProcDrawBorderImpl (WINDOW *win)
                 proc_view_begin + proc_view_size, proc_count);
       DrawWindowInfo (win, info);
     }
-  DrawWindowInfo2 (win, "Press ? for help");
+  // Borders are only drawn when neccessary, so if we are supposed to have the
+  // help button info we need to redraw it.
+  if (&proc_widget == bottom_right_widget) {
+    DrawHelpInfo();
+  }
 }
 
 void

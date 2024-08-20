@@ -64,3 +64,6 @@ void UICollectWidgets (const Layout *self, Widget **widgets_out);
 
 /** gets the widget containing the given point. */
 Layout* UIFindWidgetContaining (Layout *self, int x, int y);
+
+/** gets the widget in the bottom right corner */
+Widget* UIBottomRightVisibleWidget(Layout *self);
