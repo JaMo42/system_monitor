@@ -68,7 +68,7 @@ void BatteryDraw(WINDOW *win) {
             PrintN(win, ' ', width - fill);
         }
     }
-    char label[strlen("100% (Not charing)")];
+    char label[sizeof("100% (Not charging)")];
     snprintf(label, sizeof(label), "%u%%", capacity);
     if (battery_status[0]
         && (strlen(label) + 3 + strlen(battery_status)) <= (unsigned)width) {
