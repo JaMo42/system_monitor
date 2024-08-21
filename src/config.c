@@ -1,4 +1,5 @@
 #include "config.h"
+#include <stdbool.h>
 
 static Ini config_file;
 
@@ -71,9 +72,8 @@ AsSigned ()
   return value;
 }
 
-void
-ReadConfig ()
-{
+bool
+TryReadConfig(Ini *out, const char **error, int *error_line) {
   const char *const home = getenv ("HOME");
   const char *const path = "/.config/sm.ini";
   const size_t len = strlen (home) + strlen (path) + 1;
@@ -82,20 +82,44 @@ ReadConfig ()
   FILE *fp = fopen (pathname, "r");
   free (pathname);
   if (!fp) {
-    config_ok = false;
-    return;
+    return false;
   }
   Ini_Options options = INI_OPTIONS_WITH_FLAGS (INI_QUOTED_VALUES);
   Ini_Parse_Result result = ini_parse_file (fp, options);
   fclose (fp);
   if (result.ok) {
-    config_ok = true;
-    config_file = result.unwrap;
+    *out = result.unwrap;
+    return true;
   } else {
+    *error = result.error;
+    *error_line = result.error_line;
+    return false;
+  }
+}
+
+static void
+ClearGlobalState() {
+    config_current_table = NULL;
+    config_current_name = NULL;
+    config_current_table_name = NULL;
+    config_value_string.data = NULL;
+    config_value_string.size = 0;
+}
+
+void
+ReadConfig ()
+{
+  config_ok = false;
+  memset(&config_file, 0, sizeof(config_file));
+  ClearGlobalState();
+  const char *error;
+  int error_line;
+  if (!TryReadConfig(&config_file, &error, &error_line)) {
     fprintf (stderr, "Failed to parse config: %s on line %u\n",
-             result.error, result.error_line);
+             error, error_line);
     exit (1);
   }
+  config_ok = true;
 }
 
 void
@@ -125,4 +149,16 @@ ConfigGet (const char *table, const char *name)
     return NULL;
   config_current_name = name;
   return &config_read_value_instance;
+}
+
+void ConfigSet(Ini ini, bool ok, Ini *old, bool *old_ok) {
+  if (old) {
+    *old = config_file;
+  }
+  if (old_ok) {
+    *old_ok = config_ok;
+  }
+  config_file = ini;
+  config_ok = ok;
+  ClearGlobalState();
 }

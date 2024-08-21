@@ -18,3 +18,8 @@ void FreeConfig ();
 bool HaveConfig ();
 
 Config_Read_Value * ConfigGet (const char *table, const char *name);
+
+bool TryReadConfig(Ini *out, const char **error, int *error_line);
+
+/** Set the global config, returning the old value. */
+void ConfigSet(Ini ini, bool ok, Ini *old, bool *old_ok);

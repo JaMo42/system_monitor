@@ -65,6 +65,6 @@
 #define likely(x) __builtin_expect((x), true)
 #define unlikely(x) __builtin_expect((x), false)
 
-#define countof(arr) (sizeof (arr) / sizeof (*(arr)))
+#define countof(arr) (sizeof (arr) / sizeof ((arr)[0]))
 
 #endif /* !STDAFX_H */

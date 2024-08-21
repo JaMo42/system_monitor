@@ -13,6 +13,7 @@
 #include "layout_parser.h"
 #include "input.h"
 #include "config.h"
+#include "dialog.h"
 
 #define widgets_for_each() \
   for (Widget *const *it = widgets, *w = *it; w != NULL; w = *++it)
@@ -43,7 +44,11 @@ static help_text_type help_text = {
   {"N", "Select previous search result"},
   HELP_LABEL ("CPU"),
   {"C", "Toggle CPU graph range scaling"},
-  {"a", "Toggle average CPU usage"}
+  {"a", "Toggle average CPU usage"},
+  HELP_LABEL("GENERAL"),
+  {"R", "Reload theme"},
+  {"q", "Quit"},
+  {"?", "Show help"},
 };
 static help_type help;
 
@@ -72,7 +77,7 @@ void (*DrawOverlay) (void *);
 bool (*HandleInput) (int key);
 
 void LoadConfig ();
-void LoadTheme(char *name);
+void LoadTheme(const char *name);
 
 void CursesInit ();
 void CursesUpdate ();
@@ -87,7 +92,7 @@ void DrawBorders ();
 
 bool MainHandleInput (int key);
 
-char* ParseArgs (int, char *const *);
+const char* ParseArgs (int, char *const *);
 
 void HelpShow ();
 
@@ -114,7 +119,7 @@ main (int argc, char *const *argv)
 {
   ReadConfig ();
   LoadConfig ();
-  char *theme_name = ParseArgs (argc, argv);
+  const char *theme_name = ParseArgs (argc, argv);
 
   const bool show_current_layout = layout && strcmp (layout, "?") == 0;
   if (show_current_layout)
@@ -228,16 +233,15 @@ LoadConfig ()
 }
 
 void
-LoadTheme(char *name) {
+LoadTheme(const char *name) {
   // The names comes from the command line arguments which take precedence over
   // the config file, and mixing the base theme from the argument with the
   // overrides from the config file doesn't seem like a good idea.
   if (name) {
     theme = CreateNamedTheme(name);
-    free(name);
   } else if (HaveConfig()) {
     Config_Read_Value *v;
-    ThemeDef *base = NULL;
+    const ThemeDef *base = NULL;
     if (HaveConfig() && (v = ConfigGet("theme", "theme"))) {
         base = NamedThemeDef(v->as_string());
     }
@@ -246,6 +250,29 @@ LoadTheme(char *name) {
   } else {
     theme = CreateNamedTheme("default");
   }
+}
+
+char*
+ReloadTheme() {
+    Ini ini;
+    const char *error;
+    int error_line;
+    if (TryReadConfig(&ini, &error, &error_line)) {
+        Ini prev;
+        bool ok;
+        ConfigSet(ini, true, &prev, &ok);
+        ResetColors();
+        // Instead of coming up with a way to get the theme override to this
+        // function we can just always pass NULL here since reloading the theme
+        // when it's overridden doesn't make much sense anyways.
+        LoadTheme(NULL);
+        ConfigSet(prev, ok, NULL, NULL);
+        ini_free(&ini);
+        return NULL;
+    } else {
+        char *msg = Format("Failed to parse config: %s on line %u", error, error_line);
+        return msg;
+    }
 }
 
 void
@@ -269,6 +296,7 @@ MainHandleInput (int key)
 {
   MEVENT event;
   Mouse_Event mouse;
+  char *err;
   switch (key)
     {
     case 'q':
@@ -277,6 +305,19 @@ MainHandleInput (int key)
     case '?':
       HelpShow ();
       break;
+
+    case 'R':
+        pthread_mutex_lock (&draw_mutex);
+        if ((err = ReloadTheme())) {
+            pthread_mutex_unlock (&draw_mutex);
+            ShowPlainMessageBox("Error", err);
+            free(err);
+        } else {
+            DrawBorders();
+            CursesUpdate();
+            pthread_mutex_unlock (&draw_mutex);
+        }
+        break;
 
     case KEY_MOUSE:
       if (getmouse (&event) == OK)
@@ -307,7 +348,6 @@ void
 CursesInit ()
 {
   setlocale (LC_ALL, "");
-  //def_shell_mode();
   initscr ();
   curs_set (FALSE);
   noecho ();
@@ -459,7 +499,7 @@ Usage (FILE *stream)
   fputs ("If the layout option for -l is '?' the default layout string gets printed.\n", stream);
 }
 
-char*
+const char*
 ParseArgs (int argc, char *const *argv)
 {
   char opt;
@@ -496,7 +536,7 @@ ParseArgs (int argc, char *const *argv)
             break;
 
           case 't':
-            theme_name = strdup(optarg);
+            theme_name = optarg;
             break;
 
           case 'h':

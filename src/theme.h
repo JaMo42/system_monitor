@@ -1,5 +1,6 @@
 #pragma once
 #include <stdbool.h>
+#include "ini.h"
 
 typedef struct {
     short foreground;
@@ -45,13 +46,16 @@ bool ThemeSet(Theme *self, const char *key, short value);
 
 /** Set values in the given theme from the already parsed config.  BASE mayb be
     NULL, in which case the default theme is used. */
-void ThemeFromConfig(Theme *self, ThemeDef *base);
+void ThemeFromConfig(Theme *self, const ThemeDef *base);
 
 /** Get a builtin named theme definition. */
-ThemeDef* NamedThemeDef(const char *name);
+const ThemeDef* NamedThemeDef(const char *name);
 
 /** Create a theme from only a named theme definition. */
 Theme* CreateNamedTheme(const char *name);
 
 /** Number of color pairs that can still be created. */
 int AvailableColors(void);
+
+/** Reset the pair index used by `DefColor`. */
+void ResetColors(void);

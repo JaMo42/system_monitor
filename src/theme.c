@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "theme.h"
 #include "config.h"
-#include <stdlib.h>
 
 struct ThemeDef {
   ColorDef border;
@@ -72,7 +71,7 @@ enum { FIELD_COUNT = sizeof(FIELD_NAMES) / sizeof(*FIELD_NAMES) };
 #define C(x) ((ColorDef){x, -1})
 #define B(x, y) ((ColorDef){x, y})
 
-static ThemeDef DEFAULT_THEME = {
+static const ThemeDef DEFAULT_THEME = {
     .border = C(213),
     .title = C(250),
     .cpu_avg = C(76),
@@ -99,7 +98,7 @@ static ThemeDef DEFAULT_THEME = {
     .name = "default",
 };
 
-static ThemeDef DEFAULT_LIGHT_THEME = {
+static const ThemeDef DEFAULT_LIGHT_THEME = {
     .border = C(93),
     .title = C(241),
     .cpu_avg = C(76),
@@ -128,8 +127,10 @@ static ThemeDef DEFAULT_LIGHT_THEME = {
 
 Theme *theme = NULL;
 
+enum { FIRST_COLOR = 1 };
+
 // 0 is already used for the default color
-static short G_next_color = 1;
+static short G_next_color = FIRST_COLOR;
 
 static short ParseColor(const char *rep) {
     // TODO: should be faster to not store them in order but storing them with
@@ -219,11 +220,8 @@ static ColorDef ParseColorDef(const char *rep) {
     return def;
 }
 
-#include <icecream.h>
-
 short DefColor(ColorDef def) {
     const short color = G_next_color++;
-    IC(color, def.foreground, def.background);
     init_pair(color, def.foreground, def.background);
     return color;
 }
@@ -239,7 +237,7 @@ bool ThemeSet(Theme *self, const char *key, short value) {
     return false;
 }
 
-void ThemeFromConfig(Theme *self, ThemeDef *base_) {
+void ThemeFromConfig(Theme *self, const ThemeDef *base_) {
     // Note: If we have N fields and M items in the config this is O(n) instead
     // of the O(n*m) we would get if we iterated the table and tried setting
     // each item individually, however we ignore any extra items in the table
@@ -262,8 +260,8 @@ void ThemeFromConfig(Theme *self, ThemeDef *base_) {
     }
 }
 
-ThemeDef* NamedThemeDef(const char *name) {
-    static ThemeDef *const THEMES[] = {
+const ThemeDef* NamedThemeDef(const char *name) {
+    static const ThemeDef *const THEMES[] = {
         &DEFAULT_THEME, &DEFAULT_LIGHT_THEME,
     };
     enum { THEME_COUNT = sizeof(THEMES) / sizeof(THEMES[0]) };
@@ -292,7 +290,7 @@ ThemeDef* NamedThemeDef(const char *name) {
 Theme* CreateNamedTheme(const char *name) {
     Theme *theme = malloc(sizeof(Theme));
     short *fields = (short *)theme;
-    ThemeDef *def = NamedThemeDef(name);
+    const ThemeDef *def = NamedThemeDef(name);
     ColorDef *defs = (ColorDef *)def;
     for (size_t i = 0; i  < FIELD_COUNT; ++i) {
         short color = DefColor(defs[i]);
@@ -303,4 +301,8 @@ Theme* CreateNamedTheme(const char *name) {
 
 int AvailableColors(void) {
     return COLORS - (G_next_color - 1);
+}
+
+void ResetColors(void) {
+    G_next_color = FIRST_COLOR;
 }

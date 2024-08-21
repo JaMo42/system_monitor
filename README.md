@@ -65,6 +65,7 @@ If the layout option for `-l` is `?` the current layout string (either the defau
   - `j` and `<Down>`: down
   - `<Space>` and `<Enter>`: confirm
   - anything else: cancel
+- `R`: Reload the theme from the configuration
 
 These can be viewed while the application is running by pressing `?`.
 
