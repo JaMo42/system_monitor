@@ -10,15 +10,16 @@ typedef struct {
     const unsigned scale;
     const bool fill;
     short color;
-    /** Left point, older sample */
+  /** Left point, older sample */
     double x1, y1;
-    /** Right point, newer sample */
+  /** Right point, newer sample */
     double x2, y2;
 } GraphDrawContext;
 
-typedef void(*DrawLineFn)(const GraphDrawContext *restrict);
+typedef void (*DrawLineFn)(const GraphDrawContext *restrict);
 
-static void DrawLine(const GraphDrawContext *restrict ctx) {
+static void
+DrawLine(const GraphDrawContext *restrict ctx) {
     if (false && ctx->fill) {
         // FIXME: this is invalid when the viewport does not stretch to the
         // bottom of the canvas.
@@ -28,7 +29,8 @@ static void DrawLine(const GraphDrawContext *restrict ctx) {
     }
 }
 
-static void DrawBezir(const GraphDrawContext *restrict ctx) {
+static void
+DrawBezir(const GraphDrawContext *restrict ctx) {
     // Create locals for the values used in the loop to prevent the repeated
     // memory indirection. Not sure if this actually does anything but it
     // shouldn't hurt either.
@@ -50,7 +52,7 @@ static void DrawBezir(const GraphDrawContext *restrict ctx) {
        0.0 -> straight line, 2.0 -> very shallow at beginning, vertical in the
        middle. Values less than 0.0 or greater than 2.0 will cause it to overlap
        itself. */
-    #define CONTROL_FACTOR ((2.0 + 1.618) / 3.0)
+#define CONTROL_FACTOR ((2.0 + 1.618) / 3.0)
     const double dx = (x2 - x1) * 2.0;
     const double dy = fabs(y1 - y2);
     const double percision = 0.9 / (dx > dy ? dx : dy);
@@ -66,15 +68,15 @@ static void DrawBezir(const GraphDrawContext *restrict ctx) {
         // clang-format off
         d2 = d * d;
         d3 = d2 * d;
-        w1 =   -d3 + 3*d2 - 3*d + 1;
-        w2 =  3*d3 - 6*d2 + 3*d    ;
-        w3 = -3*d3 + 3*d2          ;
-        w4 =    d3                 ;
-        x = x1*w1 + x1_c*w2 + x2_c*w3 + x2*w4;
+        w1 = -d3 + 3 * d2 - 3 * d + 1;
+        w2 = 3 * d3 - 6 * d2 + 3 * d;
+        w3 = -3 * d3 + 3 * d2;
+        w4 = d3;
+        x = x1 * w1 + x1_c * w2 + x2_c * w3 + x2 * w4;
         if (x < 0.0) {
             continue;
         }
-        y = y1*w1 + y1_c*w2 + y2_c*w3 + y2*w4;
+        y = y1 * w1 + y1_c * w2 + y2_c * w3 + y2 * w4;
         // clang-format on
         if (ctx->fill) {
             for (double yy = bottom; yy >= y; --yy) {
@@ -86,7 +88,8 @@ static void DrawBezir(const GraphDrawContext *restrict ctx) {
     }
 }
 
-static void DrawBlocks(const GraphDrawContext *restrict ctx) {
+static void
+DrawBlocks(const GraphDrawContext *restrict ctx) {
     if (ctx->fill) {
         // See `GraphDraw` about the `- 1`.
         const double bottom = (ctx->viewport.y - 1 + ctx->viewport.height) * 4.0 - 1.0;
@@ -105,26 +108,28 @@ static void DrawBlocks(const GraphDrawContext *restrict ctx) {
     }
 }
 
-static DrawLineFn GraphKindLineDrawer(Graph_Kind kind) {
+static DrawLineFn
+GraphKindLineDrawer(Graph_Kind kind) {
     switch (kind) {
-        case GRAPH_KIND_STRAIGHT: return DrawLine;
-        case GRAPH_KIND_BEZIR: return DrawBezir;
-        case GRAPH_KIND_BLOCKS: return DrawBlocks;
+    case GRAPH_KIND_STRAIGHT:
+        return DrawLine;
+    case GRAPH_KIND_BEZIR:
+        return DrawBezir;
+    case GRAPH_KIND_BLOCKS:
+        return DrawBlocks;
     }
     __builtin_unreachable();
 }
 
-static void GraphKindFromString(const char *s, Graph_Kind *out) {
+static void
+GraphKindFromString(const char *s, Graph_Kind *out) {
     static const struct {
         const char *s;
         Graph_Kind k;
     } VALID_PAIRS[] = {
-        {"straight", GRAPH_KIND_STRAIGHT},
-        {"line", GRAPH_KIND_STRAIGHT},
-        {"bezir", GRAPH_KIND_BEZIR},
-        {"curve", GRAPH_KIND_BEZIR},
-        {"blocks", GRAPH_KIND_BLOCKS},
-        {"block", GRAPH_KIND_BLOCKS},
+        {"straight", GRAPH_KIND_STRAIGHT}, {"line", GRAPH_KIND_STRAIGHT},
+        {"bezir", GRAPH_KIND_BEZIR}, {"curve", GRAPH_KIND_BEZIR},
+        {"blocks", GRAPH_KIND_BLOCKS}, {"block", GRAPH_KIND_BLOCKS},
     };
     for (size_t i = 0; i < countof(VALID_PAIRS); ++i) {
         if (strcasecmp(s, VALID_PAIRS[i].s) == 0) {
@@ -135,9 +140,11 @@ static void GraphKindFromString(const char *s, Graph_Kind *out) {
     fprintf(stderr, "invalid graph kind: %s\n", s);
 }
 
-void GetGraphOptions(const char *domain, Graph_Kind *kind_out, unsigned *scale_out) {
-    if (!HaveConfig ())
+void
+GetGraphOptions(const char *domain, Graph_Kind *kind_out, unsigned *scale_out) {
+    if (!HaveConfig()) {
         return;
+    }
     Config_Read_Value *v;
     if ((v = ConfigGet(domain, "graph-kind"))) {
         GraphKindFromString(v->as_string(), kind_out);
@@ -147,15 +154,17 @@ void GetGraphOptions(const char *domain, Graph_Kind *kind_out, unsigned *scale_o
     }
 }
 
-void GraphConstruct(Graph *self, Graph_Kind kind, size_t n_sources, unsigned scale) {
+void
+GraphConstruct(Graph *self, Graph_Kind kind, size_t n_sources, unsigned scale) {
     self->kind = kind;
     self->samples = calloc(n_sources, sizeof(List *));
-    for (size_t i = 0; i < n_sources; ++i)
+    for (size_t i = 0; i < n_sources; ++i) {
         self->samples[i] = list_create();
+    }
     self->n_sources = n_sources;
     self->max_samples = 1;
     self->scale = scale;
-    self->viewport = (Rectangle){ 0, 0, 0, 0 };
+    self->viewport = (Rectangle) { 0, 0, 0, 0 };
     self->lowest_sample = 0.0;
     self->highest_sample = 1.0;
     self->range_step = 0.1;
@@ -164,71 +173,83 @@ void GraphConstruct(Graph *self, Graph_Kind kind, size_t n_sources, unsigned sca
     vector_push(self->set_colors, 0);
 }
 
-void GraphDestroy(Graph *self) {
-    for (size_t i = 0; i < self->n_sources; ++i)
+void
+GraphDestroy(Graph *self) {
+    for (size_t i = 0; i < self->n_sources; ++i) {
         list_delete(self->samples[i]);
+    }
     free(self->samples);
     vector_free(self->set_colors);
 }
 
-static void GraphSetMaxSamples(Graph *self, size_t max_samples) {
+static void
+GraphSetMaxSamples(Graph *self, size_t max_samples) {
     if (max_samples >= self->max_samples) {
         self->max_samples = max_samples;
         return;
     }
-    for (size_t i = 0; i < self->n_sources; ++i)
+    for (size_t i = 0; i < self->n_sources; ++i) {
         list_shrink(self->samples[i], max_samples);
+    }
     self->max_samples = max_samples;
 }
 
-void GraphSetViewport(Graph *self, Rectangle viewport) {
+void
+GraphSetViewport(Graph *self, Rectangle viewport) {
     // We need 1 extra sample as the scale equation only gives us the number of
     // line segments we need which is 1 less than the number of samples.
     GraphSetMaxSamples(self, 1 + (viewport.width + self->scale - 1) / self->scale);
     self->viewport = viewport;
 }
 
-void GraphSetFixedRange(Graph *self, double lo, double hi) {
+void
+GraphSetFixedRange(Graph *self, double lo, double hi) {
     self->fixed_range = true;
     self->lowest_sample = lo;
     self->highest_sample = hi;
 }
 
-static double GraphApplyStep(double sample, double step, bool up) {
+static double
+GraphApplyStep(double sample, double step, bool up) {
     // FIXME: doesn't work correctly with negative samples.
     return round(sample / step) * step + up * step;
 }
 
-static void GraphGetRange(Graph *self, double *lo_out, double *hi_out) {
+static void
+GraphGetRange(Graph *self, double *lo_out, double *hi_out) {
     double s;
     double lo = self->samples[0]->back->f;
     double hi = lo;
     for (size_t i = 0; i < self->n_sources; ++i) {
-        list_for_each (self->samples[i], it) {
+        list_for_each(self->samples[i], it) {
             s = it->f;
-            if (s > hi)
+            if (s > hi) {
                 hi = s;
-            else if (s < lo)
+            } else if (s < lo) {
                 lo = s;
+            }
         }
     }
     *lo_out = GraphApplyStep(lo, self->range_step, false);
     *hi_out = GraphApplyStep(hi, self->range_step, true);
 }
 
-void GraphSetDynamicRange(Graph *self, double step) {
+void
+GraphSetDynamicRange(Graph *self, double step) {
     self->fixed_range = false;
     self->range_step = step;
 }
 
-void GraphSetScale(Graph *self, unsigned scale, bool update_max_samples) {
+void
+GraphSetScale(Graph *self, unsigned scale, bool update_max_samples) {
     self->scale = scale;
     if (update_max_samples) {
         GraphSetViewport(self, self->viewport);
     }
 }
 
-void GraphAddSample(Graph *self, size_t source, double sample) {
+void
+GraphAddSample(Graph *self, size_t source, double sample) {
     List *list = self->samples[source];
     if (likely(list->count == self->max_samples)) {
         list_rotate_left(list)->f = sample;
@@ -237,12 +258,14 @@ void GraphAddSample(Graph *self, size_t source, double sample) {
     }
 }
 
-short GraphSourceColor(Graph *self, int source) {
+short
+GraphSourceColor(Graph *self, int source) {
     return self->set_colors[source % vector_size(self->set_colors)];
 }
 
-void GraphDraw(Graph *self, Canvas *canvas, double *lo_out, double *hi_out) {
-    #define Y(sample) (height - ((height - 0.25) * (sample)))
+void
+GraphDraw(Graph *self, Canvas *canvas, double *lo_out, double *hi_out) {
+#define Y(sample) (height - ((height - 0.25) * (sample)))
     double lowest_sample, highest_sample;
     if (self->fixed_range) {
         lowest_sample = self->lowest_sample;
@@ -255,14 +278,10 @@ void GraphDraw(Graph *self, Canvas *canvas, double *lo_out, double *hi_out) {
         lowest_sample = 0.0;
     }
     GraphDrawContext ctx = {
-        canvas,
-        self->viewport,
-        self->scale,
-        self->n_sources == 1,
-        0,
-        0.0,
-        0.0,
-        0.0,
+        canvas, self->viewport,
+        self->scale, self->n_sources == 1,
+        0, 0.0,
+        0.0, 0.0,
         0.0,
     };
     const double scale = 2.0 * self->scale;
@@ -275,8 +294,9 @@ void GraphDraw(Graph *self, Canvas *canvas, double *lo_out, double *hi_out) {
     double scaled_sample;
     for (int i = self->n_sources - 1; i >= 0; --i) {
         List *list = self->samples[i];
-        if (list->count <= 1)
+        if (list->count <= 1) {
             continue;
+        }
         scaled_sample = (list->front->f - lowest_sample) / highest_sample;
         ctx.x1 = (double)self->viewport.width * 2.0 - (list->count - 1) * scale;
         ctx.y1 = top_y + Y(scaled_sample) * 4.0 - 1;
@@ -293,11 +313,16 @@ void GraphDraw(Graph *self, Canvas *canvas, double *lo_out, double *hi_out) {
             ctx.y1 = ctx.y2;
         }
     }
-    if (lo_out) *lo_out = lowest_sample;
-    if (hi_out) *hi_out = highest_sample;
+    if (lo_out) {
+        *lo_out = lowest_sample;
+    }
+    if (hi_out) {
+        *hi_out = highest_sample;
+    }
 }
 
-void GraphSetColors(Graph *self, ...) {
+void
+GraphSetColors(Graph *self, ...) {
     va_list ap;
     va_start(ap, self);
     short color = 0;
@@ -308,13 +333,15 @@ void GraphSetColors(Graph *self, ...) {
     va_end(ap);
 }
 
-void GraphSetColorsList(Graph *self, short *colors, size_t n) {
+void
+GraphSetColorsList(Graph *self, short *colors, size_t n) {
     vector_clear(self->set_colors);
     for (size_t i = 0; i < n; ++i) {
         vector_push(self->set_colors, colors[i]);
     }
 }
 
-double GraphLastSample(Graph *self, int source) {
+double
+GraphLastSample(Graph *self, int source) {
     return self->samples[source]->back->f;
 }

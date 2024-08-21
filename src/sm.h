@@ -1,7 +1,7 @@
 #pragma once
 #include "stdafx.h"
-#include "widget.h"
 #include "ui.h"
+#include "widget.h"
 
 extern Layout *ui;
 
@@ -13,12 +13,12 @@ extern pthread_mutex_t draw_mutex;
 
 extern void *overlay_data;
 
-extern void (*DrawOverlay) (void *);
+extern void (*DrawOverlay)(void *);
 
-extern bool (*HandleInput) (int);
+extern bool (*HandleInput)(int);
 
-bool MainHandleInput (int key);
+bool MainHandleInput(int key);
 
-void HandleResize ();
+void HandleResize();
 
 void DrawHelpInfo();

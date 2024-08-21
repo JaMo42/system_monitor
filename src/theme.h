@@ -10,28 +10,28 @@ typedef struct {
 enum { THEME_CPU_COLORS = 8 };
 
 typedef struct {
-  short border;
-  short title;
-  short cpu_avg;
-  short cpu_graphs[THEME_CPU_COLORS];
-  short mem_main;
-  short mem_swap;
-  short net_receive;
-  short net_transmit;
-  short proc_header;
-  short proc_processes;
-  short proc_cursor;
-  short proc_highlight;
-  short proc_high_percent;
-  short proc_branches;
-  short proc_path;
-  short proc_command;
-  short proc_opt;
-  short proc_arg;
-  short disk_free;
-  short disk_used;
-  short disk_error;
-  short battery_fill;
+    short border;
+    short title;
+    short cpu_avg;
+    short cpu_graphs[THEME_CPU_COLORS];
+    short mem_main;
+    short mem_swap;
+    short net_receive;
+    short net_transmit;
+    short proc_header;
+    short proc_processes;
+    short proc_cursor;
+    short proc_highlight;
+    short proc_high_percent;
+    short proc_branches;
+    short proc_path;
+    short proc_command;
+    short proc_opt;
+    short proc_arg;
+    short disk_free;
+    short disk_used;
+    short disk_error;
+    short battery_fill;
 } Theme;
 
 typedef struct ThemeDef ThemeDef;
@@ -49,10 +49,10 @@ bool ThemeSet(Theme *self, const char *key, short value);
 void ThemeFromConfig(Theme *self, const ThemeDef *base);
 
 /** Get a builtin named theme definition. */
-const ThemeDef* NamedThemeDef(const char *name);
+const ThemeDef *NamedThemeDef(const char *name);
 
 /** Create a theme from only a named theme definition. */
-Theme* CreateNamedTheme(const char *name);
+Theme *CreateNamedTheme(const char *name);
 
 /** Number of color pairs that can still be created. */
 int AvailableColors(void);

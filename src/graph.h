@@ -26,7 +26,7 @@ typedef struct {
     double highest_sample;
     double range_step;
     bool fixed_range;
-    VECTOR(short) set_colors;
+      VECTOR(short) set_colors;
 } Graph;
 
 void GetGraphOptions(const char *domain, Graph_Kind *kind_out, unsigned *scale_out);
@@ -52,10 +52,12 @@ void GraphSetScale(Graph *self, unsigned scale, bool update_max_samples);
 void GraphAddSample(Graph *self, size_t source, double sample);
 
 /** Draws the graph.  The highest and lowest sample from all sources is written
-    to the `lo_out` and `hi_out` parameters respectively, if they are not NULL. */
+    to the `lo_out` and `hi_out` parameters respectively, if they are not NULL.
+ */
 void GraphDraw(Graph *self, Canvas *canvas, double *lo_out, double *hi_out);
 
-/** Overwrites the default colors for any number of sources, terminated by -1. */
+/** Overwrites the default colors for any number of sources, terminated by -1.
+ */
 void GraphSetColors(Graph *self, ...);
 
 /** Overwrites the default colors for any number of sources. */

@@ -29,6 +29,10 @@ source_files = $(wildcard src/*.c src/canvas/*.c src/ps/*.c) \
                src/nc-help/help.c src/ini/ini.c
 object_files = $(patsubst src/%.c,build/%.o,$(source_files))
 
+formatting_files = $(wildcard src/*.c src/*.h src/canvas/*.c src/canvas/*.h \
+                     src/ps/*.c src/ps/*.h)
+backup_files = $(patsubst %,%~,$(formatting_files))
+
 # Changing the theme structure requires a full rebuild or colors will be
 # messed up due to wrong offsets into the theme structure
 # XXX: should really just use correct dependencies for all files
@@ -76,4 +80,13 @@ mod: sm
 mod_and_install: mod
 	cp sm $(_SU_INSTALL_PATH)/sm
 
-.PHONY: clean vg cg install mod mod_and_install
+format:
+	@indent $(formatting_files) -bap -nsob -br -ce -cdw -cli 0 -ss -npcs -ncs -saf \
+		-sai -saw -psl -brs -brf -nut -i 4 -lp -ip 1 -il 0 -l100 -bbo -hnl -par \
+		$(shell python get_types.py $(formatting_files))
+	@rm $(backup_files)
+
+_clang_format:
+	@clang-format -i $(formatting_files)
+
+.PHONY: clean vg cg install mod mod_and_install format

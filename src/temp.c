@@ -1,6 +1,6 @@
 #include "temp.h"
-#include "util.h"
 #include "ps/util.h"
+#include "util.h"
 
 IgnoreInput(Temp);
 IgnoreMouse(Temp);
@@ -14,14 +14,17 @@ typedef struct {
     char *type;
     // size is determined by the compiler warning after using a very small value
     char temp[15];
-    int number; // for sorting
+    int number;                 // for sorting
 } ThermalZone;
 
 static bool did_filter = false;
-static VECTOR(ThermalZone) zones = NULL;
-static char average_temp[15] = "";
+static
+VECTOR(ThermalZone)
+    zones = NULL;
+ static char average_temp[15] = "";
 
-static bool TempFilter(const char *entry_name, VECTOR(char *) filter) {
+ static bool
+   TempFilter(const char *entry_name, VECTOR(char *)filter) {
     if (filter == NULL) {
         return true;
     }
@@ -31,13 +34,15 @@ static bool TempFilter(const char *entry_name, VECTOR(char *) filter) {
         }
     }
     return false;
-}
+ }
 
-static int TempCompareZone(const void *a, const void *b) {
+static int
+TempCompareZone(const void *a, const void *b) {
     return ((ThermalZone *)a)->number - ((ThermalZone *)b)->number;
 }
 
-static void TempDiscover(VECTOR(char *) filter) {
+static void
+TempDiscover(VECTOR(char *)filter) {
     const char *BASE_PATH = "/sys/class/thermal";
     DIR *dir = opendir(BASE_PATH);
     struct dirent *entry = NULL;
@@ -48,13 +53,8 @@ static void TempDiscover(VECTOR(char *) filter) {
             char *type = ReadSmallFile(path, true);
             if (TempFilter(entry->d_name, filter) || TempFilter(type, filter)) {
                 memcpy(path + strlen(path) - 4, "temp", 4);
-                vector_emplace_back(
-                    zones,
-                    .temp_path = path,
-                    .type = strdup(type),
-                    .temp = "",
-                    .number = atoi(entry->d_name + 12)
-                );
+                vector_emplace_back(zones,.temp_path = path,.type = strdup(type),.temp =
+                                    "",.number = atoi(entry->d_name + 12));
             } else {
                 did_filter = true;
             }
@@ -65,7 +65,9 @@ static void TempDiscover(VECTOR(char *) filter) {
     }
 }
 
-static VECTOR(char *) TempGetFilter(const char *filter_string) {
+static
+VECTOR(char *)
+TempGetFilter(const char *filter_string) {
     if (filter_string == NULL) {
         return NULL;
     }
@@ -89,7 +91,8 @@ static VECTOR(char *) TempGetFilter(const char *filter_string) {
     return filter;
 }
 
-void TempInit(WINDOW *win) {
+void
+TempInit(WINDOW *win) {
     zones = vector_create(ThermalZone, 4);
     memset(zones, 0, 4 * sizeof(ThermalZone));
     VECTOR(char *) filter = TempGetFilter(temp_filter);
@@ -99,7 +102,8 @@ void TempInit(WINDOW *win) {
     WidgetFixedSize(&temp_widget, true);
 }
 
-void TempQuit() {
+void
+TempQuit() {
     vector_for_each(zones, zone) {
         free(zone->temp_path);
         free(zone->type);
@@ -107,7 +111,8 @@ void TempQuit() {
     vector_free(zones);
 }
 
-void TempUpdate() {
+void
+TempUpdate() {
     uint64_t total = 0;
     vector_for_each(zones, zone) {
         const int sample = atoi(ReadSmallFile(zone->temp_path, true));
@@ -125,7 +130,8 @@ void TempUpdate() {
     }
 }
 
-void TempDraw(WINDOW *win) {
+void
+TempDraw(WINDOW *win) {
     int width = getmaxx(win) - 2;
     int y = 0;
     vector_for_each(zones, zone) {
@@ -141,14 +147,16 @@ void TempDraw(WINDOW *win) {
     }
 }
 
-void TempResize(WINDOW *win) {
+void
+TempResize(WINDOW *win) {
     wclear(win);
     TempDrawBorder(win);
 }
 
-void TempMinSize(int *width_return, int *height_return) {
-    const int title_min_width = 12 + 2 + 2; // "< Temperature >"
-    const int temp_width = 6; // "xx.x°C"
+void
+TempMinSize(int *width_return, int *height_return) {
+    const int title_min_width = 12 + 2 + 2;     // "< Temperature >"
+    const int temp_width = 6;   // "xx.x°C"
     const int average_min_width = 9 + 2 + temp_width;
     int min_width = Max(title_min_width, average_min_width);
     vector_for_each(zones, zone) {
@@ -158,6 +166,7 @@ void TempMinSize(int *width_return, int *height_return) {
     *height_return = vector_size(zones) + temp_show_average;
 }
 
-void TempDrawBorder(WINDOW *win) {
+void
+TempDrawBorder(WINDOW *win) {
     DrawWindow(win, "Temperatures");
 }

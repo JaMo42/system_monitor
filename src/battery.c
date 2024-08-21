@@ -16,19 +16,22 @@ static char battery_capacity[4];
 static char battery_status[13]; // The longest status is "Not charging"
 static unsigned battery_last_capacity = 0;
 
-void BatteryInit(WINDOW *win) {
+void
+BatteryInit(WINDOW *win) {
     strcpy(battery_capacity, "50");
     battery_capacity_path = Format("/sys/class/power_supply/%s/capacity", battery_battery);
     battery_status_path = Format("/sys/class/power_supply/%s/status", battery_battery);
     BatteryDrawBorder(win);
 }
 
-void BatteryQuit() {
+void
+BatteryQuit() {
     free(battery_capacity_path);
     free(battery_status_path);
 }
 
-static bool ShowStatus() {
+static bool
+ShowStatus() {
     const size_t n = strlen(battery_status);
     const char *s = battery_show_status;
     do {
@@ -43,15 +46,18 @@ static bool ShowStatus() {
     return false;
 }
 
-void BatteryUpdate() {
-    strncpy(battery_capacity, ReadSmallFile(battery_capacity_path, true), sizeof(battery_capacity) - 1);
+void
+BatteryUpdate() {
+    strncpy(battery_capacity, ReadSmallFile(battery_capacity_path, true),
+            sizeof(battery_capacity) - 1);
     strncpy(battery_status, ReadSmallFile(battery_status_path, true), sizeof(battery_status) - 1);
     if (!ShowStatus()) {
         battery_status[0] = '\0';
     }
 }
 
-void BatteryDraw(WINDOW *win) {
+void
+BatteryDraw(WINDOW *win) {
     const unsigned capacity = atoi(battery_capacity);
     if (capacity == battery_last_capacity) {
         return;
@@ -70,8 +76,7 @@ void BatteryDraw(WINDOW *win) {
     }
     char label[sizeof("100% (Not charging)")];
     snprintf(label, sizeof(label), "%u%%", capacity);
-    if (battery_status[0]
-        && (strlen(label) + 3 + strlen(battery_status)) <= (unsigned)width) {
+    if (battery_status[0] && (strlen(label) + 3 + strlen(battery_status)) <= (unsigned)width) {
         snprintf(label, sizeof(label), "%u%% (%s)", capacity, battery_status);
     }
     int x = 1 + (width - strlen(label) + 1) / 2;
@@ -87,16 +92,19 @@ void BatteryDraw(WINDOW *win) {
     battery_last_capacity = capacity;
 }
 
-void BatteryResize(WINDOW *win) {
+void
+BatteryResize(WINDOW *win) {
     battery_last_capacity = 0;
     BatteryDrawBorder(win);
 }
 
-void BatteryMinSize(int *width_return, int *height_return) {
+void
+BatteryMinSize(int *width_return, int *height_return) {
     *width_return = strlen(battery_battery) + 2 + 2;
     *height_return = battery_slim ? 1 : 3;
 }
 
-void BatteryDrawBorder(WINDOW *win) {
+void
+BatteryDrawBorder(WINDOW *win) {
     DrawWindow(win, "Battery");
 }

@@ -2,10 +2,11 @@
 #include "../util.h"
 
 /** Gets the start and end (1 past the last) indices of the comand name. */
-static void commandline_get_command_range(char *cmdline, int *command_start, int *command_end) {
+static void
+commandline_get_command_range(char *cmdline, int *command_start, int *command_end) {
     bool ignore = false;
     char c;
-    for (int i = 0; ; ++i) {
+    for (int i = 0;; ++i) {
         c = cmdline[i];
         if (c == '\0') {
             *command_end = i;
@@ -18,7 +19,8 @@ static void commandline_get_command_range(char *cmdline, int *command_start, int
     }
 }
 
-void commandline_from_cmdline(Command_Line *self, File_Content content) {
+void
+commandline_from_cmdline(Command_Line *self, File_Content content) {
     self->data = malloc((content.size + 1) * sizeof(chtype));
     chtype *writeptr = self->data;
     char c;
@@ -37,7 +39,7 @@ void commandline_from_cmdline(Command_Line *self, File_Content content) {
     for (i = command_end; i < content.size; ++i) {
         c = content.data[i];
         if (c == '\0') {
-            in_opt = content.data[i+1] == '-';
+            in_opt = content.data[i + 1] == '-';
             color = COLOR_PAIR(in_opt ? theme->proc_opt : theme->proc_arg);
             *writeptr++ = ' ';
         } else {
@@ -61,7 +63,8 @@ void commandline_from_cmdline(Command_Line *self, File_Content content) {
     self->str[content.size] = 0;
 }
 
-void commandline_from_comm(Command_Line *self, File_Content content) {
+void
+commandline_from_comm(Command_Line *self, File_Content content) {
     self->data = malloc((content.size + 3) * sizeof(chtype));
     self->command = self->data;
     chtype *writeptr = self->data;
@@ -76,13 +79,9 @@ void commandline_from_comm(Command_Line *self, File_Content content) {
     self->str[content.size] = 0;
 }
 
-void commandline_print(
-    const Command_Line *self,
-    WINDOW *win,
-    bool command_only,
-    int width,
-    bool mask_color
-) {
+void
+commandline_print(const Command_Line *self, WINDOW *win, bool command_only,
+                  int width, bool mask_color) {
     if (mask_color) {
         chtype *c = command_only ? self->command : self->data;
         for (int i = 0; *c && i < width; ++i) {
@@ -93,11 +92,13 @@ void commandline_print(
     }
 }
 
-bool commandline_contains(const Command_Line *self, const char *needle) {
+bool
+commandline_contains(const Command_Line *self, const char *needle) {
     return strstr(self->str, needle);
 }
 
-void commandline_free(Command_Line *self) {
+void
+commandline_free(Command_Line *self) {
     free(self->str);
     free(self->data);
 }
