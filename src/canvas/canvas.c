@@ -119,7 +119,6 @@ CanvasDrawAt (const Canvas *c, WINDOW *win, int x0, int y0)
           else
             waddch (win, ' ');
           wattroff (win, COLOR_PAIR (c->colors[row_off + x]));
-          //fprintf(stderr, "color=%d pair=%d\n", c->colors[row_off + x], COLOR_PAIR (c->colors[row_off + x]));
         }
     }
 }

@@ -1,5 +1,4 @@
 #include "config.h"
-#include "ini/ini.h"
 
 static Ini config_file;
 

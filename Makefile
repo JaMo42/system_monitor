@@ -32,10 +32,12 @@ else
 endif
 
 source_files = $(wildcard src/*.c src/canvas/*.c src/ps/*.c) \
-               src/nc-help/help.c src/rb-tree/rb_tree.c src/ini/ini.c
+               src/nc-help/help.c src/ini/ini.c
 object_files = $(patsubst src/%.c,build/%.o,$(source_files))
 
-# Changing the theme structure requires a full rebuild or colors will be messed up
+# Changing the theme structure requires a full rebuild or colors will be
+# messed up due to wrong offsets into the theme structure
+# XXX: should really just use correct dependencies for all files
 deps = src/stdafx.h src/theme.h
 
 all: build_dirs build/stdafx.h.gch sm
@@ -61,7 +63,7 @@ vgclean:
 	rm -f vgcore.* callgrind.out.*
 
 clean: vgclean
-	rm -rf build/*.o sm
+	rm -rf build sm
 
 vg: sm
 	valgrind $(VGFLAGS) ./sm $(VGARGS) 2>err
