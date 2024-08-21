@@ -27,27 +27,27 @@ void commandline_from_cmdline(Command_Line *self, File_Content content) {
     self->command = self->data + command_start;
     int i;
     for (i = 0; i != command_start; ++i) {
-        *writeptr++ = content.data[i] | COLOR_PAIR(C_PROC_PATH);
+        *writeptr++ = content.data[i] | COLOR_PAIR(theme->proc_path);
     }
     for (i = command_start; i != command_end; ++i) {
-        *writeptr++ = content.data[i] | COLOR_PAIR(C_PROC_COMMAND);
+        *writeptr++ = content.data[i] | COLOR_PAIR(theme->proc_command);
     }
     bool in_opt = content.data[i] == '-';
-    attr_t color = COLOR_PAIR(in_opt ? C_PROC_OPT : C_PROC_ARG);
+    attr_t color = COLOR_PAIR(in_opt ? theme->proc_opt : theme->proc_arg);
     for (i = command_end; i < content.size; ++i) {
         c = content.data[i];
         if (c == '\0') {
             in_opt = content.data[i+1] == '-';
-            color = COLOR_PAIR(in_opt ? C_PROC_OPT : C_PROC_ARG);
+            color = COLOR_PAIR(in_opt ? theme->proc_opt : theme->proc_arg);
             *writeptr++ = ' ';
         } else {
             if (in_opt && c == '=') {
                 *writeptr++ = c | color;
-                color = COLOR_PAIR(C_PROC_ARG);
+                color = COLOR_PAIR(theme->proc_arg);
                 in_opt = false;
                 continue;
             } else if (in_opt && !(isalnum(c) || c == '-')) {
-                color = COLOR_PAIR(C_PROC_ARG);
+                color = COLOR_PAIR(theme->proc_arg);
                 in_opt = false;
             }
             *writeptr++ = c | color;
@@ -65,11 +65,11 @@ void commandline_from_comm(Command_Line *self, File_Content content) {
     self->data = malloc((content.size + 3) * sizeof(chtype));
     self->command = self->data;
     chtype *writeptr = self->data;
-    *writeptr++ = '[' | COLOR_PAIR(C_PROC_PATH);
+    *writeptr++ = '[' | COLOR_PAIR(theme->proc_path);
     for (int i = 0; i < content.size; ++i) {
-        *writeptr++ = content.data[i] | COLOR_PAIR(C_PROC_COMMAND);
+        *writeptr++ = content.data[i] | COLOR_PAIR(theme->proc_command);
     }
-    self->data[content.size] = ']' | COLOR_PAIR(C_PROC_PATH);
+    self->data[content.size] = ']' | COLOR_PAIR(theme->proc_path);
     self->data[content.size + 1] = 0;
     self->str = malloc(content.size + 1);
     memcpy(self->str, content.data, content.size);

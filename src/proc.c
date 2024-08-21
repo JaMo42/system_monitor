@@ -49,7 +49,7 @@ enum {
     PROC_CTX_KILL,
 };
 
-#define PROC_ENUM_CONTEXT_MENU(o) \
+#define PROC_CONTEXT_MENU(o) \
     o(PROC_CTX_VIEW_FULL_COMMAND, "View full command") \
     o(PROC_CTX_DEBUG, "Debug") \
     o(PROC_CTX_STOP, "Stop") \
@@ -108,7 +108,7 @@ DrawHeader (WINDOW *win)
   static const char *const cpu_indicators[] = {" ", " ", "▼", "▲", " ", " "};
   static const char *const mem_indicators[] = {" ", " ", " ", " ", "▼", "▲"};
 
-  wattron (win, A_BOLD | COLOR_PAIR (C_PROC_HEADER));
+  wattron (win, A_BOLD | COLOR_PAIR (theme->proc_header));
 
   wmove (win, 1, 1);
   waddstr (win, " PID");
@@ -125,7 +125,7 @@ DrawHeader (WINDOW *win)
   waddstr (win, mem_indicators[current_sorting_mode]);
   waddstr (win, "MEM%");
 
-  wattroff (win, A_BOLD | COLOR_PAIR (C_PROC_HEADER));
+  wattroff (win, A_BOLD | COLOR_PAIR (theme->proc_header));
 }
 
 static inline void
@@ -264,7 +264,7 @@ ProcInit (WINDOW *win)
   ProcUpdateProcesses ();
   static const char *menu_items[] = {
     #define O(n, s) s,
-    PROC_ENUM_CONTEXT_MENU(O)
+    PROC_CONTEXT_MENU(O)
     #undef O
   };
   proc_context_menu = ContextMenuCreate (menu_items, countof (menu_items));
@@ -294,7 +294,7 @@ ProcPrintPrefix (WINDOW *win, int8_t *prefix, unsigned level, bool color)
 {
   int width = 0;
   if (color)
-    PushStyle (win, 0, C_PROC_BRANCHES);
+    PushStyle (win, 0, theme->proc_branches);
   if (level == 0 && proc_forest)
     {
       width = proc_prefix_widths[prefix[0]];
@@ -334,13 +334,13 @@ ProcFormatPercentage (WINDOW *win, unsigned long value, unsigned long max_value,
   const unsigned long p = value * 1000UL / max_value;
   const bool color = !mask_color && p > 900;
   if (color)
-    wattron (win, COLOR_PAIR (C_PROC_HIGH_PERCENT));
+    wattron (win, COLOR_PAIR (theme->proc_high_percent));
   if (p > 999)
     waddstr (win, " 100");
   else
     wprintw (win, "%2u.%u", (unsigned)(p / 10), (unsigned)(p % 10));
   if (color)
-    wattroff (win, COLOR_PAIR (C_PROC_HIGH_PERCENT));
+    wattroff (win, COLOR_PAIR (theme->proc_high_percent));
 }
 
 static void
@@ -384,14 +384,14 @@ ProcDraw (WINDOW *win)
       colorize_branches = false;
       mask_color = true;
       if (i == proc_cursor)
-        wattrset (win, COLOR_PAIR (C_PROC_CURSOR));
+        wattrset (win, COLOR_PAIR (theme->proc_cursor));
       else if (proc_search_show && p->search_match)
-        wattrset (win, COLOR_PAIR (C_PROC_HIGHLIGHT));
+        wattrset (win, COLOR_PAIR (theme->proc_highlight));
       else
         {
           // TODO: this now only sets the color for the pid, cpu and memory
           // usage which could get their own colors.
-          wattrset (win, COLOR_PAIR (C_PROC_PROCESSES));
+          wattrset (win, COLOR_PAIR (theme->proc_processes));
           colorize_branches = true;
           mask_color = false;
         }

@@ -51,7 +51,7 @@ CanvasClear (Canvas *c)
   for (size_t i = 0; i < c->width * c->height; ++i)
     {
       c->chars[i] = 0;
-      c->colors[i] = -1;
+      c->colors[i] = 0;
     }
 }
 
@@ -70,7 +70,7 @@ CanvasResizeTo (Canvas *c, size_t width, size_t height)
   c->chars = calloc (width * height, sizeof (uint8_t));
   c->colors = malloc (width * height * sizeof (short));
   for (size_t i = 0; i < width * height; ++i)
-    c->colors[i] = -1;
+    c->colors[i] = 0;
   c->width = width;
   c->height = height;
 }
@@ -119,6 +119,7 @@ CanvasDrawAt (const Canvas *c, WINDOW *win, int x0, int y0)
           else
             waddch (win, ' ');
           wattroff (win, COLOR_PAIR (c->colors[row_off + x]));
+          //fprintf(stderr, "color=%d pair=%d\n", c->colors[row_off + x], COLOR_PAIR (c->colors[row_off + x]));
         }
     }
 }

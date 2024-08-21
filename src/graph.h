@@ -58,6 +58,9 @@ void GraphDraw(Graph *self, Canvas *canvas, double *lo_out, double *hi_out);
 /** Overwrites the default colors for any number of sources, terminated by -1. */
 void GraphSetColors(Graph *self, ...);
 
+/** Overwrites the default colors for any number of sources. */
+void GraphSetColorsList(Graph *self, short *colors, size_t n);
+
 /** Returns the graph color for the given source.  This is either the value
     speified by `GraphSetColors` or the default. */
 short GraphSourceColor(Graph *self, int source);

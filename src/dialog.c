@@ -67,9 +67,9 @@ ShowPlainMessageBox (const char *title, const char *message)
     DrawWindow (win, title);
   else
     {
-      wattron (win, COLOR_PAIR (C_BORDER));
+      wattron (win, COLOR_PAIR (theme->border));
       Border (win);
-      wattroff (win, COLOR_PAIR (C_BORDER));
+      wattroff (win, COLOR_PAIR (theme->border));
     }
   for (line = 1; *message; ++line) {
     wmove (win, line, 1);
@@ -150,9 +150,9 @@ const char* ShowInputBox(const char *title, const char *label, bool secret) {
     if (title) {
         DrawWindow(win, title);
     } else {
-        wattron(win, COLOR_PAIR(C_BORDER));
+        wattron(win, COLOR_PAIR(theme->border));
         Border(win);
-        wattroff(win, COLOR_PAIR(C_BORDER));
+        wattroff(win, COLOR_PAIR(theme->border));
     }
     for (int line = 1; *label; ++line) {
         wmove(win, line, 1);

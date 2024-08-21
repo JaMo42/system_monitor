@@ -25,6 +25,8 @@ Note: by default the program links with the `-lncurses` library but on some syst
 - `-c` always show CPU graph in range 0~100%
 - `-f` ASCII art process tree (like the `--forest` option for `ps`)
 - `-l layout` specifies the [layout](#layout)
+- `-T` show kernel threads
+- `-t name` specifies the theme, using this will disable all the theme settings from the configuration
 - `-h` show help message
 
 If the layout option for `-l` is `?` the current layout string (either the default or the `SM_LAYOUT` environment variable) gets printed.
@@ -115,6 +117,9 @@ Sections and their properties are:
   - `show_status` (string) comma separated list of battery statuses to show.
     The default is `Charging,Not charging`.
     See the `/sys/class/power_supply/<supply_name>/status` section here for valid values: https://www.kernel.org/doc/Documentation/ABI/testing/sysfs-class-power.
+
+- `theme`
+    - `theme` (string) name of builtin theme to use as a base, the other fields in this section override colors in that theme, see `THEME.md`.
 
 Boolean values can be given as `true`, `yes`, or `1` for true and `false`, `no`, or `0` for false.
 

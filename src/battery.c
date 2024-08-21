@@ -61,7 +61,7 @@ void BatteryDraw(WINDOW *win) {
     const int fill = width * capacity / 100;
     for (int i = 1; i <= height; ++i) {
         wmove(win, i, 1);
-        wattr_set(win, A_NORMAL, C_BATTERY_FILL, NULL);
+        wattr_set(win, A_NORMAL, theme->battery_fill, NULL);
         PrintN(win, ' ', fill);
         if (battery_last_capacity > capacity) {
             wattr_set(win, A_NORMAL, A_NORMAL, NULL);
@@ -78,7 +78,7 @@ void BatteryDraw(WINDOW *win) {
     wmove(win, 1 + height / 2, x);
     for (char *c = label; *c; ++c) {
         if (x++ <= fill) {
-            wattr_set(win, A_NORMAL, C_BATTERY_FILL, NULL);
+            wattr_set(win, A_NORMAL, theme->battery_fill, NULL);
         } else {
             wattr_set(win, A_NORMAL, A_NORMAL, NULL);
         }

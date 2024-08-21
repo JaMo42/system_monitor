@@ -74,10 +74,10 @@ NetworkInit (WINDOW *win)
   Graph_Kind graph_kind = GRAPH_KIND_BLOCKS;
   GetGraphOptions(net_widget.name, &graph_kind, &graph_scale);
   GraphConstruct(&net_recv_graph, graph_kind, 1, graph_scale);
-  GraphSetColors(&net_recv_graph, C_NET_RECEIVE, -1);
+  GraphSetColors(&net_recv_graph, theme->net_receive, -1);
   GraphSetDynamicRange(&net_recv_graph, 0.1);
   GraphConstruct(&net_send_graph, graph_kind, 1, graph_scale);
-  GraphSetColors(&net_send_graph, C_NET_TRANSMIT, -1);
+  GraphSetColors(&net_send_graph, theme->net_transmit, -1);
   GraphSetDynamicRange(&net_send_graph, 0.1);
   NetworkUpdate ();
   list_clear(net_recv_graph.samples[0]);
@@ -147,27 +147,27 @@ NetworkDraw (WINDOW *win)
 
   wmove (win, 2, 3);
   waddstr (win, "Total RX:");
-  wattron (win, COLOR_PAIR (C_NET_RECEIVE));
+  wattron (win, COLOR_PAIR (theme->net_receive));
   FormatSize (win, net_receive_total, true);
-  wattroff (win, COLOR_PAIR (C_NET_RECEIVE));
+  wattroff (win, COLOR_PAIR (theme->net_receive));
   wmove (win, 3, 3);
   waddstr (win, "RX/s:    ");
-  wattron (win, COLOR_PAIR (C_NET_RECEIVE));
+  wattron (win, COLOR_PAIR (theme->net_receive));
   FormatSize (win, (size_t)GraphLastSample(&net_recv_graph, 0), true);
   waddstr (win, "/s");
-  wattroff (win, COLOR_PAIR (C_NET_RECEIVE));
+  wattroff (win, COLOR_PAIR (theme->net_receive));
 
   wmove (win, getmaxy (win) / 2 + 1, 3);
   waddstr (win, "Total TX:");
-  wattron (win, COLOR_PAIR (C_NET_TRANSMIT));
+  wattron (win, COLOR_PAIR (theme->net_transmit));
   FormatSize (win, net_transmit_total, true);
-  wattroff (win, COLOR_PAIR (C_NET_TRANSMIT));
+  wattroff (win, COLOR_PAIR (theme->net_transmit));
   wmove (win, getmaxy (win) / 2 + 2, 3);
   waddstr (win, "TX/s:    ");
-  wattron (win, COLOR_PAIR (C_NET_TRANSMIT));
+  wattron (win, COLOR_PAIR (theme->net_transmit));
   FormatSize (win, (size_t)GraphLastSample(&net_send_graph, 0), true);
   waddstr (win, "/s");
-  wattroff (win, COLOR_PAIR (C_NET_TRANSMIT));
+  wattroff (win, COLOR_PAIR (theme->net_transmit));
 }
 
 void

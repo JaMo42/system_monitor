@@ -1,4 +1,5 @@
 #include "cpu.h"
+#include "theme.h"
 #include "util.h"
 #include "canvas/canvas.h"
 #include "ps/util.h"
@@ -12,6 +13,7 @@ static int cpu_count;
 bool cpu_show_avg = false;
 bool cpu_scale_height = false;
 static Canvas *cpu_canvas;
+static short *cpu_colors;
 
 static size_t *cpu_last_total_jiffies;
 static size_t *cpu_last_work_jiffies;
@@ -29,12 +31,35 @@ CpuInit (WINDOW *win)
   CpuDrawBorder (win);
   cpu_canvas = CanvasCreate (win);
 
+  cpu_colors = malloc(sizeof(short) * cpu_count);
+  memcpy(cpu_colors, theme->cpu_graphs, sizeof(short) * THEME_CPU_COLORS);
+  const int avail = AvailableColors();
+  if (cpu_count - THEME_CPU_COLORS <= avail) {
+    for (int i = THEME_CPU_COLORS; i < cpu_count; i++) {
+        cpu_colors[i] = DefColor((ColorDef){ 16 + rand() % 216, -1 });
+    }
+  } else if (avail){
+    short *colors = malloc(sizeof(short) * avail);
+    for (int i = 0; i < avail; i++) {
+      colors[i] = DefColor((ColorDef){ 16 + rand() % 216, -1 });
+    }
+    for (int i = THEME_CPU_COLORS; i < cpu_count; i++) {
+      cpu_colors[i] = colors[(i - THEME_CPU_COLORS) % avail];
+    }
+    free(colors);
+  } else {
+    for (int i = THEME_CPU_COLORS; i < cpu_count; i++) {
+      cpu_colors[i] = theme->cpu_graphs[i % THEME_CPU_COLORS];
+    }
+  }
+
   unsigned graph_scale = DEFAULT_GRAPH_SCALE;
   Graph_Kind graph_kind = GRAPH_KIND_BEZIR;
   GetGraphOptions(cpu_widget.name, &graph_kind, &graph_scale);
   GraphConstruct(&cpu_graph, graph_kind, cpu_count, graph_scale);
+  GraphSetColorsList(&cpu_graph, cpu_colors, cpu_count);
   GraphConstruct(&cpu_avg_graph, graph_kind, 1, graph_scale);
-  GraphSetColors(&cpu_avg_graph, C_CPU_AVG, -1);
+  GraphSetColors(&cpu_avg_graph, theme->cpu_avg, -1);
   if (cpu_show_avg ) {
     GraphSetDynamicRange(&cpu_graph, 0.1);
     GraphSetDynamicRange(&cpu_avg_graph, 0.1);
@@ -100,8 +125,6 @@ CpuUpdate ()
   fclose (stat);
 }
 
-#define COLOR(i) ((i) < 8 ? C_CPU_GRAPHS[i] : ((i + 10) % 256))
-
 void
 CpuDraw (WINDOW *win)
 {
@@ -118,9 +141,9 @@ CpuDraw (WINDOW *win)
   if (cpu_show_avg)
     {
       const double u = GraphLastSample(&cpu_avg_graph, 0);
-      wattron (win, COLOR_PAIR (C_CPU_AVG));
+      wattron (win, COLOR_PAIR (theme->cpu_avg));
       mvwprintw (win, 2, 3, "AVRG %d%%", (int)(u * 100.f));
-      wattroff (win, COLOR_PAIR (C_CPU_AVG));
+      wattroff (win, COLOR_PAIR (theme->cpu_avg));
     }
   else
     {
@@ -130,9 +153,9 @@ CpuDraw (WINDOW *win)
           const int y = 2 + i % rows;
           const int x = 3 + i / rows * 10;
           const double u = GraphLastSample(&cpu_graph, i);
-          wattron (win, COLOR_PAIR (COLOR (i)));
+          wattron (win, COLOR_PAIR (cpu_colors[i]));
           mvwprintw (win, y, x, "CPU%d %d%%", i, (int)(u * 100.f));
-          wattroff (win, COLOR_PAIR (COLOR (i)));
+          wattroff (win, COLOR_PAIR (cpu_colors[i]));
         }
     }
   PrintPercentage(win, width - 5, 1, hi);

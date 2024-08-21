@@ -1,28 +1,5 @@
 #include "util.h"
 
-const short C_BORDER = 214;
-const short C_TITLE = 251;
-const short C_CPU_AVG = 77;
-const short C_CPU_GRAPHS[8] = {5, 4, 3, 2, 6, 7, 8, 9};
-const short C_MEM_MAIN = 221;
-const short C_MEM_SWAP = 209;
-const short C_NET_RECEIVE = 5;
-const short C_NET_TRANSMIT = 2;
-const short C_PROC_HEADER = 16;
-const short C_PROC_PROCESSES = 251;
-const short C_PROC_CURSOR = 254;
-const short C_PROC_HIGHLIGHT = 253;
-const short C_PROC_HIGH_PERCENT = 2;
-const short C_PROC_BRANCHES = 243;
-const short C_PROC_PATH = 245;
-const short C_PROC_COMMAND = 0;
-const short C_PROC_OPT = 66;
-const short C_PROC_ARG = 61;
-const short C_DISK_FREE = 248;
-const short C_DISK_USED = 77;
-const short C_DISK_ERROR = 2;
-const short C_BATTERY_FILL = 252;
-
 void DrawRect(WINDOW *win, int x, int y, int width, int height) {
     const char *const vertical = "│";
     const char *const horizontal = "─";
@@ -70,15 +47,15 @@ Border (WINDOW *w)
 void
 DrawWindow (WINDOW *w, const char *title)
 {
-  wattron (w, COLOR_PAIR (C_BORDER));
+  wattron (w, COLOR_PAIR (theme->border));
   Border (w);
   mvwaddch (w, 0, 1, '<');
   waddch (w, ' ');
   mvwaddch (w, 0, 4 + strlen (title), '>');
-  wattroff (w, COLOR_PAIR (C_BORDER));
-  wattron (w, COLOR_PAIR (C_TITLE));
+  wattroff (w, COLOR_PAIR (theme->border));
+  wattron (w, COLOR_PAIR (theme->title));
   mvwaddstr (w, 0, 3, title);
-  wattroff (w, COLOR_PAIR (C_TITLE));
+  wattroff (w, COLOR_PAIR (theme->title));
   waddch (w, ' ');
 }
 
@@ -88,16 +65,16 @@ DrawWindowInfo (WINDOW *w, const char *info)
   const int len = strlen (info);
   const int width = getmaxx (w);
 
-  wattron (w, COLOR_PAIR (C_BORDER));
+  wattron (w, COLOR_PAIR (theme->border));
   mvwaddch (w, 0, width - 6 - len, '<');
   waddch (w, ' ');
   mvwaddch (w, 0, width - 4, ' ');
   waddch (w, '>');
-  wattroff (w, COLOR_PAIR (C_BORDER));
+  wattroff (w, COLOR_PAIR (theme->border));
 
-  wattron (w, COLOR_PAIR (C_TITLE));
+  wattron (w, COLOR_PAIR (theme->title));
   mvwaddstr (w, 0, width - 4 - len, info);
-  wattroff (w, COLOR_PAIR (C_TITLE));
+  wattroff (w, COLOR_PAIR (theme->title));
 }
 
 void
@@ -107,16 +84,16 @@ DrawWindowInfo2 (WINDOW *w, const char *info)
   const int width = getmaxx (w);
   const int row = getmaxy (w) - 1;
 
-  wattron (w, COLOR_PAIR (C_BORDER));
+  wattron (w, COLOR_PAIR (theme->border));
   mvwaddch (w, row, width - 6 - len, '<');
   waddch (w, ' ');
   mvwaddch (w, row, width - 4, ' ');
   waddch (w, '>');
-  wattroff (w, COLOR_PAIR (C_TITLE));
+  wattroff (w, COLOR_PAIR (theme->title));
 
-  wattron (w, COLOR_PAIR (C_TITLE));
+  wattron (w, COLOR_PAIR (theme->title));
   mvwaddstr (w, row, width - 4 - len, info);
-  wattroff (w, COLOR_PAIR (C_TITLE));
+  wattroff (w, COLOR_PAIR (theme->title));
 }
 
 Size_Format

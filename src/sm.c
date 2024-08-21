@@ -72,6 +72,7 @@ void (*DrawOverlay) (void *);
 bool (*HandleInput) (int key);
 
 void LoadConfig ();
+void LoadTheme(char *name);
 
 void CursesInit ();
 void CursesUpdate ();
@@ -86,7 +87,7 @@ void DrawBorders ();
 
 bool MainHandleInput (int key);
 
-void ParseArgs (int, char *const *);
+char* ParseArgs (int, char *const *);
 
 void HelpShow ();
 
@@ -113,7 +114,7 @@ main (int argc, char *const *argv)
 {
   ReadConfig ();
   LoadConfig ();
-  ParseArgs (argc, argv);
+  char *theme_name = ParseArgs (argc, argv);
 
   const bool show_current_layout = layout && strcmp (layout, "?") == 0;
   if (show_current_layout)
@@ -150,6 +151,7 @@ main (int argc, char *const *argv)
   HandleInput = MainHandleInput;
 
   CursesInit ();
+  LoadTheme(theme_name);
   UIConstruct (ui);
   InitWidgets ();
   UIUpdateSizeInfo (ui, true);
@@ -173,6 +175,7 @@ main (int argc, char *const *argv)
   pthread_mutex_destroy (&draw_mutex);
   help_free (&help);
   UIDeleteLayout (ui);
+  free(theme);
   CursesQuit ();
   FreeConfig ();
 }
@@ -222,6 +225,27 @@ LoadConfig ()
     battery_slim = v->as_bool();
   if ((v = ConfigGet("battery", "show_status")))
     battery_show_status = v->as_string();
+}
+
+void
+LoadTheme(char *name) {
+  // The names comes from the command line arguments which take precedence over
+  // the config file, and mixing the base theme from the argument with the
+  // overrides from the config file doesn't seem like a good idea.
+  if (name) {
+    theme = CreateNamedTheme(name);
+    free(name);
+  } else if (HaveConfig()) {
+    Config_Read_Value *v;
+    ThemeDef *base = NULL;
+    if (HaveConfig() && (v = ConfigGet("theme", "theme"))) {
+        base = NamedThemeDef(v->as_string());
+    }
+    theme = malloc(sizeof(Theme));
+    ThemeFromConfig(theme, base);
+  } else {
+    theme = CreateNamedTheme("default");
+  }
 }
 
 void
@@ -293,15 +317,7 @@ CursesInit ()
   use_default_colors ();
   keypad (stdscr, TRUE);
   mousemask (ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL);
-
-  for (int i = 0; i < COLORS; ++i)
-    init_pair (i + 1, i, -1);
-  // These values encroach on the normal colors starting from 254
-  init_pair (C_PROC_CURSOR, 0, 76);
-  init_pair (C_PROC_HIGHLIGHT, 0, 81);
-  init_pair (C_BATTERY_FILL, 15, 27);
-
-  //def_prog_mode();
+  init_pair(0, -1, -1);
 }
 
 void
@@ -429,7 +445,7 @@ TooSmall ()
 void
 Usage (FILE *stream)
 {
-  fputs ("Usage: sm [-a] [-r millis] [-s scale]\n", stream);
+  fputs ("Usage: sm [OPTION...]\n", stream);
   fputs ("Options:\n", stream);
   fputs ("  -a         Show average CPU usage\n", stream);
   fputs ("  -r millis  Update interval in milliseconds\n", stream);
@@ -437,17 +453,19 @@ Usage (FILE *stream)
   fputs ("  -f         ASCII art process tree\n", stream);
   fputs ("  -l layout  Specifies the layout string\n", stream);
   fputs ("  -T         Show kernel threads\n", stderr);
+  fputs ("  -t theme   Specifies the theme, disables all theme changes from the configuration\n", stream);
   fputs ("  -h         Show help message\n", stream);
   fputc ('\n', stream);
   fputs ("If the layout option for -l is '?' the default layout string gets printed.\n", stream);
 }
 
-void
+char*
 ParseArgs (int argc, char *const *argv)
 {
   char opt;
   unsigned long n;
-  while ((opt = getopt (argc, argv, "ar:hs:cfl:T")) != -1)
+  char *theme_name = NULL;
+  while ((opt = getopt (argc, argv, "ar:h?s:cfl:Tt:")) != -1)
     {
       switch (opt)
         {
@@ -477,6 +495,10 @@ ParseArgs (int argc, char *const *argv)
             proc_kthreads = true;
             break;
 
+          case 't':
+            theme_name = strdup(optarg);
+            break;
+
           case 'h':
           case '?':
           default:
@@ -484,6 +506,7 @@ ParseArgs (int argc, char *const *argv)
             exit (1);
         }
     }
+  return theme_name;
 }
 
 static void

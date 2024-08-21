@@ -37,6 +37,7 @@
 #include "ini/ini.h"
 
 #include "list.h"
+#include "theme.h"
 
 #define PI 3.1415926
 

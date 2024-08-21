@@ -4,6 +4,7 @@
 #include "proc_map.h"
 #include "util.h"
 #include "sort.h"
+#include <unistd.h>
 
 #define MAX_PID_LEN 7
 

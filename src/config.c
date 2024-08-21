@@ -1,4 +1,5 @@
 #include "config.h"
+#include "ini/ini.h"
 
 static Ini config_file;
 
@@ -14,11 +15,13 @@ static Ini_String config_value_string;
 static bool AsBool ();
 static const char * AsString ();
 static unsigned long AsUnsigned ();
+static long AsSigned ();
 
 static Config_Read_Value config_read_value_instance = {
   AsBool,
   AsString,
-  AsUnsigned
+  AsUnsigned,
+  AsSigned,
 };
 
 __attribute__ ((noreturn)) static void
@@ -54,6 +57,16 @@ AsUnsigned ()
 {
   char *endptr;
   unsigned long value = strtoull (config_value_string.data, &endptr, 10);
+  if (*endptr != '\0')
+    ConfigInvalidValue ();
+  return value;
+}
+
+static long
+AsSigned ()
+{
+  char *endptr;
+  long value = strtoll (config_value_string.data, &endptr, 10);
   if (*endptr != '\0')
     ConfigInvalidValue ();
   return value;

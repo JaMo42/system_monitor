@@ -161,6 +161,7 @@ void GraphConstruct(Graph *self, Graph_Kind kind, size_t n_sources, unsigned sca
     self->range_step = 0.1;
     self->fixed_range = true;
     self->set_colors = NULL;
+    vector_push(self->set_colors, 0);
 }
 
 void GraphDestroy(Graph *self) {
@@ -237,15 +238,7 @@ void GraphAddSample(Graph *self, size_t source, double sample) {
 }
 
 short GraphSourceColor(Graph *self, int source) {
-    enum { N_DEFAULT = 8 };
-    static const short DEFAULT_FIRST[N_DEFAULT] = {5, 4, 3, 2, 6, 7, 8, 9};
-    if (source < (int)vector_size(self->set_colors)) {
-        return self->set_colors[source];
-    } else if (source < N_DEFAULT) {
-        return DEFAULT_FIRST[source];
-    } else {
-        return 18 + (37 * source) % 214;
-    }
+    return self->set_colors[source % vector_size(self->set_colors)];
 }
 
 void GraphDraw(Graph *self, Canvas *canvas, double *lo_out, double *hi_out) {
@@ -308,10 +301,18 @@ void GraphSetColors(Graph *self, ...) {
     va_list ap;
     va_start(ap, self);
     short color = 0;
+    vector_clear(self->set_colors);
     while ((color = (short)va_arg(ap, int)) >= 0) {
         vector_push(self->set_colors, color);
     }
     va_end(ap);
+}
+
+void GraphSetColorsList(Graph *self, short *colors, size_t n) {
+    vector_clear(self->set_colors);
+    for (size_t i = 0; i < n; ++i) {
+        vector_push(self->set_colors, colors[i]);
+    }
 }
 
 double GraphLastSample(Graph *self, int source) {

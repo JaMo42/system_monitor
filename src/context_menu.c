@@ -62,9 +62,9 @@ ContextMenuShow (Context_Menu *menu, int x, int y)
   };
   const int maxx = x + menu->width -1, maxy = y + menu->count - 1;
 
-  wattron (win, COLOR_PAIR (C_BORDER));
+  wattron (win, COLOR_PAIR (theme->border));
   Border (win);
-  wattroff (win, COLOR_PAIR (C_BORDER));
+  wattroff (win, COLOR_PAIR (theme->border));
 
   pthread_mutex_lock (&draw_mutex);
   ContextMenuDraw (&state);

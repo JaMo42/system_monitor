@@ -35,7 +35,7 @@ MemoryInit (WINDOW *win)
   GetGraphOptions(mem_widget.name, &graph_kind, &graph_scale);
   GraphConstruct(&mem_graph, graph_kind, 2, graph_scale);
   GraphSetFixedRange(&mem_graph, 0.0, 1.0);
-  GraphSetColors(&mem_graph, C_MEM_MAIN, C_MEM_SWAP, -1);
+  GraphSetColors(&mem_graph, theme->mem_main, theme->mem_swap, -1);
 }
 
 void
@@ -98,8 +98,8 @@ MemoryDraw (WINDOW *win)
 
   const int width = getmaxx (win) - 2;
 
-#define PRINT(line, lower, title, upper)                          \
-  wattron (win, COLOR_PAIR (C_MEM_##upper));                      \
+#define PRINT(line, lower, title)                                 \
+  wattron (win, COLOR_PAIR (theme->mem_##lower));                 \
   wmove (win, line, 3);                                           \
   wprintw (win, #title " %3d%%", (int)(lower##_current * 100.0)); \
   if (width > 26)                                                 \
@@ -109,10 +109,10 @@ MemoryDraw (WINDOW *win)
       waddch (win, '/');                                          \
       FormatSize (win, mem_##lower##_total, false);               \
     }                                                             \
-  wattroff (win, COLOR_PAIR (C_MEM_##upper))
+  wattroff (win, COLOR_PAIR (theme->mem_##lower))
 
-  PRINT (2, main, Main, MAIN);
-  PRINT (3, swap, Swap, SWAP);
+  PRINT (2, main, Main);
+  PRINT (3, swap, Swap);
 #undef PRINT
 }
 

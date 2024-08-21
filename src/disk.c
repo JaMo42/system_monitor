@@ -1,8 +1,6 @@
 #include "disk.h"
 #include "util.h"
 #include "canvas/canvas.h"
-#include "ui.h"
-#include "sm.h"
 
 static const double disk_radius = 9.0;
 static const int disk_width = 14;
@@ -172,7 +170,7 @@ DiskDrawFSInfo (WINDOW *win, Disk_FS_Info *fs_info, int x, int y)
 
   len = strlen (fs_info->path);
   if (!fs_info->ok)
-    wattron (win, COLOR_PAIR (C_DISK_ERROR));
+    wattron (win, COLOR_PAIR (theme->disk_error));
   if (len > disk_width)
     {
       wmove (win, y, x);
@@ -185,11 +183,11 @@ DiskDrawFSInfo (WINDOW *win, Disk_FS_Info *fs_info, int x, int y)
       waddstr (win, fs_info->path);
     }
   if (!fs_info->ok)
-    wattroff (win, COLOR_PAIR (C_DISK_ERROR));
+    wattroff (win, COLOR_PAIR (theme->disk_error));
 
   CanvasClear (disk_canvas);
-  DiskDrawArc (cx, cy, inner_radius, outer_radius, fill, end, C_DISK_FREE);
-  DiskDrawArc (cx, cy, inner_radius, outer_radius, start, fill, C_DISK_USED);
+  DiskDrawArc (cx, cy, inner_radius, outer_radius, fill, end, theme->disk_free);
+  DiskDrawArc (cx, cy, inner_radius, outer_radius, start, fill, theme->disk_used);
   CanvasDrawAt (disk_canvas, win, x + 2, y + 1);
 
   wmove (win, y + 3, x + 5);
