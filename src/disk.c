@@ -188,7 +188,9 @@ DiskDrawFSInfo (WINDOW *win, Disk_FS_Info *fs_info, int x, int y)
   CanvasClear (disk_canvas);
   DiskDrawArc (cx, cy, inner_radius, outer_radius, fill, end, theme->disk_free);
   DiskDrawArc (cx, cy, inner_radius, outer_radius, start, fill, theme->disk_used);
+  wattron(win, A_BOLD);
   CanvasDrawAt (disk_canvas, win, x + 2, y + 1);
+  wattroff(win, A_BOLD);
 
   wmove (win, y + 3, x + 5);
   wprintw (win, "%2d%%", (int)ceil (used_percent * 100.0));
