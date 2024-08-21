@@ -16,9 +16,9 @@ Color values are parsed as strings and can be either a number or the name of a c
 - `border` widget border
 - `title` widget title and other text on widget border
 - `cpu-avg` graph and label for average CPU usage
-- `cpu-graphs-0` graph and label for CPU core 0
+- `cpu-graph-0` graph and label for CPU core 0
 - ...
-- `cpu-graphs-7`
+- `cpu-graph-7`
 - `mem-main` main memory graph and label
 - `mem-swap` swap memory graph and label
 - `net-receive` network receive graph and label
