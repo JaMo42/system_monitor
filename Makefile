@@ -1,8 +1,10 @@
-INCLUDE_DIRS = -Isrc/rb-tree -Isrc/c-vector
+INCLUDE_DIRS = -Isrc/rb-tree -Isrc/c-vector -Isrc/ini
 CC = gcc
 CFLAGS = -Wall -Wextra $(INCLUDE_DIRS)
 LDFLAGS = -lm -pthread
 VGFLAGS = --track-origins=yes #--leak-check=full
+
+LDFLAGS += $(shell pkg-config --libs ncurses)
 
 PREFIX ?= ~/.local/bin
 # Install path to use in mod_and_install since it has to be run as root so we can't use ~
@@ -21,14 +23,6 @@ endif
 ifdef PROFILE
 	CFLAGS += -pg
 	LDFLAGS += -pg
-endif
-
-# Use -lncursesw on apt based systems and -lncurses otherwise,
-# may not be correct for all systems but works for me on debian and manjaro :^)
-ifneq ($(which apt),"")
-	LDFLAGS += -lncursesw
-else
-	LDFLAGS += -lncurses
 endif
 
 source_files = $(wildcard src/*.c src/canvas/*.c src/ps/*.c) \
@@ -51,7 +45,7 @@ build_dirs:
 	@mkdir -p build/ini
 
 build/stdafx.h.gch: src/stdafx.h
-	$(CC) $(INCLUDE_DIRS) -o $@ $<
+	$(CC) $(INCLUDE_DIRS) -o $@ -x c-header $<
 
 build/%.o: src/%.c $(deps)
 	$(CC) $(CFLAGS) -c -o $@ $<
