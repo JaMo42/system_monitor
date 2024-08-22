@@ -7,7 +7,7 @@
 #define SELECTION_END() Max(S.cursor, S.selection_start)
 
 static struct Get_Line_State {
-  /**** Arguments ****/
+    /**** Arguments ****/
 
     WINDOW *window;
     int x;
@@ -19,11 +19,11 @@ static struct Get_Line_State {
     Get_Line_Finish_Callback finish_callback;
     bool secret;
 
-  /**** State ****/
+    /**** State ****/
 
-  /** Input value used when no history is provided. */
+    /** Input value used when no history is provided. */
     Input_String no_history_value;
-  /** The currently used input value */
+    /** The currently used input value */
     Input_String *input;
     /* Cursor position */
     int cursor;
@@ -31,15 +31,15 @@ static struct Get_Line_State {
     int selection_start;
     /* Whether there is a selection */
     bool selection_active;
-  /** Cursor position when Ctrl+A is used as the actual cursor position gets
-      moved to mark the selection but the view does not change. */
+    /** Cursor position when Ctrl+A is used as the actual cursor position gets
+        moved to mark the selection but the view does not change. */
     int cursor_before;
-  /** Range to show for @ref GetLineDraw */
+    /** Range to show for @ref GetLineDraw */
     int view_begin, view_end;
-  /** Which history value is currently selected, NULL for the new value */
+    /** Which history value is currently selected, NULL for the new value */
     History_Entry *history_selected;
-  /** Current window size, used to adjust with and Y position when window size
-      changes. */
+    /** Current window size, used to adjust with and Y position when window size
+        changes. */
     int window_width, window_height;
 } S;
 
@@ -135,10 +135,10 @@ GetChar() {
     if (input == 27) {
         return GetEscape();
     } else if (
-                  // These overlap the ctrl+alpha keys
-                  input == '\n' // KEY_ENTER
-                  || input == 8 // KEY_CTRL_BACKSPACE
-        ) {
+        // These overlap the ctrl+alpha keys
+        input == '\n'  // KEY_ENTER
+        || input == 8  // KEY_CTRL_BACKSPACE
+    ) {
         return input;
     } else if (input >= 1 && input <= 26) {
         return KEY_CTRL('a' - 1 + input);
@@ -159,7 +159,11 @@ HistoryNewer() {
         return &S.history->new_value;
     } else {
         S.history_selected = S.history_selected->newer;
-        memcpy(&S.history->history_value, &S.history_selected->value, sizeof(Input_String));
+        memcpy(
+            &S.history->history_value,
+            &S.history_selected->value,
+            sizeof(Input_String)
+        );
         return &S.history->history_value;
     }
 }
@@ -172,13 +176,21 @@ HistoryOlder() {
         return &S.history->new_value;
     } else if (S.history_selected == NULL) {
         S.history_selected = S.history->most_recent;
-        memcpy(&S.history->history_value, &S.history_selected->value, sizeof(Input_String));
+        memcpy(
+            &S.history->history_value,
+            &S.history_selected->value,
+            sizeof(Input_String)
+        );
         return &S.history->history_value;
     } else if (S.history_selected->older == NULL) {
         return &S.history->history_value;
     } else {
         S.history_selected = S.history_selected->older;
-        memcpy(&S.history->history_value, &S.history_selected->value, sizeof(Input_String));
+        memcpy(
+            &S.history->history_value,
+            &S.history_selected->value,
+            sizeof(Input_String)
+        );
         return &S.history->history_value;
     }
 }
@@ -235,8 +247,12 @@ GetLineFinish() {
         S.finish_callback(&S.no_history_value);
     } else {
         /* Don't add if it's the same as the most recent entry. */
-        if (S.history->most_recent == NULL ||
-            memcmp(S.history->most_recent->value.data, S.input->data, S.input->length + 1)) {
+        if (S.history->most_recent == NULL
+            || memcmp(
+                S.history->most_recent->value.data,
+                S.input->data,
+                S.input->length + 1
+            )) {
             History_Entry *new_entry = malloc(sizeof(History_Entry));
             new_entry->older = S.history->most_recent;
             new_entry->newer = NULL;
@@ -561,9 +577,17 @@ GetLineHandleInput(int key) {
 }
 
 void
-GetLineBegin(WINDOW *win, int x, int y, bool move_y_on_resize, int width,
-             History *history, Get_Line_Change_Callback change_callback,
-             Get_Line_Finish_Callback finish_callback, bool secret) {
+GetLineBegin(
+    WINDOW *win,
+    int x,
+    int y,
+    bool move_y_on_resize,
+    int width,
+    History *history,
+    Get_Line_Change_Callback change_callback,
+    Get_Line_Finish_Callback finish_callback,
+    bool secret
+) {
     Input_String *input;
     if (history) {
         memset(&history->history_value, 0, sizeof(Input_String));
@@ -573,27 +597,27 @@ GetLineBegin(WINDOW *win, int x, int y, bool move_y_on_resize, int width,
         memset(&S.no_history_value, 0, sizeof(Input_String));
         input = &S.no_history_value;
     }
-    S = (struct Get_Line_State) {.window = win,
-        .x = x,
-        .y = y,
-        .move_y_on_resize = move_y_on_resize,
-        .width = width,
-        .history = history,
-        .change_callback = change_callback,
-        .finish_callback = finish_callback,
-        .secret = secret,
+    S = (struct Get_Line_State
+    ){.window = win,
+      .x = x,
+      .y = y,
+      .move_y_on_resize = move_y_on_resize,
+      .width = width,
+      .history = history,
+      .change_callback = change_callback,
+      .finish_callback = finish_callback,
+      .secret = secret,
 
-        .input = input,
-        .cursor = 0,
-        .selection_start = 0,
-        .selection_active = false,
-        .cursor_before = -1,
-        .view_begin = 0,
-        .view_end = 0,
-        .history_selected = NULL,
-        .window_width = getmaxx(win),
-        .window_height = getmaxy(win)
-    };
+      .input = input,
+      .cursor = 0,
+      .selection_start = 0,
+      .selection_active = false,
+      .cursor_before = -1,
+      .view_begin = 0,
+      .view_end = 0,
+      .history_selected = NULL,
+      .window_width = getmaxx(win),
+      .window_height = getmaxy(win)};
 
     HandleInput = GetLineHandleInput;
     curs_set(true);
@@ -631,7 +655,8 @@ void
 ResolveMouseEvent(MEVENT *event, Layout *ui, Mouse_Event *out) {
     out->button = event->bstate;
     if (ui->type != UI_WIDGET) {
-        if (last_mouse_widget && event->x == last_mouse_x && event->y == last_mouse_y) {
+        if (last_mouse_widget && event->x == last_mouse_x
+            && event->y == last_mouse_y) {
             ui = last_mouse_widget;
         } else {
             ui = UIFindWidgetContaining(ui, event->x, event->y);
@@ -647,7 +672,7 @@ ResolveMouseEvent(MEVENT *event, Layout *ui, Mouse_Event *out) {
 
 void
 ReportMouseMoveEvents(bool yay_or_nay, bool only_if_held) {
-    move(0, 0);                 /* ensure we don't scroll output */
+    move(0, 0); /* ensure we don't scroll output */
     /* https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-Mouse-Tracking
      */
     if (only_if_held) {
@@ -664,6 +689,6 @@ ReportMouseMoveEvents(bool yay_or_nay, bool only_if_held) {
         }
     }
     if (!yay_or_nay) {
-        mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL);      /* why? */
+        mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL); /* why? */
     }
 }

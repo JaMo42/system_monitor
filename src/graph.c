@@ -10,9 +10,9 @@ typedef struct {
     const unsigned scale;
     const bool fill;
     short color;
-  /** Left point, older sample */
+    /** Left point, older sample */
     double x1, y1;
-  /** Right point, newer sample */
+    /** Right point, newer sample */
     double x2, y2;
 } GraphDrawContext;
 
@@ -23,9 +23,13 @@ DrawLine(const GraphDrawContext *restrict ctx) {
     if (false && ctx->fill) {
         // FIXME: this is invalid when the viewport does not stretch to the
         // bottom of the canvas.
-        CanvasDrawLineFill(ctx->canvas, ctx->x1, ctx->y1, ctx->x2, ctx->y2, ctx->color);
+        CanvasDrawLineFill(
+            ctx->canvas, ctx->x1, ctx->y1, ctx->x2, ctx->y2, ctx->color
+        );
     } else {
-        CanvasDrawLine(ctx->canvas, ctx->x1, ctx->y1, ctx->x2, ctx->y2, ctx->color);
+        CanvasDrawLine(
+            ctx->canvas, ctx->x1, ctx->y1, ctx->x2, ctx->y2, ctx->color
+        );
     }
 }
 
@@ -92,8 +96,11 @@ static void
 DrawBlocks(const GraphDrawContext *restrict ctx) {
     if (ctx->fill) {
         // See `GraphDraw` about the `- 1`.
-        const double bottom = (ctx->viewport.y - 1 + ctx->viewport.height) * 4.0 - 1.0;
-        CanvasDrawRect(ctx->canvas, ctx->x1, bottom, ctx->x2 - 1, ctx->y2, ctx->color);
+        const double bottom
+            = (ctx->viewport.y - 1 + ctx->viewport.height) * 4.0 - 1.0;
+        CanvasDrawRect(
+            ctx->canvas, ctx->x1, bottom, ctx->x2 - 1, ctx->y2, ctx->color
+        );
     } else {
         for (double xx = Max(0.0, ctx->x1); xx <= ctx->x2; ++xx) {
             CanvasSet(ctx->canvas, xx, ctx->y2, ctx->color);
@@ -127,9 +134,12 @@ GraphKindFromString(const char *s, Graph_Kind *out) {
         const char *s;
         Graph_Kind k;
     } VALID_PAIRS[] = {
-        {"straight", GRAPH_KIND_STRAIGHT}, {"line", GRAPH_KIND_STRAIGHT},
-        {"bezir", GRAPH_KIND_BEZIR}, {"curve", GRAPH_KIND_BEZIR},
-        {"blocks", GRAPH_KIND_BLOCKS}, {"block", GRAPH_KIND_BLOCKS},
+        {"straight", GRAPH_KIND_STRAIGHT},
+        {"line", GRAPH_KIND_STRAIGHT},
+        {"bezir", GRAPH_KIND_BEZIR},
+        {"curve", GRAPH_KIND_BEZIR},
+        {"blocks", GRAPH_KIND_BLOCKS},
+        {"block", GRAPH_KIND_BLOCKS},
     };
     for (size_t i = 0; i < countof(VALID_PAIRS); ++i) {
         if (strcasecmp(s, VALID_PAIRS[i].s) == 0) {
@@ -164,7 +174,7 @@ GraphConstruct(Graph *self, Graph_Kind kind, size_t n_sources, unsigned scale) {
     self->n_sources = n_sources;
     self->max_samples = 1;
     self->scale = scale;
-    self->viewport = (Rectangle) { 0, 0, 0, 0 };
+    self->viewport = (Rectangle){0, 0, 0, 0};
     self->lowest_sample = 0.0;
     self->highest_sample = 1.0;
     self->range_step = 0.1;
@@ -198,7 +208,9 @@ void
 GraphSetViewport(Graph *self, Rectangle viewport) {
     // We need 1 extra sample as the scale equation only gives us the number of
     // line segments we need which is 1 less than the number of samples.
-    GraphSetMaxSamples(self, 1 + (viewport.width + self->scale - 1) / self->scale);
+    GraphSetMaxSamples(
+        self, 1 + (viewport.width + self->scale - 1) / self->scale
+    );
     self->viewport = viewport;
 }
 
@@ -278,10 +290,14 @@ GraphDraw(Graph *self, Canvas *canvas, double *lo_out, double *hi_out) {
         lowest_sample = 0.0;
     }
     GraphDrawContext ctx = {
-        canvas, self->viewport,
-        self->scale, self->n_sources == 1,
-        0, 0.0,
-        0.0, 0.0,
+        canvas,
+        self->viewport,
+        self->scale,
+        self->n_sources == 1,
+        0,
+        0.0,
+        0.0,
+        0.0,
         0.0,
     };
     const double scale = 2.0 * self->scale;
@@ -302,7 +318,8 @@ GraphDraw(Graph *self, Canvas *canvas, double *lo_out, double *hi_out) {
         ctx.y1 = top_y + Y(scaled_sample) * 4.0 - 1;
         ctx.x2 = ctx.x1;
         ctx.color = GraphSourceColor(self, i);
-        for (const List_Node *it = list->front->next; it != NULL; it = it->next) {
+        for (const List_Node *it = list->front->next; it != NULL;
+             it = it->next) {
             scaled_sample = (it->f - lowest_sample) / highest_sample;
             // x2,y2 are the current point because we want x1,y1 to be the
             // point on the left.

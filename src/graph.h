@@ -26,12 +26,14 @@ typedef struct {
     double highest_sample;
     double range_step;
     bool fixed_range;
-      VECTOR(short) set_colors;
+    VECTOR(short) set_colors;
 } Graph;
 
-void GetGraphOptions(const char *domain, Graph_Kind *kind_out, unsigned *scale_out);
+void
+GetGraphOptions(const char *domain, Graph_Kind *kind_out, unsigned *scale_out);
 
-void GraphConstruct(Graph *self, Graph_Kind kind, size_t n_sources, unsigned scale);
+void
+GraphConstruct(Graph *self, Graph_Kind kind, size_t n_sources, unsigned scale);
 
 void GraphDestroy(Graph *self);
 

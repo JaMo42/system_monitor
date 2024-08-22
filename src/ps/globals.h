@@ -19,14 +19,12 @@ extern Jiffy_List cpu_times;
 /** The total amount of memory, in KB. */
 extern unsigned long mem_total;
 /** The sorted and potentially forested process list. */
-extern
-VECTOR(Proc_Data *)
-    sorted_procs;
+extern VECTOR(Proc_Data *) sorted_procs;
 /** Whether to include kernel threads in the record. */
- extern bool show_kthreads;
+extern bool show_kthreads;
 /** Sorting mode */
- extern int sorting_mode;
+extern int sorting_mode;
 /** Whether to arrange processes trees as such. */
- extern bool forest;
+extern bool forest;
 /** Whether to sum up cpu and memory usage in trees. */
- extern bool sum_children;
+extern bool sum_children;

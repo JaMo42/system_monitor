@@ -1,10 +1,10 @@
 #include "ps.h"
-#include <unistd.h>
 #include "globals.h"
 #include "proc_map.h"
 #include "read_stat.h"
 #include "sort.h"
 #include "util.h"
+#include <unistd.h>
 
 #define MAX_PID_LEN 7
 
@@ -27,7 +27,9 @@ update_process(int dir_fd, Proc_Data *process) {
 
 /** Adds a new process to the record. */
 static void
-new_process(int dir_fd, Proc_Data *process, pid_t pid, Command_Line command_line) {
+new_process(
+    int dir_fd, Proc_Data *process, pid_t pid, Command_Line command_line
+) {
     Proc_Stat stat;
     readstat(dir_fd, &stat);
     process->pid = pid;
@@ -43,7 +45,7 @@ new_process(int dir_fd, Proc_Data *process, pid_t pid, Command_Line command_line
     if (stat.parent) {
         Proc_Data *parent = add_or_update(stat.parent, true);
         if (parent) {
-            vector_for_each(parent->children, it) {
+            vector_for_each (parent->children, it) {
                 if ((*it)->pid == pid) {
                     return;
                 }
@@ -79,8 +81,8 @@ add_or_update(pid_t pid, bool force) {
     const uint8_t bucket_generation = *insert_result.generation;
     *insert_result.generation = current_generation;
     if (insert_result.is_new) {
-        // In `cmdline` it contains a trailing null byte and in `comm` a trailing
-        // linefeed, we want neither of those.
+        // In `cmdline` it contains a trailing null byte and in `comm` a
+        // trailing linefeed, we want neither of those.
         --cmdline.size;
         if (cmdline_is_comm) {
             commandline_from_comm(&command_line, cmdline);
@@ -115,7 +117,7 @@ update_procs() {
 /** Unparents all children of the given process. */
 static void
 unparent_children_of(Proc_Data *d) {
-    vector_for_each(d->children, it) {
+    vector_for_each (d->children, it) {
         (*it)->parent = 0;
     }
 }
@@ -163,9 +165,12 @@ proc_data_remove(Proc_Data *d) {
 void
 ps_init() {
     // For memory info in /proc/[pid]/stat, need to translate from pages to KB.
-    const unsigned page_to_bytes_shift = __builtin_ctz((unsigned)sysconf(_SC_PAGESIZE));
+    const unsigned page_to_bytes_shift
+        = __builtin_ctz((unsigned)sysconf(_SC_PAGESIZE));
     page_shift_amount = page_to_bytes_shift - 10;
-    proc_map_construct(&procs, proc_data_alloc, proc_data_free, proc_data_remove);
+    proc_map_construct(
+        &procs, proc_data_alloc, proc_data_free, proc_data_remove
+    );
     jiffy_list_construct(&cpu_times, get_total_cpu());
     current_generation = INVALID_GENERATION + 1;
     mem_total = get_total_memory();
@@ -179,9 +184,7 @@ ps_init() {
 
 /** Returns a list of processes without parents.  This returns a reference to
     an internal vector which is leaked when the program terminates. */
-static
-VECTOR(Proc_Data *)
-ps_get_toplevel() {
+static VECTOR(Proc_Data *) ps_get_toplevel() {
     /* This vector is leaked (only) when the program exists,
        this is not an issue but it will show up in valgrind as a leak. */
     static VECTOR(Proc_Data *) toplevel = NULL;
@@ -199,7 +202,7 @@ static void
 ps_sum_proc_data(Proc_Data *proc) {
     proc->total_cpu_time = jiffy_list_period(&proc->cpu_times);
     proc->total_memory = proc->memory;
-    vector_for_each(proc->children, it) {
+    vector_for_each (proc->children, it) {
         Proc_Data *const p = *it;
         ps_sum_proc_data(p);
         proc->total_cpu_time += p->total_cpu_time;
@@ -209,8 +212,8 @@ ps_sum_proc_data(Proc_Data *proc) {
 
 /** Sums up the cpu and memory usage of all given processes. */
 static void
-ps_sum_child_data(VECTOR(Proc_Data *)toplevel) {
-    vector_for_each(toplevel, it) {
+ps_sum_child_data(VECTOR(Proc_Data *) toplevel) {
+    vector_for_each (toplevel, it) {
         ps_sum_proc_data(*it);
     }
 }
@@ -218,10 +221,12 @@ ps_sum_child_data(VECTOR(Proc_Data *)toplevel) {
 /** Sorts processes into trees.  On the first call this should be called with
     all the toplevel proceses. */
 static void
-ps_sort_procs_forest(VECTOR(Proc_Data *)procs, unsigned level, int8_t *prefix) {
+ps_sort_procs_forest(
+    VECTOR(Proc_Data *) procs, unsigned level, int8_t *prefix
+) {
     sort_procs(procs, sorting_mode);
     bool folded, has_children;
-    vector_for_each(procs, it) {
+    vector_for_each (procs, it) {
         folded = (*it)->tree_folded;
         has_children = !vector_empty((*it)->children);
         (*it)->tree_level = level;
@@ -245,7 +250,8 @@ ps_sort_procs_forest(VECTOR(Proc_Data *)procs, unsigned level, int8_t *prefix) {
                 memcpy((*it)->tree_prefix, prefix, PS_MAX_LEVEL);
             }
         } else if (forest) {
-            int p = (folded && has_children) ? PS_PREFIX_TOP_FOLDED : PS_PREFIX_TOP;
+            int p = (folded && has_children) ? PS_PREFIX_TOP_FOLDED
+                                             : PS_PREFIX_TOP;
             (*it)->tree_prefix[0] = p;
         }
         vector_push(sorted_procs, (*it));
@@ -272,7 +278,8 @@ ps_sort_procs() {
             ps_sum_child_data(toplevel);
         } else {
             proc_map_for_each(&procs) {
-                it->data->total_cpu_time = jiffy_list_period(&it->data->cpu_times);
+                it->data->total_cpu_time
+                    = jiffy_list_period(&it->data->cpu_times);
                 it->data->total_memory = it->data->memory;
             }
         }

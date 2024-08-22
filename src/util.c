@@ -95,14 +95,14 @@ DrawWindowInfo2(WINDOW *w, const char *info) {
 
 Size_Format
 GetSizeFormat(size_t size) {
-    static const char *units[] = { "B", "KB", "MB", "GB", "TB", "PB", "EB" };
+    static const char *units[] = {"B", "KB", "MB", "GB", "TB", "PB", "EB"};
     int order = 0;
     double s = size;
     while (s >= KB && order < (int)countof(units)) {
         ++order;
         s /= KB;
     }
-    return (Size_Format) {.unit = units[order],.size = s };
+    return (Size_Format){.unit = units[order], .size = s};
 }
 
 void

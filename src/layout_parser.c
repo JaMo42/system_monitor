@@ -46,7 +46,7 @@ static Token *first_token;
 static const char *source;
 static const char *source_name;
 static const char *widget_choices;
-static Used_Widget used_widgets_proxy = {.next = NULL };
+static Used_Widget used_widgets_proxy = {.next = NULL};
 
 static Used_Widget *used_widgets_last = &used_widgets_proxy;
 
@@ -86,8 +86,14 @@ Error(const char *format, ...) {
 }
 
 static int
-ShowSourceImpl(size_t idx, size_t len, int line_num_width,
-               const char *highlight, const char *format, va_list ap) {
+ShowSourceImpl(
+    size_t idx,
+    size_t len,
+    int line_num_width,
+    const char *highlight,
+    const char *format,
+    va_list ap
+) {
     const char *line = source + idx;
     int line_length = 0, line_number, column, i;
     IndexToPosition(idx, &line_number, &column);
@@ -100,10 +106,24 @@ ShowSourceImpl(size_t idx, size_t len, int line_num_width,
     while (line[line_length] && line[line_length] != '\n') {
         ++line_length;
     }
-    fprintf(stderr, "%*c" C_STRUCT "-->\x1b[0m %s:%d:%d\n", line_num_width, ' ',
-            source_name, line_number, column);
+    fprintf(
+        stderr,
+        "%*c" C_STRUCT "-->\x1b[0m %s:%d:%d\n",
+        line_num_width,
+        ' ',
+        source_name,
+        line_number,
+        column
+    );
     fprintf(stderr, C_STRUCT "%*c |\x1b[0m\n", line_num_width, ' ');
-    fprintf(stderr, C_STRUCT "%*d |\x1b[0m %.*s\n", line_num_width, line_number, line_length, line);
+    fprintf(
+        stderr,
+        C_STRUCT "%*d |\x1b[0m %.*s\n",
+        line_num_width,
+        line_number,
+        line_length,
+        line
+    );
     fprintf(stderr, C_STRUCT "%*c |\x1b[0m ", line_num_width, ' ');
     for (i = 1; i < column; ++i) {
         fputc(' ', stderr);
@@ -136,17 +156,27 @@ static void
 HintValid(int line_num_width, const char *for_, const char *choices) {
     const char *p;
     int len = 0;
-    fprintf(stderr,
-            C_STRUCT "%*c |\x1b[0m\n" C_NOTE "hint:\x1b[0m valid %s are\n",
-            line_num_width, ' ', for_);
+    fprintf(
+        stderr,
+        C_STRUCT "%*c |\x1b[0m\n" C_NOTE "hint:\x1b[0m valid %s are\n",
+        line_num_width,
+        ' ',
+        for_
+    );
     fprintf(stderr, C_STRUCT "%*c |\x1b[0m - ", line_num_width, ' ');
     while ((p = strpbrk(choices, ",;"))) {
         len = p - choices;
         if (*p == ',') {
             fprintf(stderr, "‘%.*s’, ", len, choices);
         } else {
-            fprintf(stderr, "‘%.*s’\n" C_STRUCT "%*c |\x1b[0m - ", len, choices,
-                    line_num_width, ' ');
+            fprintf(
+                stderr,
+                "‘%.*s’\n" C_STRUCT "%*c |\x1b[0m - ",
+                len,
+                choices,
+                line_num_width,
+                ' '
+            );
         }
         choices = p + 1;
     }
@@ -157,7 +187,12 @@ static void
 NoteVA(int line_num_width, bool inline_, const char *format, va_list ap) {
     fprintf(stderr, C_STRUCT "%*c |\x1b[0m\n", line_num_width, ' ');
     if (inline_) {
-        fprintf(stderr, C_STRUCT "%*c =\x1b[0m" C_MESSAGE " note:\x1b[0m ", line_num_width, ' ');
+        fprintf(
+            stderr,
+            C_STRUCT "%*c =\x1b[0m" C_MESSAGE " note:\x1b[0m ",
+            line_num_width,
+            ' '
+        );
     } else {
         fprintf(stderr, C_NOTE "note:\x1b[0m ");
     }
@@ -174,8 +209,13 @@ Note(int line_num_width, bool inline_, const char *format, ...) {
 }
 
 static void
-ErrorDuplicate(Token *first, Token *second,
-               const char *first_format, const char *second_format, ...) {
+ErrorDuplicate(
+    Token *first,
+    Token *second,
+    const char *first_format,
+    const char *second_format,
+    ...
+) {
     va_list ap;
     int first_width, second_width, line_number, column;
     IndexToPosition(first->begin, &line_number, &column);
@@ -187,7 +227,9 @@ ErrorDuplicate(Token *first, Token *second,
     }
 
     va_start(ap, second_format);
-    ShowSourceImpl(first->begin, first->length, first_width, C_ERROR, first_format, ap);
+    ShowSourceImpl(
+        first->begin, first->length, first_width, C_ERROR, first_format, ap
+    );
     NoteVA(first_width, false, second_format, ap);
     ShowSourceImpl(second->begin, second->length, first_width, C_NOTE, "", ap);
     va_end(ap);
@@ -206,16 +248,16 @@ Tokenize() {
     intmax_t number;
     bool whitespace;
 
-#define PUSH(k, l)                      \
-  do {                                  \
-    last->next = malloc(sizeof(Token)); \
-    last = last->next;                  \
-    last->kind = k;                     \
-    last->text = source + pos;          \
-    last->begin = pos;                  \
-    last->length = l;                   \
-    pos += l;                           \
-  } while (0)
+#define PUSH(k, l)                          \
+    do {                                    \
+        last->next = malloc(sizeof(Token)); \
+        last = last->next;                  \
+        last->kind = k;                     \
+        last->text = source + pos;          \
+        last->begin = pos;                  \
+        last->length = l;                   \
+        pos += l;                           \
+    } while (0)
 
 #define TOKEQ(s) (sizeof(s) - 1 == len && strncmp(tok, s, len) == 0)
 
@@ -257,7 +299,9 @@ Tokenize() {
             len = end - pos;
             if (TOKEQ("strict")) {
                 if (!is_first) {
-                    Error("‘strict’ must be at the beginning of the layout string");
+                    Error(
+                        "‘strict’ must be at the beginning of the layout string"
+                    );
                     ErrorShowSource(pos, len, "");
                     exit(1);
                 }
@@ -265,12 +309,17 @@ Tokenize() {
             } else if (next_word_is_layout_shape) {
                 if (TOKEQ("rows") || TOKEQ("horizontal")) {
                     PUSH(TOK_SHAPE_ROWS, len);
-                } else if (TOKEQ("cols") || TOKEQ("columns") || TOKEQ("vertical")) {
+                } else if (TOKEQ("cols") || TOKEQ("columns")
+                           || TOKEQ("vertical")) {
                     PUSH(TOK_SHAPE_COLS, len);
                 } else {
                     Error("unknown layout shape ‘%.*s’", (int)len, tok);
                     len = ErrorShowSource(pos, len, "expected layout shape");
-                    HintValid(len, "shape names", "rows,horizontal;cols,columns,vertical");
+                    HintValid(
+                        len,
+                        "shape names",
+                        "rows,horizontal;cols,columns,vertical"
+                    );
                     exit(1);
                 }
                 next_word_is_layout_shape = false;
@@ -375,8 +424,16 @@ ParseWidget() {
         if (strncmp(tok->text, w->name, tok->length) == 0) {
             if (match) {
                 Error("ambiguous widget name");
-                line_num_width = ErrorShowSource(tok->begin, tok->length, "widget referenced here");
-                Note(line_num_width, true, "matches ‘%s’ and ‘%s’", match->name, w->name);
+                line_num_width = ErrorShowSource(
+                    tok->begin, tok->length, "widget referenced here"
+                );
+                Note(
+                    line_num_width,
+                    true,
+                    "matches ‘%s’ and ‘%s’",
+                    match->name,
+                    w->name
+                );
                 exit(1);
             }
             match = w;
@@ -385,20 +442,27 @@ ParseWidget() {
     if (!match) {
         MakeWidgetChoices();
         Error("no matching widget");
-        line_num_width = ErrorShowSource(tok->begin, tok->length, "widget referenced here");
+        line_num_width = ErrorShowSource(
+            tok->begin, tok->length, "widget referenced here"
+        );
         HintValid(line_num_width, "widget names", widget_choices);
         exit(1);
     }
     for (used_it = used_widgets_proxy.next; used_it; used_it = used_it->next) {
         if (used_it->widget == match) {
             Error("duplicate widget");
-            ErrorDuplicate(tok, used_it->token, "‘%s’ reused here",
-                           "previous usage here", match->name);
+            ErrorDuplicate(
+                tok,
+                used_it->token,
+                "‘%s’ reused here",
+                "previous usage here",
+                match->name
+            );
             exit(1);
         }
     }
     use = malloc(sizeof(Used_Widget));
-    *use = (Used_Widget) {.widget = match,.token = tok,.next = NULL };
+    *use = (Used_Widget){.widget = match, .token = tok, .next = NULL};
     used_widgets_last->next = use;
     used_widgets_last = used_widgets_last->next;
     return match;
@@ -451,7 +515,9 @@ ParseChild(Layout *layout) {
 
     default:
         Error("invalid layout child");
-        ErrorShowSource(tok->begin, tok->length, "expected widget or sub-layout");
+        ErrorShowSource(
+            tok->begin, tok->length, "expected widget or sub-layout"
+        );
         exit(1);
         break;
     }
@@ -466,7 +532,7 @@ ParseLayout() {
     float percent_first = 0.5f;
     Layout *layout;
 
-    Next("");                   // Consume '('
+    Next("");  // Consume '('
 
     switch ((tok = Next("layout shape"))->kind) {
     case TOK_SHAPE_COLS:
@@ -477,8 +543,13 @@ ParseLayout() {
         break;
     default:
         Error("missing layout shape");
-        line_num_width = ErrorShowSource(tok->begin, tok->length, "expected layout shape");
-        HintValid(line_num_width, "shape names", "rows,horizontal;cols,columns,vertical");
+        line_num_width
+            = ErrorShowSource(tok->begin, tok->length, "expected layout shape");
+        HintValid(
+            line_num_width,
+            "shape names",
+            "rows,horizontal;cols,columns,vertical"
+        );
         exit(1);
     }
 
@@ -535,7 +606,10 @@ ParseLayoutString(const char *source_, const char *source_name_) {
         layout->min_width += 2;
         layout->priority = 0;
     } else {
-        Error(tok->kind == TOK_END ? "unexpected end of layout string" : "unexpected token");
+        Error(
+            tok->kind == TOK_END ? "unexpected end of layout string"
+                                 : "unexpected token"
+        );
         ErrorShowSource(tok->begin, tok->length, "expected toplevel layout");
         exit(1);
     }

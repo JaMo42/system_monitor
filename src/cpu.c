@@ -35,12 +35,12 @@ CpuInit(WINDOW *win) {
     const int avail = AvailableColors();
     if (cpu_count - THEME_CPU_COLORS <= avail) {
         for (int i = THEME_CPU_COLORS; i < cpu_count; i++) {
-            cpu_colors[i] = DefColor((ColorDef) { 16 + rand() % 216, -1 });
+            cpu_colors[i] = DefColor((ColorDef){16 + rand() % 216, -1});
         }
     } else if (avail) {
         short *colors = malloc(sizeof(short) * avail);
         for (int i = 0; i < avail; i++) {
-            colors[i] = DefColor((ColorDef) { 16 + rand() % 216, -1 });
+            colors[i] = DefColor((ColorDef){16 + rand() % 216, -1});
         }
         for (int i = THEME_CPU_COLORS; i < cpu_count; i++) {
             cpu_colors[i] = colors[(i - THEME_CPU_COLORS) % avail];
@@ -86,9 +86,9 @@ CpuPollUsage(int id, FILE *stat) {
     skipspace(&p);
 
     const size_t work_jiffies = (str2u(&p) + str2u(&p) + str2u(&p));
-    const size_t total_jiffies =
-        (work_jiffies + str2u(&p) + str2u(&p) + str2u(&p) + str2u(&p) +
-         str2u(&p) + str2u(&p) + str2u(&p));
+    const size_t total_jiffies
+        = (work_jiffies + str2u(&p) + str2u(&p) + str2u(&p) + str2u(&p)
+           + str2u(&p) + str2u(&p) + str2u(&p));
 
     const size_t total_period = total_jiffies - cpu_last_total_jiffies[id];
     const size_t work_period = work_jiffies - cpu_last_work_jiffies[id];
@@ -150,7 +150,7 @@ void
 CpuResize(WINDOW *win) {
     wclear(win);
     CanvasResize(cpu_canvas, win);
-    const Rectangle viewport = { 1, 1, cpu_canvas->width, cpu_canvas->height };
+    const Rectangle viewport = {1, 1, cpu_canvas->width, cpu_canvas->height};
     GraphSetViewport(&cpu_graph, viewport);
     GraphSetViewport(&cpu_avg_graph, viewport);
 }

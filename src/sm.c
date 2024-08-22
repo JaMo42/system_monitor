@@ -16,9 +16,9 @@
 #include "util.h"
 
 #define widgets_for_each() \
-  for (Widget *const *it = widgets, *w = *it; w != NULL; w = *++it)
+    for (Widget *const *it = widgets, *w = *it; w != NULL; w = *++it)
 
-struct timespec interval = {.tv_sec = 0,.tv_nsec = 500000000L };
+struct timespec interval = {.tv_sec = 0, .tv_nsec = 500000000L};
 
 static const char *layout = NULL;
 Layout *ui;
@@ -55,10 +55,15 @@ static help_text_type help_text = {
 static help_type help;
 
 // All available widgets
-struct Widget *all_widgets[] = { &cpu_widget, &mem_widget, &net_widget,
-    &proc_widget, &disk_widget, &temp_widget,
-    &battery_widget, NULL
-};
+struct Widget *all_widgets[]
+    = {&cpu_widget,
+       &mem_widget,
+       &net_widget,
+       &proc_widget,
+       &disk_widget,
+       &temp_widget,
+       &battery_widget,
+       NULL};
 
 // Widgets used in the layout
 static struct Widget *widgets[countof(all_widgets)];
@@ -81,8 +86,6 @@ void CursesUpdate();
 void CursesQuit();
 void CursesResize();
 
-/** doc comment test.
-    with multiple lines. */
 void InitWidgets();
 void UpdateWidgets();
 void DrawWidgets();
@@ -239,9 +242,9 @@ LoadConfig() {
 
 void
 LoadTheme(const char *name) {
-    // The names comes from the command line arguments which take precedence over
-    // the config file, and mixing the base theme from the argument with the
-    // overrides from the config file doesn't seem like a good idea.
+    // The names comes from the command line arguments which take precedence
+    // over the config file, and mixing the base theme from the argument with
+    // the overrides from the config file doesn't seem like a good idea.
     if (name) {
         theme = CreateNamedTheme(name);
     } else if (HaveConfig()) {
@@ -275,7 +278,9 @@ ReloadTheme() {
         ini_free(&ini);
         return NULL;
     } else {
-        char *msg = Format("Failed to parse config: %s on line %u", error, error_line);
+        char *msg = Format(
+            "Failed to parse config: %s on line %u", error, error_line
+        );
         return msg;
     }
 }
@@ -335,7 +340,7 @@ MainHandleInput(int key) {
         break;
 
     default:
-        widgets_for_each() {
+        widgets_for_each () {
             if (w->HandleInput(key)) {
                 break;
             }
@@ -362,7 +367,7 @@ CursesInit() {
 void
 CursesUpdate() {
     refresh();
-    widgets_for_each() {
+    widgets_for_each () {
         if (!w->hidden) {
             wrefresh(w->win);
         }
@@ -383,21 +388,21 @@ CursesResize() {
 
 void
 InitWidgets() {
-    widgets_for_each() {
+    widgets_for_each () {
         w->Init(w->win);
     }
 }
 
 void
 UpdateWidgets() {
-    widgets_for_each() {
+    widgets_for_each () {
         w->Update();
     }
 }
 
 void
 DrawWidgets() {
-    widgets_for_each() {
+    widgets_for_each () {
         if (!w->hidden) {
             w->Draw(w->win);
         }
@@ -406,7 +411,7 @@ DrawWidgets() {
 
 void
 DrawBorders() {
-    widgets_for_each() {
+    widgets_for_each () {
         if (!w->hidden) {
             w->DrawBorder(w->win);
         }
@@ -472,6 +477,7 @@ TooSmall() {
 
 void
 Usage(FILE *stream) {
+    // clang-format off
     fputs("Usage: sm [OPTION...]\n", stream);
     fputs("Options:\n", stream);
     fputs("  -a         Show average CPU usage\n", stream);
@@ -480,12 +486,11 @@ Usage(FILE *stream) {
     fputs("  -f         ASCII art process tree\n", stream);
     fputs("  -l layout  Specifies the layout string\n", stream);
     fputs("  -T         Show kernel threads\n", stderr);
-    fputs("  -t theme   Specifies the theme, disables all theme changes from the "
-          "configuration\n", stream);
+    fputs("  -t theme   Specifies the theme, disables all theme changes from the configuration\n", stream);
     fputs("  -h         Show help message\n", stream);
     fputc('\n', stream);
-    fputs("If the layout option for -l is '?' the default layout string gets "
-          "printed.\n", stream);
+    fputs("If the layout option for -l is '?' the default layout string gets printed.\n", stream);
+    // clang-format on
 }
 
 const char *

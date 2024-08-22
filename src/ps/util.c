@@ -49,7 +49,7 @@ read_file(int dir_fd, const char *filename, int n) {
         close(fd);
     }
     file_content_buf[s > 0 ? s : 0] = '\0';
-    return (File_Content) {.data = file_content_buf,.size = s };
+    return (File_Content){.data = file_content_buf, .size = s};
 }
 
 File_Content

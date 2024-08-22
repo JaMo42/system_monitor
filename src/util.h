@@ -9,45 +9,45 @@ typedef struct {
 } Size_Format;
 
 /* Draw a rectangle */
-void DrawRect(WINDOW * win, int x, int y, int width, int height);
+void DrawRect(WINDOW *win, int x, int y, int width, int height);
 
 /* Draw a window border */
-void Border(WINDOW * w);
+void Border(WINDOW *w);
 
 /* Draw a window border and title:
    +-< title >-----+
    |               |
    +---------------+ */
-void DrawWindow(WINDOW * w, const char *title);
+void DrawWindow(WINDOW *w, const char *title);
 
 /* Draw extra information onto the window border:
    +-< title >-----< info >-+
    |                        |
    +------------------------+ */
-void DrawWindowInfo(WINDOW * w, const char *info);
+void DrawWindowInfo(WINDOW *w, const char *info);
 
 /* Draw extra information onto bottom window border:
    +-< title >-----+
    |               |
    +------< info >-+ */
-void DrawWindowInfo2(WINDOW * w, const char *info);
+void DrawWindowInfo2(WINDOW *w, const char *info);
 
 Size_Format GetSizeFormat(size_t size);
 
-void FormatSize(WINDOW * win, size_t size, bool pad);
+void FormatSize(WINDOW *win, size_t size, bool pad);
 
-void PrintN(WINDOW * win, int ch, unsigned n);
+void PrintN(WINDOW *win, int ch, unsigned n);
 
 char *StringPush(char *buf, const char *s);
 
-void PushStyle(WINDOW * win, attr_t attributes, short color);
+void PushStyle(WINDOW *win, attr_t attributes, short color);
 
-void PopStyle(WINDOW * win);
+void PopStyle(WINDOW *win);
 
 /** Prints a padded percentage without adding unnecessary spaces.
     The given coordinates are the leftmost cell and the printed text is at most
     4 characters wide ("100%"). */
-void PrintPercentage(WINDOW * win, int x, int y, double p);
+void PrintPercentage(WINDOW *win, int x, int y, double p);
 
 // asprintf is not declared for me, even with _GNU_SOURCE...
 char *Format(const char *fmt, ...);

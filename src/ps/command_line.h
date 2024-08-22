@@ -5,11 +5,11 @@
 #define COMMANDLINE_ZEROED ((Command_Line){NULL, NULL, NULL})
 
 typedef struct {
-  /** string for searching */
+    /** string for searching */
     char *str;
-  /** cells for display */
+    /** cells for display */
     chtype *data;
-  /** points into `data`, skipping the path of the program */
+    /** points into `data`, skipping the path of the program */
     chtype *command;
 } Command_Line;
 
@@ -23,8 +23,13 @@ void commandline_from_comm(Command_Line *self, File_Content comm);
     the path of the command is skipped.  If `mask_color` is true only the
     characters are printed, using the current attributes of the window.  At most
     `width` characters are written. */
-void commandline_print(const Command_Line *self, WINDOW * win, bool command_only,
-                       int width, bool mask_color);
+void commandline_print(
+    const Command_Line *self,
+    WINDOW *win,
+    bool command_only,
+    int width,
+    bool mask_color
+);
 
 /** Checks if the string representation of the command line contains the given
     needle string. */

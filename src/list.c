@@ -26,13 +26,13 @@ list_delete(List *l) {
     free(l);
 }
 
-#define LIST_PUSH_EMPTY(l)                             \
-  if (l->front == NULL) {                              \
-    l->front = (List_Node *)malloc(sizeof(List_Node)); \
-    l->front->next = NULL;                             \
-    l->back = l->front;                                \
-    return l->front;                                   \
-  }
+#define LIST_PUSH_EMPTY(l)                                 \
+    if (l->front == NULL) {                                \
+        l->front = (List_Node *)malloc(sizeof(List_Node)); \
+        l->front->next = NULL;                             \
+        l->back = l->front;                                \
+        return l->front;                                   \
+    }
 
 List_Node *
 list_push_back(List *l) {

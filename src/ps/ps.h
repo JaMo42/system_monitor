@@ -6,17 +6,17 @@
 #define PS_MAX_LEVEL 8U
 
 typedef struct Proc_Data {
-  /*** Data ***/
+    /*** Data ***/
     pid_t pid;
     pid_t parent;
     Jiffy_List cpu_times;
     unsigned long start_time;
     unsigned long memory;
     Command_Line command_line;
-      VECTOR(struct Proc_Data *) children;
+    VECTOR(struct Proc_Data *) children;
     unsigned long total_cpu_time;
     unsigned long total_memory;
-  /*** Display info ***/
+    /*** Display info ***/
     // For forest mode, depth in the tree (may be larger than PS_MAX_LEVEL)
     unsigned tree_level;
     // What prefixes it should have in forest mode, these need to be set during
@@ -24,7 +24,7 @@ typedef struct Proc_Data {
     // start drawing within a tree
     int8_t tree_prefix[PS_MAX_LEVEL];
     bool tree_folded;
-  /*** Extra data ***/
+    /*** Extra data ***/
     bool search_match;
 } Proc_Data;
 
@@ -69,7 +69,8 @@ enum {
  */
 enum {
     /* PS_PREFIX_TOP is just an empty prefix, it's used so we can use the same
-       logic for printing toplevel prefixes as we used for the other prefixes. */
+       logic for printing toplevel prefixes as we used for the other prefixes.
+     */
     PS_PREFIX_TOP,
     PS_PREFIX_TOP_FOLDED,
     PS_PREFIX_OUTER_SIBLING,
@@ -116,7 +117,7 @@ ps_get_procs();
 
 /** Gets the total recorded CPU time period.  This is the divisor to get
     percentage CPU usage, given a work period as dividend. */
- unsigned long ps_cpu_period();
+unsigned long ps_cpu_period();
 
 /** Returns the total amount of main memory. */
- unsigned long ps_total_memory();
+unsigned long ps_total_memory();

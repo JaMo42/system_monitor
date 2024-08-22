@@ -35,6 +35,6 @@ void list_shrink(List *, size_t length);
 void list_clear(List *);
 
 #define list_for_each(l, it) \
-  for (List_Node *it = l->front; it != NULL; it = it->next)
+    for (List_Node *it = l->front; it != NULL; it = it->next)
 
 #endif /* !LIST_H */

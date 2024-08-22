@@ -22,12 +22,12 @@ COMPARATOR(compare_pid_ascending) {
 
 COMPARATOR(compare_cpu_descending) {
     UNPACK();
-    return SUBSORT((intmax_t) b->total_cpu_time - (intmax_t) a->total_cpu_time);
+    return SUBSORT((intmax_t)b->total_cpu_time - (intmax_t)a->total_cpu_time);
 }
 
 COMPARATOR(compare_cpu_ascending) {
     UNPACK();
-    return SUBSORT((intmax_t) a->total_cpu_time - (intmax_t) b->total_cpu_time);
+    return SUBSORT((intmax_t)a->total_cpu_time - (intmax_t)b->total_cpu_time);
 }
 
 COMPARATOR(compare_mem_descending) {
@@ -40,21 +40,24 @@ COMPARATOR(compare_mem_ascending) {
     return SUBSORT((long)a->total_memory - (long)b->total_memory);
 }
 
-Compare_Function compare_functions[] = {
-    compare_pid_descending, compare_pid_ascending, compare_cpu_descending,
-    compare_cpu_ascending, compare_mem_descending, compare_mem_ascending
-};
+Compare_Function compare_functions[]
+    = {compare_pid_descending,
+       compare_pid_ascending,
+       compare_cpu_descending,
+       compare_cpu_ascending,
+       compare_mem_descending,
+       compare_mem_ascending};
 
 void
-sort_procs(VECTOR(Proc_Data *)procs, int mode) {
+sort_procs(VECTOR(Proc_Data *) procs, int mode) {
     Compare_Function compare = compare_functions[mode];
     qsort(procs, vector_size(procs), sizeof(Proc_Data *), compare);
 }
 
 void
-sort_procs_recurse(VECTOR(Proc_Data *)procs, int mode) {
+sort_procs_recurse(VECTOR(Proc_Data *) procs, int mode) {
     sort_procs(procs, mode);
-    vector_for_each(procs, it) {
+    vector_for_each (procs, it) {
         if ((*it)->children) {
             sort_procs_recurse((*it)->children, mode);
         }

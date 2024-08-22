@@ -20,7 +20,7 @@ WrappedTextDimensions(const char *text, int max_width) {
         }
     }
     ++cols;
-    return (Dimensions) {.lines = lines,.cols = cols };
+    return (Dimensions){.lines = lines, .cols = cols};
 }
 
 static void
@@ -39,13 +39,14 @@ PrintLine(WINDOW *win, const char **str, int n) {
 
 static void
 PlainMessageBoxDraw(void *win) {
-    redrawwin((WINDOW *) win);
-    wrefresh((WINDOW *) win);
+    redrawwin((WINDOW *)win);
+    wrefresh((WINDOW *)win);
 }
 
 void
 ShowPlainMessageBox(const char *title, const char *message) {
-    const Dimensions dim = WrappedTextDimensions(message, (int)(0.9 * COLS) - 2);
+    const Dimensions dim
+        = WrappedTextDimensions(message, (int)(0.9 * COLS) - 2);
     const int width = Max(dim.cols, title ? (int)strlen(title) + 8 : 3);
     const int height = dim.lines;
     int line;
@@ -53,8 +54,12 @@ ShowPlainMessageBox(const char *title, const char *message) {
     if (height + 4 > LINES) {
         return;
     }
-    WINDOW *win = newwin(height + 2, width + 2, (LINES - (height + 2)) / 2,
-                         (COLS - (width + 2)) / 2);
+    WINDOW *win = newwin(
+        height + 2,
+        width + 2,
+        (LINES - (height + 2)) / 2,
+        (COLS - (width + 2)) / 2
+    );
     if (title) {
         DrawWindow(win, title);
     } else {
@@ -130,8 +135,12 @@ ShowInputBox(const char *title, const char *label, bool secret) {
     int entryx = 2;
     const int entryy = 1 + dim.lines + 1;
 
-    WINDOW *win = newwin(height + 2, width + 2, (LINES - (height + 2)) / 2,
-                         (COLS - (width + 2)) / 2);
+    WINDOW *win = newwin(
+        height + 2,
+        width + 2,
+        (LINES - (height + 2)) / 2,
+        (COLS - (width + 2)) / 2
+    );
 
     InputBoxState state = {
         .win = win,
@@ -165,8 +174,17 @@ ShowInputBox(const char *title, const char *label, bool secret) {
     DrawOverlay = InputBoxDraw;
     pthread_mutex_unlock(&draw_mutex);
 
-    GetLineBegin(win, entryx + 1, entryy, false, width - 3, NULL, InputBoxChange,
-                 InputBoxFinish, true);
+    GetLineBegin(
+        win,
+        entryx + 1,
+        entryy,
+        false,
+        width - 3,
+        NULL,
+        InputBoxChange,
+        InputBoxFinish,
+        true
+    );
 
     int ch;
     while (state.str == NULL) {

@@ -3,6 +3,10 @@
 
 #define _GNU_SOURCE
 
+#include "c-vector/vector.h"
+#include "ini/ini.h"
+#include "list.h"
+#include "theme.h"
 #include <assert.h>
 #include <ctype.h>
 #include <dirent.h>
@@ -30,10 +34,6 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
-#include "c-vector/vector.h"
-#include "ini/ini.h"
-#include "list.h"
-#include "theme.h"
 
 #define PI 3.1415926
 
@@ -42,19 +42,19 @@
 #define GB (MB * KB)
 #define TB (GB * KB)
 
-#define Max(a, b)              \
-  ({                           \
-    typeof(a) my_a = a;        \
-    typeof(b) my_b = b;        \
-    my_a > my_b ? my_a : my_b; \
-  })
+#define Max(a, b)                  \
+    ({                             \
+        typeof(a) my_a = a;        \
+        typeof(b) my_b = b;        \
+        my_a > my_b ? my_a : my_b; \
+    })
 
-#define Min(a, b)              \
-  ({                           \
-    typeof(a) my_a = a;        \
-    typeof(b) my_b = b;        \
-    my_a < my_b ? my_a : my_b; \
-  })
+#define Min(a, b)                  \
+    ({                             \
+        typeof(a) my_a = a;        \
+        typeof(b) my_b = b;        \
+        my_a < my_b ? my_a : my_b; \
+    })
 
 #define Clamp(x, low, high) Max((low), Min((x), (high)))
 

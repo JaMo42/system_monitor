@@ -54,9 +54,8 @@ ContextMenuShow(Context_Menu *menu, int x, int y) {
     }
 
     WINDOW *win = newwin(menu->count + 2, menu->width + 2, y - 1, x - 1);
-    Active_Context_Menu state = {
-        .menu = menu,.sel = 0,.prev_sel = -2,.win = win
-    };
+    Active_Context_Menu state
+        = {.menu = menu, .sel = 0, .prev_sel = -2, .win = win};
     const int maxx = x + menu->width - 1, maxy = y + menu->count - 1;
 
     wattron(win, COLOR_PAIR(theme->border));
@@ -103,7 +102,9 @@ ContextMenuShow(Context_Menu *menu, int x, int y) {
             if (getmouse(&mouse) == ERR) {
                 break;
             }
-            inside = !(mouse.x < x || mouse.x > maxx || mouse.y < y || mouse.y > maxy);
+            inside
+                = !(mouse.x < x || mouse.x > maxx || mouse.y < y
+                    || mouse.y > maxy);
             if (mouse.bstate == REPORT_MOUSE_POSITION) {
                 if (inside) {
                     state.sel = mouse.y - y;

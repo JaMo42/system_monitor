@@ -1,0 +1,62 @@
+---
+AllowShortIfStatementsOnASingleLine: Never
+InsertBraces: true
+#AlignEscapedNewlines: LeftWithLastLine
+AlignEscapedNewlines: Left
+AlwaysBreakAfterDefinitionReturnType: TopLevel
+
+# Format Style Options - Created with Clang Power Tools
+AlignAfterOpenBracket: BlockIndent
+AlignOperands: Align
+AlignTrailingComments: false
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowShortFunctionsOnASingleLine: None
+BinPackArguments: false
+BinPackParameters: false
+BitFieldColonSpacing: Both
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterClass: false
+  AfterControlStatement: false
+  AfterEnum: false
+  AfterFunction: false
+  AfterNamespace: false
+  AfterObjCDeclaration: false
+  AfterStruct: false
+  AfterUnion: false
+  AfterExternBlock: false
+  BeforeCatch: false
+  BeforeElse: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+  BeforeLambdaBody: false
+  BeforeWhile: false
+BreakBeforeBinaryOperators: All
+BreakBeforeBraces: Attach
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeComma
+ColumnLimit: 80
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+ContinuationIndentWidth: 4
+FixNamespaceComments: true
+ForEachMacros:
+  - foreach
+  - Q_FOREACH
+  - BOOST_FOREACH
+  - vector_for_each
+  - widgets_for_each
+
+IndentCaseLabels: false
+IndentExternBlock: NoIndent
+IndentWidth: 4
+LineEnding: LF
+PointerAlignment: Right
+SortIncludes: true
+SpaceAroundPointerQualifiers: After
+SpaceBeforeParens: ControlStatements
+SpacesBeforeTrailingComments: 2
+TabWidth: 4
+...

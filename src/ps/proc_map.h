@@ -32,11 +32,11 @@ typedef struct {
 
 /** Return value of `proc_map_insert_or_get` */
 typedef struct {
-  /** The process data inside the entry. */
+    /** The process data inside the entry. */
     Proc_Data *value;
-  /** The generation number of the entry. */
+    /** The generation number of the entry. */
     uint8_t *generation;
-  /** Whether the entry was newly created. */
+    /** Whether the entry was newly created. */
     bool is_new;
 } Proc_Map_Insert_Result;
 
@@ -44,8 +44,12 @@ typedef struct {
     data for a bucket.  `free_data` is used to release memory of a bucket.
     `remove_data` is used for additional removal logic of a bucket and is called
     before `free_data` when removing a bucket. */
-void proc_map_construct(Proc_Map *self, Proc_Map_Alloc alloc_data,
-                        Proc_Map_Free free_data, Proc_Map_Remove remove_data);
+void proc_map_construct(
+    Proc_Map *self,
+    Proc_Map_Alloc alloc_data,
+    Proc_Map_Free free_data,
+    Proc_Map_Remove remove_data
+);
 
 /** Releases all memory held by the map.  This only calls `free_data` on buckets
     but not `remove_data`. */
@@ -69,5 +73,6 @@ void proc_map_erase_outdated(Proc_Map *self, uint8_t expected_generation);
 Proc_Map_Bucket *proc_map_begin(Proc_Map *self);
 /** Returns the next non-empty bucket. */
 Proc_Map_Bucket *proc_map_next(Proc_Map_Bucket *it);
-#define proc_map_for_each(self_) \
-  for (Proc_Map_Bucket *it = proc_map_begin(self_); it; it = proc_map_next(it))
+#define proc_map_for_each(self_)                          \
+    for (Proc_Map_Bucket *it = proc_map_begin(self_); it; \
+         it = proc_map_next(it))

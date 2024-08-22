@@ -14,27 +14,25 @@ typedef struct {
     char *type;
     // size is determined by the compiler warning after using a very small value
     char temp[15];
-    int number;                 // for sorting
+    int number;  // for sorting
 } ThermalZone;
 
 static bool did_filter = false;
-static
-VECTOR(ThermalZone)
-    zones = NULL;
- static char average_temp[15] = "";
+static VECTOR(ThermalZone) zones = NULL;
+static char average_temp[15] = "";
 
- static bool
-   TempFilter(const char *entry_name, VECTOR(char *)filter) {
+static bool
+TempFilter(const char *entry_name, VECTOR(char *) filter) {
     if (filter == NULL) {
         return true;
     }
-    vector_for_each(filter, f) {
+    vector_for_each (filter, f) {
         if (strcmp(entry_name, *f) == 0) {
             return true;
         }
     }
     return false;
- }
+}
 
 static int
 TempCompareZone(const void *a, const void *b) {
@@ -42,7 +40,7 @@ TempCompareZone(const void *a, const void *b) {
 }
 
 static void
-TempDiscover(VECTOR(char *)filter) {
+TempDiscover(VECTOR(char *) filter) {
     const char *BASE_PATH = "/sys/class/thermal";
     DIR *dir = opendir(BASE_PATH);
     struct dirent *entry = NULL;
@@ -53,8 +51,13 @@ TempDiscover(VECTOR(char *)filter) {
             char *type = ReadSmallFile(path, true);
             if (TempFilter(entry->d_name, filter) || TempFilter(type, filter)) {
                 memcpy(path + strlen(path) - 4, "temp", 4);
-                vector_emplace_back(zones,.temp_path = path,.type = strdup(type),.temp =
-                                    "",.number = atoi(entry->d_name + 12));
+                vector_emplace_back(
+                    zones,
+                    .temp_path = path,
+                    .type = strdup(type),
+                    .temp = "",
+                    .number = atoi(entry->d_name + 12)
+                );
             } else {
                 did_filter = true;
             }
@@ -65,9 +68,7 @@ TempDiscover(VECTOR(char *)filter) {
     }
 }
 
-static
-VECTOR(char *)
-TempGetFilter(const char *filter_string) {
+static VECTOR(char *) TempGetFilter(const char *filter_string) {
     if (filter_string == NULL) {
         return NULL;
     }
@@ -104,7 +105,7 @@ TempInit(WINDOW *win) {
 
 void
 TempQuit() {
-    vector_for_each(zones, zone) {
+    vector_for_each (zones, zone) {
         free(zone->temp_path);
         free(zone->type);
     }
@@ -114,7 +115,7 @@ TempQuit() {
 void
 TempUpdate() {
     uint64_t total = 0;
-    vector_for_each(zones, zone) {
+    vector_for_each (zones, zone) {
         const int sample = atoi(ReadSmallFile(zone->temp_path, true));
         const int whole = sample / 1000;
         const int decimal = sample % 1000 / 100;
@@ -126,7 +127,9 @@ TempUpdate() {
         const uint64_t average = (total + count / 2) / count;
         const int whole = average / 10;
         const int decimal = average % 10;
-        snprintf(average_temp, sizeof(average_temp), "%5d.%d°C", whole, decimal);
+        snprintf(
+            average_temp, sizeof(average_temp), "%5d.%d°C", whole, decimal
+        );
     }
 }
 
@@ -134,7 +137,7 @@ void
 TempDraw(WINDOW *win) {
     int width = getmaxx(win) - 2;
     int y = 0;
-    vector_for_each(zones, zone) {
+    vector_for_each (zones, zone) {
         ++y;
         // +1 is to offset the extra byte of the degree symbol
         mvwaddstr(win, y, 1 + width - strlen(zone->temp) + 1, zone->temp);
@@ -155,11 +158,11 @@ TempResize(WINDOW *win) {
 
 void
 TempMinSize(int *width_return, int *height_return) {
-    const int title_min_width = 12 + 2 + 2;     // "< Temperature >"
-    const int temp_width = 6;   // "xx.x°C"
+    const int title_min_width = 12 + 2 + 2;  // "< Temperature >"
+    const int temp_width = 6;  // "xx.x°C"
     const int average_min_width = 9 + 2 + temp_width;
     int min_width = Max(title_min_width, average_min_width);
-    vector_for_each(zones, zone) {
+    vector_for_each (zones, zone) {
         min_width = Max(min_width, (int)strlen(zone->type) + 2 + temp_width);
     }
     *width_return = min_width;

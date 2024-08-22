@@ -58,7 +58,7 @@ MemoryAvailable() {
     while (skiplines) {
         skiplines -= *p++ == '\n';
     }
-    p += 13;                    /* skip "MemAvailable:" */
+    p += 13; /* skip "MemAvailable:" */
     skipspace(&p);
     return str2u(&p) << 10;
 }
@@ -71,8 +71,9 @@ MemoryUpdate() {
     if (main_avail) {
         main_used = mem_sysinfo.totalram - main_avail;
     } else {
-        main_used = (mem_sysinfo.totalram - mem_sysinfo.freeram -
-                     mem_sysinfo.bufferram - mem_sysinfo.sharedram);
+        main_used
+            = (mem_sysinfo.totalram - mem_sysinfo.freeram
+               - mem_sysinfo.bufferram - mem_sysinfo.sharedram);
     }
     unsigned long swap_used = mem_sysinfo.totalswap - mem_sysinfo.freeswap;
 
@@ -93,17 +94,17 @@ MemoryDraw(WINDOW *win) {
 
     const int width = getmaxx(win) - 2;
 
-#define PRINT(line, lower, title)                                \
-  wattron(win, COLOR_PAIR(theme->mem_##lower));                  \
-  wmove(win, line, 3);                                           \
-  wprintw(win, #title " %3d%%", (int)(lower##_current * 100.0)); \
-  if (width > 26) {                                              \
-    waddch(win, ' ');                                            \
-    FormatSize(win, lower##_use, true);                          \
-    waddch(win, '/');                                            \
-    FormatSize(win, mem_##lower##_total, false);                 \
-  }                                                              \
-  wattroff(win, COLOR_PAIR(theme->mem_##lower))
+#define PRINT(line, lower, title)                                  \
+    wattron(win, COLOR_PAIR(theme->mem_##lower));                  \
+    wmove(win, line, 3);                                           \
+    wprintw(win, #title " %3d%%", (int)(lower##_current * 100.0)); \
+    if (width > 26) {                                              \
+        waddch(win, ' ');                                          \
+        FormatSize(win, lower##_use, true);                        \
+        waddch(win, '/');                                          \
+        FormatSize(win, mem_##lower##_total, false);               \
+    }                                                              \
+    wattroff(win, COLOR_PAIR(theme->mem_##lower))
 
     PRINT(2, main, Main);
     PRINT(3, swap, Swap);
@@ -114,7 +115,9 @@ void
 MemoryResize(WINDOW *win) {
     wclear(win);
     CanvasResize(mem_canvas, win);
-    GraphSetViewport(&mem_graph, (Rectangle) { 1, 1, getmaxx(win) - 2, getmaxy(win) - 2 });
+    GraphSetViewport(
+        &mem_graph, (Rectangle){1, 1, getmaxx(win) - 2, getmaxy(win) - 2}
+    );
 }
 
 void

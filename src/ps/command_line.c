@@ -3,7 +3,9 @@
 
 /** Gets the start and end (1 past the last) indices of the comand name. */
 static void
-commandline_get_command_range(char *cmdline, int *command_start, int *command_end) {
+commandline_get_command_range(
+    char *cmdline, int *command_start, int *command_end
+) {
     bool ignore = false;
     char c;
     for (int i = 0;; ++i) {
@@ -80,8 +82,13 @@ commandline_from_comm(Command_Line *self, File_Content content) {
 }
 
 void
-commandline_print(const Command_Line *self, WINDOW *win, bool command_only,
-                  int width, bool mask_color) {
+commandline_print(
+    const Command_Line *self,
+    WINDOW *win,
+    bool command_only,
+    int width,
+    bool mask_color
+) {
     if (mask_color) {
         chtype *c = command_only ? self->command : self->data;
         for (int i = 0; *c && i < width; ++i) {

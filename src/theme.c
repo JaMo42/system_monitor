@@ -29,20 +29,44 @@ struct ThemeDef {
     const char *name;
 };
 
+// clang-format off
 static const char *const FIELD_NAMES[] = {
-    "border", "title", "cpu-avg", "cpu-graph-0",
-    "cpu-graph-1", "cpu-graph-2", "cpu-graph-3", "cpu-graph-4",
-    "cpu-graph-5", "cpu-graph-6", "cpu-graph-7", "mem-main",
-    "mem-swap", "net-receive", "net-transmit", "proc-header",
-    "proc-processes", "proc-cursor", "proc-highlight", "proc-high-percent",
-    "proc-branches", "proc-path", "proc-command", "proc-opt",
-    "proc-arg", "disk-free", "disk-used", "disk-error",
+    "border",
+    "title",
+    "cpu-avg",
+    "cpu-graph-0",
+    "cpu-graph-1",
+    "cpu-graph-2",
+    "cpu-graph-3",
+    "cpu-graph-4",
+    "cpu-graph-5",
+    "cpu-graph-6",
+    "cpu-graph-7",
+    "mem-main",
+    "mem-swap",
+    "net-receive",
+    "net-transmit",
+    "proc-header",
+    "proc-processes",
+    "proc-cursor",
+    "proc-highlight",
+    "proc-high-percent",
+    "proc-branches",
+    "proc-path",
+    "proc-command",
+    "proc-opt",
+    "proc-arg",
+    "disk-free",
+    "disk-used",
+    "disk-error",
     "battery-fill",
 };
+// clang-format on
 
-_Static_assert(sizeof(FIELD_NAMES) / sizeof(*FIELD_NAMES) ==
-               sizeof(Theme) / sizeof(short),
-               "FIELD_NAMES and Theme must have the same number of fields");
+_Static_assert(
+    sizeof(FIELD_NAMES) / sizeof(*FIELD_NAMES) == sizeof(Theme) / sizeof(short),
+    "FIELD_NAMES and Theme must have the same number of fields"
+);
 
 enum { FIELD_COUNT = sizeof(FIELD_NAMES) / sizeof(*FIELD_NAMES) };
 
@@ -385,7 +409,7 @@ ParseColor(const char *rep) {
 
 static ColorDef
 ParseColorDef(const char *rep) {
-    ColorDef def = { 0, 0 };
+    ColorDef def = {0, 0};
     char *comma = strchr(rep, ',');
     const char *second = comma + 1;
     if (comma) {

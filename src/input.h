@@ -27,12 +27,12 @@ enum {
 
 // Utility/re-definitions
 #undef KEY_BACKSPACE
-    KEY_BACKSPACE_1 = 127,      // May depend on terminal?
+    KEY_BACKSPACE_1 = 127,  // May depend on terminal?
     KEY_BACKSPACE_2 = 263,
     KEY_ESCAPE = 27,
 #undef KEY_ENTER
     KEY_ENTER = '\n',
-    KEY_CTRL_BACKSPACE = 8      // Same as Ctrl+H?
+    KEY_CTRL_BACKSPACE = 8  // Same as Ctrl+H?
 };
 
 typedef struct Input_String Input_String;
@@ -63,8 +63,8 @@ struct More_Marker {
 };
 
 #define MORE_MARKER(chars_, attrs_) \
-  ((More_Marker){                   \
-      .chars = (chars_), .size = sizeof(chars_) - 1, .attributes = (attrs_)})
+    ((More_Marker                   \
+    ){.chars = (chars_), .size = sizeof(chars_) - 1, .attributes = (attrs_)})
 
 typedef struct Mouse_Event Mouse_Event;
 struct Mouse_Event {
@@ -83,7 +83,9 @@ StrEmpty(Input_String *s) {
  * @param string: the current string.
  * @param text_changed: whether the content of the string has changed.
  */
-typedef void (*Get_Line_Change_Callback)(Input_String *string, bool text_changed);
+typedef void (*Get_Line_Change_Callback)(
+    Input_String *string, bool text_changed
+);
 
 /**
  * @param string_or_null: the final string.
@@ -115,9 +117,17 @@ int GetChar();
  * @param finish_callback: function to call with the final string
  * @param secret: whether to hide the input
  */
-void GetLineBegin(WINDOW * win, int x, int y, bool move_y_on_resize, int width,
-                  History *history, Get_Line_Change_Callback change_callback,
-                  Get_Line_Finish_Callback finish_callback, bool secret);
+void GetLineBegin(
+    WINDOW *win,
+    int x,
+    int y,
+    bool move_y_on_resize,
+    int width,
+    History *history,
+    Get_Line_Change_Callback change_callback,
+    Get_Line_Finish_Callback finish_callback,
+    bool secret
+);
 
 /**
  * draws the current get-line text.
@@ -133,7 +143,7 @@ History *NewHistory();
 
 void DeleteHistory(History *self);
 
-void ResolveMouseEvent(MEVENT * event, Layout *ui, Mouse_Event *out);
+void ResolveMouseEvent(MEVENT *event, Layout *ui, Mouse_Event *out);
 
 /**
  * Toggle reporting of mouse movement.

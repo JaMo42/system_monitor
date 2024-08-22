@@ -13,14 +13,16 @@ static char *battery_capacity_path;
 static char *battery_status_path;
 
 static char battery_capacity[4];
-static char battery_status[13]; // The longest status is "Not charging"
+static char battery_status[13];  // The longest status is "Not charging"
 static unsigned battery_last_capacity = 0;
 
 void
 BatteryInit(WINDOW *win) {
     strcpy(battery_capacity, "50");
-    battery_capacity_path = Format("/sys/class/power_supply/%s/capacity", battery_battery);
-    battery_status_path = Format("/sys/class/power_supply/%s/status", battery_battery);
+    battery_capacity_path
+        = Format("/sys/class/power_supply/%s/capacity", battery_battery);
+    battery_status_path
+        = Format("/sys/class/power_supply/%s/status", battery_battery);
     BatteryDrawBorder(win);
 }
 
@@ -48,9 +50,16 @@ ShowStatus() {
 
 void
 BatteryUpdate() {
-    strncpy(battery_capacity, ReadSmallFile(battery_capacity_path, true),
-            sizeof(battery_capacity) - 1);
-    strncpy(battery_status, ReadSmallFile(battery_status_path, true), sizeof(battery_status) - 1);
+    strncpy(
+        battery_capacity,
+        ReadSmallFile(battery_capacity_path, true),
+        sizeof(battery_capacity) - 1
+    );
+    strncpy(
+        battery_status,
+        ReadSmallFile(battery_status_path, true),
+        sizeof(battery_status) - 1
+    );
     if (!ShowStatus()) {
         battery_status[0] = '\0';
     }
@@ -76,7 +85,8 @@ BatteryDraw(WINDOW *win) {
     }
     char label[sizeof("100% (Not charging)")];
     snprintf(label, sizeof(label), "%u%%", capacity);
-    if (battery_status[0] && (strlen(label) + 3 + strlen(battery_status)) <= (unsigned)width) {
+    if (battery_status[0]
+        && (strlen(label) + 3 + strlen(battery_status)) <= (unsigned)width) {
         snprintf(label, sizeof(label), "%u%% (%s)", capacity, battery_status);
     }
     int x = 1 + (width - strlen(label) + 1) / 2;

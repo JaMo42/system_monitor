@@ -4,13 +4,12 @@
 #include <string.h>
 
 /* Apparently this isn't included by <ncurses.h> */
-extern int waddnwstr(WINDOW * win, const wchar_t *wstr, int n);
+extern int waddnwstr(WINDOW *win, const wchar_t *wstr, int n);
 
 #define NORMALIZE(x) (size_t) round((double)(x))
 
-static const uint16_t pixel_map[4][2] = {
-    {0x01, 0x08}, {0x02, 0x10}, {0x04, 0x20}, {0x40, 0x80}
-};
+static const uint16_t pixel_map[4][2]
+    = {{0x01, 0x08}, {0x02, 0x10}, {0x04, 0x20}, {0x40, 0x80}};
 
 static const int braille_char_offset = 0x2800;
 
@@ -89,7 +88,7 @@ CanvasDraw(const Canvas *c, WINDOW *win) {
 void
 CanvasDrawAt(const Canvas *c, WINDOW *win, int x0, int y0) {
     size_t row_off;
-    wchar_t ch[] = { 0, 0 };
+    wchar_t ch[] = {0, 0};
     uint8_t b;
 
     for (size_t y = 0; y < c->height; ++y) {
@@ -110,7 +109,9 @@ CanvasDrawAt(const Canvas *c, WINDOW *win, int x0, int y0) {
 }
 
 void
-CanvasDrawLine(Canvas *c, double x1_, double y1_, double x2_, double y2_, short color) {
+CanvasDrawLine(
+    Canvas *c, double x1_, double y1_, double x2_, double y2_, short color
+) {
     const int x1 = NORMALIZE(x1_);
     const int y1 = NORMALIZE(y1_);
     const int x2 = NORMALIZE(x2_);
@@ -130,8 +131,8 @@ CanvasDrawLine(Canvas *c, double x1_, double y1_, double x2_, double y2_, short 
 
         if (xd != 0) {
             x += (double)(i * xd) / r * xs;
-            // Note: this clipping is specialized for the graph drawing so we only
-            // need check the X coordinate.
+            // Note: this clipping is specialized for the graph drawing so we
+            // only need check the X coordinate.
             if (x < 0) {
                 continue;
             }
@@ -148,7 +149,9 @@ CanvasDrawLine(Canvas *c, double x1_, double y1_, double x2_, double y2_, short 
 #define CANVAS_MIN(a, b) (((a) < (b)) ? (a) : (b))
 
 void
-CanvasDrawLineFill(Canvas *c, double x1_, double y1_, double x2_, double y2_, short color) {
+CanvasDrawLineFill(
+    Canvas *c, double x1_, double y1_, double x2_, double y2_, short color
+) {
     const int x1 = NORMALIZE(x1_);
     const int y1 = NORMALIZE(y1_);
     const int x2 = NORMALIZE(x2_);
@@ -184,7 +187,9 @@ CanvasDrawLineFill(Canvas *c, double x1_, double y1_, double x2_, double y2_, sh
 }
 
 void
-CanvasDrawRect(Canvas *c, double x1_, double y1_, double x2_, double y2_, short color) {
+CanvasDrawRect(
+    Canvas *c, double x1_, double y1_, double x2_, double y2_, short color
+) {
     // Like in `CanvasDrawLine` this is specific to the graph drawing where only
     // the the left x can be negative.
     if (x1_ < 0.0) {

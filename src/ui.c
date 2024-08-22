@@ -2,18 +2,18 @@
 #include "sm.h"
 #include "util.h"
 
-#define layout_for_each(l)                                                \
-  for (Layout **it = (l)->elems, **end = it + 2, *child = *it; it != end; \
-       ++it, child = (it < end ? *it : NULL))
+#define layout_for_each(l)                                                  \
+    for (Layout **it = (l)->elems, **end = it + 2, *child = *it; it != end; \
+         ++it, child = (it < end ? *it : NULL))
 
 #define layout_sibling(l, c) \
-  ((c) == (l)->elems[0] ? (l)->elems[1] : (l)->elems[0])
+    ((c) == (l)->elems[0] ? (l)->elems[1] : (l)->elems[0])
 
 #define max_priority(a, b) ((a)->priority > (b)->priority ? (a) : (b))
 
-#define cool_child(l)                                                \
-  ((l)->elems[0]->priority > (l)->elems[1]->priority ? (l)->elems[0] \
-                                                     : (l)->elems[1])
+#define cool_child(l)                                                  \
+    ((l)->elems[0]->priority > (l)->elems[1]->priority ? (l)->elems[0] \
+                                                       : (l)->elems[1])
 
 typedef void (*UI_Visitor)(const Layout *, void *);
 
@@ -39,17 +39,17 @@ UIForEachWidget(const Layout *self, void *data, UI_Visitor visitor) {
 Layout *
 UICreateLayout(LayoutType type, float percent_first) {
     Layout *l = (Layout *)malloc(sizeof(Layout));
-    *l = (Layout) {.type = type,
-        .percent_first = percent_first,
-        .min_width = 0,
-        .min_height = 0,
-        .x = 0,
-        .y = 0,
-        .width = 0,
-        .height = 0,
-        .priority = -1,
-        .elems = {NULL, NULL}
-    };
+    *l = (Layout
+    ){.type = type,
+      .percent_first = percent_first,
+      .min_width = 0,
+      .min_height = 0,
+      .x = 0,
+      .y = 0,
+      .width = 0,
+      .height = 0,
+      .priority = -1,
+      .elems = {NULL, NULL}};
     return l;
 }
 
@@ -178,7 +178,8 @@ static inline struct UI_Get_Size_Return {
         }
     }
 
-    if (first_size >= first_min && second_size >= second_min) ;
+    if (first_size >= first_min && second_size >= second_min)
+        ;
     else if (!ui_strict_size && first_min + second_min <= total) {
         if (first_min > first_size) {
             diff = first_min - first_size;
@@ -211,9 +212,8 @@ static inline struct UI_Get_Size_Return {
         second_size = second_min;
     }
 
-    return (struct UI_Get_Size_Return) {.first = first_size,
-        .second = second_size
-    };
+    return (struct UI_Get_Size_Return
+    ){.first = first_size, .second = second_size};
 }
 
 /** recursively repositions and resizes, or hides the windows in the given
@@ -222,30 +222,33 @@ static void
 UIResizeLayout(Layout *self, int x, int y, int width, int height) {
     const bool get_height = self->type == UI_ROWS;
     const int total = get_height ? height : width;
-    struct UI_Get_Size_Return sizes = UIGetSize(self, total, self->percent_first, get_height);
+    struct UI_Get_Size_Return sizes
+        = UIGetSize(self, total, self->percent_first, get_height);
     struct Geometry {
         int x, y, w, h;
     } geometries[2];
 
     if (sizes.first == -1) {
         geometries[0].x = -1;
-        geometries[1] = (struct Geometry) {.x = x,.y = y,.w = width,.h = height };
+        geometries[1]
+            = (struct Geometry){.x = x, .y = y, .w = width, .h = height};
     } else if (sizes.second == -1) {
-        geometries[0] = (struct Geometry) {.x = x,.y = y,.w = width,.h = height };
+        geometries[0]
+            = (struct Geometry){.x = x, .y = y, .w = width, .h = height};
         geometries[1].x = -1;
     } else {
         if (get_height) {
             // Rows
-            geometries[0] = (struct Geometry) {.x = x,.y = y,.w = width,.h = sizes.first };
-            geometries[1] = (struct Geometry) {
-                .x = x,.y = y + sizes.first,.w = width,.h = sizes.second
-            };
+            geometries[0] = (struct Geometry
+            ){.x = x, .y = y, .w = width, .h = sizes.first};
+            geometries[1] = (struct Geometry
+            ){.x = x, .y = y + sizes.first, .w = width, .h = sizes.second};
         } else {
             // Columns
-            geometries[0] = (struct Geometry) {.x = x,.y = y,.w = sizes.first,.h = height };
-            geometries[1] = (struct Geometry) {
-                .x = x + sizes.first,.y = y,.w = sizes.second,.h = height
-            };
+            geometries[0] = (struct Geometry
+            ){.x = x, .y = y, .w = sizes.first, .h = height};
+            geometries[1] = (struct Geometry
+            ){.x = x + sizes.first, .y = y, .w = sizes.second, .h = height};
         }
     }
 
@@ -279,10 +282,13 @@ UICheckSize(const Layout *self, int width, int height) {
     struct UI_Get_Size_Return sizes;
     const Layout *choice;
 
-    if (other_size < UIGetMin(first, !get_height) || other_size < UIGetMin(second, !get_height)) {
+    if (other_size < UIGetMin(first, !get_height)
+        || other_size < UIGetMin(second, !get_height)) {
         return false;
     }
-    sizes = UIGetSize(self, get_height ? height : width, self->percent_first, get_height);
+    sizes = UIGetSize(
+        self, get_height ? height : width, self->percent_first, get_height
+    );
     if (sizes.first == -1 || sizes.second == -1) {
         // Need to re-check since `UIGetSize` assumes at least one fits.
         choice = max_priority(first, second);
@@ -292,13 +298,19 @@ UICheckSize(const Layout *self, int width, int height) {
                 return false;
             }
         }
-    } else if (first->type != UI_WIDGET &&
-               !UICheckSize(first, get_height ? width : sizes.first,
-                            get_height ? sizes.first : height)) {
+    } else if (first->type != UI_WIDGET
+               && !UICheckSize(
+                   first,
+                   get_height ? width : sizes.first,
+                   get_height ? sizes.first : height
+               )) {
         return false;
-    } else if (second->type != UI_WIDGET &&
-               !UICheckSize(second, get_height ? width : sizes.second,
-                            get_height ? sizes.second : height)) {
+    } else if (second->type != UI_WIDGET
+               && !UICheckSize(
+                   second,
+                   get_height ? width : sizes.second,
+                   get_height ? sizes.second : height
+               )) {
         return false;
     }
     return true;
@@ -323,7 +335,7 @@ UIBestFitVisitor(const Layout *w, void *data_p) {
 
 void
 UIBestFit(Layout *self, Layout **best_return, int width, int height) {
-    UIBestFitData data = {.best = NULL,.width = width,.height = height };
+    UIBestFitData data = {.best = NULL, .width = width, .height = height};
     UIForEachWidget(self, &data, UIBestFitVisitor);
     *best_return = (Layout *)data.best;
 }
@@ -416,7 +428,7 @@ UIGetMinSize(Layout *self) {
                 self->min_width = child->min_width;
             }
             self->min_height += child->min_height;
-        } else                  // UI_COLS
+        } else  // UI_COLS
         {
             if (child->min_height > self->min_height) {
                 self->min_height = child->min_height;
@@ -429,7 +441,8 @@ UIGetMinSize(Layout *self) {
 static void
 UIUpdateSizeInfoVisitor(const Layout *w, void *changed) {
     const int width = w->min_width, height = w->min_height;
-    const int fixed = w->type == UI_WIDGET ? w->widget->fixed_size : FIXED_SIZE_NO;
+    const int fixed
+        = w->type == UI_WIDGET ? w->widget->fixed_size : FIXED_SIZE_NO;
     Layout *mut = (Layout *)w;
 
     w->widget->MinSize(&mut->min_width, &mut->min_height);
@@ -439,8 +452,10 @@ UIUpdateSizeInfoVisitor(const Layout *w, void *changed) {
         w->widget->fixed_size = FIXED_SIZE_YES;
     }
 
-    if (w->min_width != width || w->min_height != height ||
-        fixed != (w->type == UI_WIDGET ? w->widget->fixed_size : FIXED_SIZE_NO)) {
+    if (w->min_width != width || w->min_height != height
+        || fixed
+               != (w->type == UI_WIDGET ? w->widget->fixed_size : FIXED_SIZE_NO
+               )) {
         *(bool *)changed = true;
     }
 }
@@ -471,8 +486,8 @@ UIFindWidgetContaining(Layout *self, int x, int y) {
     if (self->type == UI_WIDGET) {
         return self;
     }
-    if (InRange(x, self->x, self->x + self->elems[0]->width) &&
-        InRange(y, self->y, self->y + self->elems[0]->height)) {
+    if (InRange(x, self->x, self->x + self->elems[0]->width)
+        && InRange(y, self->y, self->y + self->elems[0]->height)) {
         return UIFindWidgetContaining(self->elems[0], x, y);
     } else {
         return UIFindWidgetContaining(self->elems[1], x, y);

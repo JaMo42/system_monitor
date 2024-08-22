@@ -34,8 +34,8 @@ NetworkGetInterfaces() {
     getifaddrs(&ifaddr);
 
     for (ifa = ifaddr; ifa; ifa = ifa->ifa_next) {
-        if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_PACKET ||
-            !strcmp(ifa->ifa_name, "lo")) {
+        if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_PACKET
+            || !strcmp(ifa->ifa_name, "lo")) {
             continue;
         }
         ++count;
@@ -45,8 +45,8 @@ NetworkGetInterfaces() {
     net_interfaces = malloc(count * sizeof(*net_interfaces));
 
     for (ifa = ifaddr, count = 0; ifa; ifa = ifa->ifa_next) {
-        if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_PACKET ||
-            !strcmp(ifa->ifa_name, "lo")) {
+        if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_PACKET
+            || !strcmp(ifa->ifa_name, "lo")) {
             continue;
         }
         l = strlen(ifa->ifa_name);
@@ -179,8 +179,8 @@ NetworkResize(WINDOW *win) {
         GraphSetScale(&net_recv_graph, scale, false);
         GraphSetScale(&net_send_graph, scale, false);
     }
-    GraphSetViewport(&net_recv_graph, (Rectangle) { 1, y1, width, graph_height });
-    GraphSetViewport(&net_send_graph, (Rectangle) { 1, y2, width, graph_height });
+    GraphSetViewport(&net_recv_graph, (Rectangle){1, y1, width, graph_height});
+    GraphSetViewport(&net_send_graph, (Rectangle){1, y2, width, graph_height});
 }
 
 void

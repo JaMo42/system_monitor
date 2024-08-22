@@ -49,8 +49,8 @@ get_total_cpu() {
     char **p = &f.data;
     skipfields(p, 1);
     skipspace(p);
-    return str2u(p) + str2u(p) + str2u(p) + str2u(p) + str2u(p) + str2u(p) +
-        str2u(p) + str2u(p) + str2u(p) + str2u(p);
+    return str2u(p) + str2u(p) + str2u(p) + str2u(p) + str2u(p) + str2u(p)
+           + str2u(p) + str2u(p) + str2u(p) + str2u(p);
 }
 
 unsigned long
@@ -61,7 +61,7 @@ get_total_memory() {
     if (f.size < 0) {
         return 0;
     }
-    char *p = f.data + 9;       // Skip 'MemTotal:'
+    char *p = f.data + 9;  // Skip 'MemTotal:'
     skipspace(&p);
     // Convert to bytes
     return str2u(&p);

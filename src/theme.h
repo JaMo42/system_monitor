@@ -1,6 +1,6 @@
 #pragma once
-#include <stdbool.h>
 #include "ini.h"
+#include <stdbool.h>
 
 typedef struct {
     short foreground;
