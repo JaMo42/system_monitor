@@ -88,7 +88,7 @@ The is configured using the file `~/.config/sm.ini`.
 Sections and their properties are:
 
 - `sm`
-  - `layout` (string) the layout string
+  - `layout` (string) the layout string or name of a named layout
   - `interval` (number) the update interval
   - `graph-scale` (number) the graph scale
 
@@ -121,6 +121,11 @@ Sections and their properties are:
 
 - `theme`
     - `theme` (string) name of builtin theme to use as a base, the other fields in this section override colors in that theme, see `THEME.md`.
+
+- `layouts`
+    The keys in the section are names that map to the layout in their value.
+    The values may also be the names of other named layouts so aliases can be created.
+    See [Named Layouts](#named-layouts) for more info and an example.
 
 Boolean values can be given as `true`, `yes`, or `1` for true and `false`, `no`, or `0` for false.
 
@@ -167,6 +172,22 @@ Another example: `strict (cols 66% cpu[3] (rows 33% mem[1] (rows net[0] proc[2])
 
 Can also be a single widget: `cpu`.
 
+### Named layouts
+
+The layout string provided on the command line or in the configuration may also be the name of a named layout which is defined in the `layouts` section of the configuration or is one of the builtin layouts:
+
+- `default` The default layout that will be used if no layout is specified anywhere
+- `full` A layout containing all widgets
+
+Command line example: `sm -l full`
+
+Configuration example:
+```
+[layouts]
+longname = "strict (cols 66% cpu[3] (rows 33% mem[1] (rows net[0] proc[2])))"
+ln = longname
+```
+
 ### Syntax
 
 ```
@@ -178,7 +199,7 @@ cols:          "cols" | "columns" | "vertical"
 percent-first: <number> "%"
 child:         widget | layout
 widget:        widget-name "[" priority "]"
-widget-name:   "cpu" | "memory" | "network" | "processes" | "disk_usage" | "temperature"
+widget-name:   "cpu" | "memory" | "network" | "processes" | "disk_usage" | "temperature" | "battery"
 priority:      <number>
 ```
 

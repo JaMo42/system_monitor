@@ -584,9 +584,9 @@ ParseLayout() {
 }
 
 Layout *
-ParseLayoutString(const char *source_, const char *source_name_) {
-    source = source_;
-    source_name = source_name_;
+ParseLayoutString(LayoutString string) {
+    source = string.string;
+    source_name = string.source_name;
     Tokenize();
 
     Token *tok = Peek("‘strict’ or ‘(’");

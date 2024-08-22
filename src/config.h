@@ -23,3 +23,5 @@ bool TryReadConfig(Ini *out, const char **error, int *error_line);
 
 /** Set the global config, returning the old value. */
 void ConfigSet(Ini ini, bool ok, Ini *old, bool *old_ok);
+
+Ini_Table_Iterator ConfigIter(const char *section);

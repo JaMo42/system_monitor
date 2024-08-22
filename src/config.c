@@ -165,3 +165,9 @@ ConfigSet(Ini ini, bool ok, Ini *old, bool *old_ok) {
     config_ok = ok;
     ClearGlobalState();
 }
+
+Ini_Table_Iterator
+ConfigIter(const char *section) {
+    const Ini_Table *table = ini_get_table(&config_file, section);
+    return ini_table_iter(table);
+}

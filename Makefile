@@ -2,7 +2,7 @@ INCLUDE_DIRS = -Isrc/rb-tree -Isrc/c-vector -Isrc/ini
 CC = gcc
 CFLAGS = -Wall -Wextra $(INCLUDE_DIRS)
 LDFLAGS = -lm -pthread
-VGFLAGS = --track-origins=yes #--leak-check=full
+VGFLAGS = --track-origins=yes --leak-check=full
 
 LDFLAGS += $(shell pkg-config --libs ncursesw)
 

@@ -5,6 +5,7 @@
 #include "dialog.h"
 #include "disk.h"
 #include "input.h"
+#include "layout.h"
 #include "layout_parser.h"
 #include "memory.h"
 #include "nc-help/help.h"
@@ -20,7 +21,6 @@
 
 struct timespec interval = {.tv_sec = 0, .tv_nsec = 500000000L};
 
-static const char *layout = NULL;
 Layout *ui;
 
 static help_text_type help_text = {
@@ -78,6 +78,11 @@ void (*DrawOverlay)(void *);
 
 bool (*HandleInput)(int key);
 
+typedef struct {
+    const char *theme_name;
+    const char *layout;
+} Arguments;
+
 void LoadConfig();
 void LoadTheme(const char *name);
 
@@ -94,7 +99,7 @@ void DrawBorders();
 
 bool MainHandleInput(int key);
 
-const char *ParseArgs(int, char *const *);
+Arguments ParseArgs(int, char *const *);
 
 void HelpShow();
 
@@ -119,40 +124,27 @@ int
 main(int argc, char *const *argv) {
     ReadConfig();
     LoadConfig();
-    const char *theme_name = ParseArgs(argc, argv);
+    Arguments arguments = ParseArgs(argc, argv);
 
-    const bool show_current_layout = layout && strcmp(layout, "?") == 0;
+    const bool show_current_layout
+        = arguments.layout && strcmp(arguments.layout, "?") == 0;
     if (show_current_layout) {
-        layout = NULL;
+        arguments.layout = NULL;
     }
-
-    const char *layout_source;
-    if (layout == NULL || *layout == '\0') {
-        Config_Read_Value *v;
-        if (HaveConfig() && (v = ConfigGet("sm", "layout"))) {
-            layout = v->as_string();
-            layout_source = "sm.ini";
-        } else {
-            layout = "(rows 33% c[2] (cols (rows m[1] n[0]) p[3]))";
-            layout_source = "<builtin layout>";
-        }
-    } else {
-        layout_source = "-l";
-    }
-
+    LayoutString layout = ResolveLayout(arguments.layout);
     if (show_current_layout) {
-        printf("Current layout: ‘%s’\n", layout);
+        printf("Current layout: ‘%s’\n", layout.string);
         return 0;
     }
 
-    ui = ParseLayoutString(layout, layout_source);
+    ui = ParseLayoutString(layout);
     UIGetMinSize(ui);
     UICollectWidgets(ui, widgets);
 
     HandleInput = MainHandleInput;
 
     CursesInit();
-    LoadTheme(theme_name);
+    LoadTheme(arguments.theme_name);
     UIConstruct(ui);
     InitWidgets();
     UIUpdateSizeInfo(ui, true);
@@ -178,6 +170,7 @@ main(int argc, char *const *argv) {
     UIDeleteLayout(ui);
     free(theme);
     CursesQuit();
+    CleanLayouts();
     FreeConfig();
 }
 
@@ -237,6 +230,12 @@ LoadConfig() {
     }
     if ((v = ConfigGet("battery", "show_status"))) {
         battery_show_status = v->as_string();
+    }
+
+    Ini_Table_Iterator it = ConfigIter("layouts");
+    Ini_Key_Value item;
+    while (!INI_ITER_DONE(item = ini_iter_next(&it))) {
+        AddNamedLayout(item.key, item.value.data);
     }
 }
 
@@ -508,11 +507,14 @@ Usage(FILE *stream) {
     // clang-format on
 }
 
-const char *
+Arguments
 ParseArgs(int argc, char *const *argv) {
     char opt;
     unsigned long n;
-    char *theme_name = NULL;
+    Arguments result = {
+        .theme_name = NULL,
+        .layout = NULL,
+    };
     while ((opt = getopt(argc, argv, "ar:h?s:cfl:Tt:")) != -1) {
         switch (opt) {
         case 'a':
@@ -534,7 +536,7 @@ ParseArgs(int argc, char *const *argv) {
             break;
 
         case 'l':
-            layout = optarg;
+            result.layout = optarg;
             break;
 
         case 'T':
@@ -542,7 +544,7 @@ ParseArgs(int argc, char *const *argv) {
             break;
 
         case 't':
-            theme_name = optarg;
+            result.theme_name = optarg;
             break;
 
         case 'h':
@@ -552,7 +554,7 @@ ParseArgs(int argc, char *const *argv) {
             exit(1);
         }
     }
-    return theme_name;
+    return result;
 }
 
 static void
