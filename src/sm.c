@@ -269,6 +269,21 @@ ReloadTheme() {
         Ini prev;
         bool ok;
         ConfigSet(ini, true, &prev, &ok);
+        Config_Read_Value *v = ConfigGet("theme", "theme");
+        if (v) {
+            char *err = VerifyThemeName(v->as_string());
+            if (err) {
+                char *msg = Format(
+                    "Invalid theme name: %s\nValid options are: %s",
+                    v->as_string(),
+                    err
+                );
+                ConfigSet(prev, ok, NULL, NULL);
+                ini_free(&ini);
+                free(err);
+                return msg;
+            }
+        }
         ResetColors();
         // Instead of coming up with a way to get the theme override to this
         // function we can just always pass NULL here since reloading the theme

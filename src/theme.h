@@ -44,9 +44,13 @@ short DefColor(ColorDef def);
 /** Set a color in a theme. */
 bool ThemeSet(Theme *self, const char *key, short value);
 
-/** Set values in the given theme from the already parsed config.  BASE mayb be
+/** Set values in the given theme from the already parsed config.  BASE may be
     NULL, in which case the default theme is used. */
 void ThemeFromConfig(Theme *self, const ThemeDef *base);
+
+/** Returns NULL if the name is a valid named theme definition, and a list of
+    valid names otherwise. */
+char *VerifyThemeName(const char *name);
 
 /** Get a builtin named theme definition. */
 const ThemeDef *NamedThemeDef(const char *name);

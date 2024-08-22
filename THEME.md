@@ -10,6 +10,7 @@ proc-header = SlateBlue1
 ## Values
 
 Color values are parsed as strings and can be either a number or the name of a color (Both are listed here for example: https://ss64.com/bash/syntax-colors.html).
+Note that some of the named colors hare ambiguous name, using them will always gives the first value in the list (lower number).
 
 ## Keys
 
