@@ -4,7 +4,7 @@ CFLAGS = -Wall -Wextra $(INCLUDE_DIRS)
 LDFLAGS = -lm -pthread
 VGFLAGS = --track-origins=yes #--leak-check=full
 
-LDFLAGS += $(shell pkg-config --libs ncurses)
+LDFLAGS += $(shell pkg-config --libs ncursesw)
 
 PREFIX ?= ~/.local/bin
 # Install path to use in mod_and_install since it has to be run as root so we can't use ~
