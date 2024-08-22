@@ -80,7 +80,7 @@ CpuQuit() {
 static double
 CpuPollUsage(int id, FILE *stat) {
     static char buf[10 * 20 + 10 + 8];
-    fgets(buf, sizeof(buf), stat);
+    assert(fgets(buf, sizeof(buf), stat));
     char *p = buf;
     skipfields(&p, 1);
     skipspace(&p);

@@ -98,7 +98,7 @@ NetworkQuit() {
 static inline unsigned long
 NetworkGetBytes(FILE *f) {
     char buf[128];
-    fgets(buf, 128, f);
+    assert(fgets(buf, 128, f));
     return strtoul(buf, NULL, 10);
 }
 
