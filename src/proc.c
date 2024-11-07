@@ -24,6 +24,9 @@ static pid_t proc_cursor_pid;
 static unsigned proc_view_begin;
 static unsigned proc_view_size;
 static unsigned proc_page_move_amount;
+/** Keep the cursor at its position on screen instead of following the process
+    it's on. */
+static bool proc_sticky;
 
 static bool proc_search_active;
 static bool proc_search_active;
@@ -126,8 +129,13 @@ DrawHeader(WINDOW *win) {
     wattroff(win, A_BOLD | COLOR_PAIR(theme->proc_header));
 }
 
+/** Sets the cursor to the given process index and adjusts the view if needed.
+    If FROM_USER is true and the same process is selected twice the cursor
+    becomes sticky.  Therefor FROM_USER doesn't strictly mean just that the
+    action comes from the user, but also that it's an action that should
+    potentially stick the cursor. */
 static inline void
-ProcSetCursor(unsigned cursor) {
+ProcSetCursor(unsigned cursor, bool from_user) {
     // Lines visible above/below the cursor
     const unsigned lines_before = 5;
     // Top
@@ -150,6 +158,9 @@ ProcSetCursor(unsigned cursor) {
     if (proc_view_begin + proc_view_size > proc_count) {
         proc_view_begin = proc_count - proc_view_size;
     }
+    if (from_user) {
+        proc_sticky = proc_cursor == cursor;
+    }
     proc_cursor = cursor;
     proc_cursor_pid = ps_get_procs()[cursor]->pid;
 }
@@ -162,7 +173,7 @@ ProcUpdateCursor() {
     for (unsigned i = 0; i < (unsigned)vector__size(procs); ++i) {
         if (procs[i]->pid == proc_cursor_pid) {
             proc_view_begin = Max(0u, i - cursor_position_in_view);
-            ProcSetCursor(i);
+            ProcSetCursor(i, false);
             break;
         }
     }
@@ -172,7 +183,7 @@ static inline void
 ProcSetViewSize(unsigned size) {
     proc_view_size = size;
     proc_page_move_amount = size / 2;
-    ProcSetCursor(proc_cursor);
+    ProcSetCursor(proc_cursor, false);
 }
 
 static void
@@ -199,7 +210,7 @@ ProcSearchUpdateMatches() {
     }
     proc_search_single_match = count == 1;
     if ((proc_search_show = count > 0) && proc_search_active) {
-        ProcSetCursor(proc_first_match);
+        ProcSetCursor(proc_first_match, false);
     }
 }
 
@@ -223,11 +234,14 @@ ProcUpdateProcesses() {
     VECTOR(Proc_Data *) procs = ps_get_procs();
     proc_count = vector_size(procs);
     const unsigned cursor_position_in_view = proc_cursor - proc_view_begin;
+    if (proc_sticky) {
+        proc_cursor_pid = ps_get_procs()[proc_cursor]->pid;
+    }
     for (size_t i = 0; i < proc_count; ++i) {
         if (procs[i]->pid == proc_cursor_pid) {
             proc_view_begin
                 = (unsigned)Max(0, (int)i - (int)cursor_position_in_view);
-            ProcSetCursor(i);
+            ProcSetCursor(i, false);
             break;
         }
     }
@@ -239,7 +253,7 @@ ProcUpdateProcesses() {
     }
 
     if (proc_cursor >= proc_count) {
-        ProcSetCursor(proc_count - 1);
+        ProcSetCursor(proc_count - 1, false);
     }
 
     proc_search_show = true;
@@ -438,43 +452,43 @@ ProcResize(WINDOW *win) {
 void
 ProcCursorUp() {
     if (proc_cursor) {
-        ProcSetCursor(proc_cursor - 1);
+        ProcSetCursor(proc_cursor - 1, true);
     }
 }
 
 void
 ProcCursorDown() {
     if ((proc_cursor + 1) < proc_count) {
-        ProcSetCursor(proc_cursor + 1);
+        ProcSetCursor(proc_cursor + 1, true);
     }
 }
 
 void
 ProcCursorPageUp() {
     if (proc_cursor >= proc_page_move_amount) {
-        ProcSetCursor(proc_cursor - proc_page_move_amount);
+        ProcSetCursor(proc_cursor - proc_page_move_amount, true);
     } else {
-        ProcSetCursor(0);
+        ProcSetCursor(0, true);
     }
 }
 
 void
 ProcCursorPageDown() {
     if ((proc_cursor + proc_page_move_amount) < proc_count) {
-        ProcSetCursor(proc_cursor + proc_page_move_amount);
+        ProcSetCursor(proc_cursor + proc_page_move_amount, true);
     } else {
-        ProcSetCursor(proc_count - 1);
+        ProcSetCursor(proc_count - 1, true);
     }
 }
 
 void
 ProcCursorTop() {
-    ProcSetCursor(0);
+    ProcSetCursor(0, true);
 }
 
 void
 ProcCursorBottom() {
-    ProcSetCursor(proc_count - 1);
+    ProcSetCursor(proc_count - 1, true);
 }
 
 static inline void
@@ -576,7 +590,7 @@ ProcSearchNext() {
             ++cursor;
         }
     }
-    ProcSetCursor(cursor);
+    ProcSetCursor(cursor, false);
 }
 
 void
@@ -598,7 +612,7 @@ ProcSearchPrev() {
             --cursor;
         }
     }
-    ProcSetCursor(cursor);
+    ProcSetCursor(cursor, false);
 }
 
 static inline void
@@ -854,7 +868,10 @@ ProcHandleMouse(Mouse_Event *event) {
             maxy = getmaxy(proc_widget.win) - 1 - proc_search_active;
             cursor_before = proc_cursor;
             if InRange (event->y, 2, maxy) {
-                ProcSetCursor(proc_view_begin + event->y - 2);
+                // Note: allowing this to set the sticky flag doesn't make much
+                // sense since we have already given it behavior for clicking
+                // the same process.
+                ProcSetCursor(proc_view_begin + event->y - 2, false);
                 if (proc_cursor == cursor_before) {
                     ProcShowContextMenu(event->x);
                 }

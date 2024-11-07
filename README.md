@@ -14,7 +14,7 @@ git submodule update
 make
 ```
 
-Note: by default the program links with the `-lncurses` library but on some systems you may need to change it to `-lncursesw` (happens automatically on debian-based distros).
+Requires ncurses.
 
 ## Usage
 

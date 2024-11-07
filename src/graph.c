@@ -72,11 +72,11 @@ DrawBezir(const GraphDrawContext *restrict ctx) {
         // clang-format off
         d2 = d * d;
         d3 = d2 * d;
-        w1 = -d3 + 3 * d2 - 3 * d + 1;
-        w2 = 3 * d3 - 6 * d2 + 3 * d;
-        w3 = -3 * d3 + 3 * d2;
-        w4 = d3;
-        x = x1 * w1 + x1_c * w2 + x2_c * w3 + x2 * w4;
+        w1 =   -d3 + 3*d2 - 3*d + 1;
+        w2 =  3*d3 - 6*d2 + 3*d    ;
+        w3 = -3*d3 + 3*d2          ;
+        w4 =    d3                 ;
+        x = x1*w1 + x1_c*w2 + x2_c*w3 + x2*w4;
         if (x < 0.0) {
             continue;
         }
