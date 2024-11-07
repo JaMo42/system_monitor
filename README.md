@@ -39,14 +39,15 @@ If the layout option for `-l` is `?` the current layout string (either the defau
   - `j` and `<Down>`: down
   - `K`: up by 5
   - `J`: down by 5
-  - `g`: jump to top
-  - `G`: jump to bottom
+  - `g` and `Home`: jump to top
+  - `G` and `End`: jump to bottom
 - Process sorting
   - `c`: sort by CPU usage (default)
   - `m`: sort by memory usage
   - `p`: sort by PID
 
   Selecting the same sorting mode again toggles between descending and ascending sorting.
+  Jumping to the same location twice makes the cursor stick to that position on screen instead of following the process it's on, so jumping to the top twice lets you always view the most CPU intensive processes for example. As soon as the cursor is moved manually it becomes non-sticky again.
 
 - Space/Enter: Open the context menu for the currently selected process
 - `f`: toggle process ASCII art tree view
