@@ -7,6 +7,7 @@ extern bool proc_forest;
 // Initial kernel thread visibility
 extern bool proc_kthreads;
 extern bool proc_command_only;
+extern unsigned proc_scroll_speed;
 
 extern Widget proc_widget;
 
@@ -20,8 +21,8 @@ bool ProcHandleInput(int key);
 void ProcHandleMouse(Mouse_Event *event);
 void ProcDrawBorder(WINDOW *win);
 
-void ProcCursorUp();
-void ProcCursorDown();
+void ProcCursorUp(unsigned count);
+void ProcCursorDown(unsigned count);
 void ProcCursorPageUp();
 void ProcCursorPageDown();
 void ProcCursorTop();

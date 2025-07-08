@@ -10,6 +10,7 @@
 bool proc_forest = false;
 bool proc_kthreads = false;
 bool proc_command_only = false;
+unsigned proc_scroll_speed = 5;
 
 Widget proc_widget = WIDGET("processes", Proc);
 
@@ -450,16 +451,18 @@ ProcResize(WINDOW *win) {
 }
 
 void
-ProcCursorUp() {
-    if (proc_cursor) {
-        ProcSetCursor(proc_cursor - 1, true);
+ProcCursorUp(unsigned count) {
+    const unsigned x = Max((int)proc_cursor - (int)count, 0);
+    if (x != proc_cursor) {
+        ProcSetCursor(x, true);
     }
 }
 
 void
-ProcCursorDown() {
-    if ((proc_cursor + 1) < proc_count) {
-        ProcSetCursor(proc_cursor + 1, true);
+ProcCursorDown(unsigned count) {
+    const unsigned x = Min(proc_cursor + count, proc_count - 1);
+    if (x != proc_cursor) {
+        ProcSetCursor(x, true);
     }
 }
 
@@ -756,11 +759,11 @@ ProcHandleInput(int key) {
     switch (key) {
     case KEY_UP:
     case 'k':
-        ProcCursorUp();
+        ProcCursorUp(1);
         break;
     case KEY_DOWN:
     case 'j':
-        ProcCursorDown();
+        ProcCursorDown(1);
         break;
     case 'K':
     case KEY_PPAGE:
@@ -854,11 +857,11 @@ ProcHandleMouse(Mouse_Event *event) {
     unsigned cursor_before;
     switch (event->button) {
     case MOUSE_WHEEL_UP:
-        ProcCursorUp();
+        ProcCursorUp(proc_scroll_speed);
         break;
 
     case MOUSE_WHEEL_DOWN:
-        ProcCursorDown();
+        ProcCursorDown(proc_scroll_speed);
         break;
 
     case BUTTON1_CLICKED:

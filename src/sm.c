@@ -203,6 +203,9 @@ LoadConfig() {
     if ((v = ConfigGet("proc", "command-only"))) {
         proc_command_only = v->as_bool();
     }
+    if ((v = ConfigGet("proc", "scroll-speed"))) {
+        proc_scroll_speed = v->as_unsigned();
+    }
 
     if ((v = ConfigGet("disk", "vertical"))) {
         disk_vertical = v->as_bool();
@@ -549,6 +552,9 @@ ParseArgs(int argc, char *const *argv) {
 
         case 'h':
         case '?':
+            Usage(stdout);
+            exit(0);
+
         default:
             Usage(stderr);
             exit(1);
