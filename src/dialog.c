@@ -46,8 +46,8 @@ PlainMessageBoxDraw(void *win) {
 void
 ShowPlainMessageBox(const char *title, const char *message) {
     const Dimensions dim
-        = WrappedTextDimensions(message, (int)(0.9 * COLS) - 2);
-    const int width = Max(dim.cols, title ? (int)strlen(title) + 8 : 3);
+        = WrappedTextDimensions(message, (int)(0.9 * COLS) - 4);
+    const int width = Max(dim.cols + 2, title ? (int)strlen(title) + 8 : 3);
     const int height = dim.lines;
     int line;
     bool quit_key_was_resize;
@@ -68,7 +68,7 @@ ShowPlainMessageBox(const char *title, const char *message) {
         wattroff(win, COLOR_PAIR(theme->border));
     }
     for (line = 1; *message; ++line) {
-        wmove(win, line, 1);
+        wmove(win, line, 2);
         PrintLine(win, &message, width);
     }
 
