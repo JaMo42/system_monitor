@@ -44,15 +44,6 @@ static Context_Menu proc_context_menu;
 static const char **proc_prefixes = NULL;
 static const int *proc_prefix_widths = NULL;
 
-enum {
-    PROC_CTX_VIEW_FULL_COMMAND,
-    PROC_CTX_DEBUG,
-    PROC_CTX_STOP,
-    PROC_CTX_CONTINUE,
-    PROC_CTX_END,
-    PROC_CTX_KILL,
-};
-
 // clang-format off
 #define PROC_CONTEXT_MENU(o)                           \
     o(PROC_CTX_VIEW_FULL_COMMAND, "View full command") \
@@ -63,32 +54,38 @@ enum {
     o(PROC_CTX_KILL, "Kill")
 // clang-format on
 
+#define o(identifier, name) identifier,
+enum {
+PROC_CONTEXT_MENU(o)
+};
+#undef o
+
 static void
 ProcSetPrefixes() {
     static const char *NORMAL_PREFIXES[] = {
         "",
         "... ",
-        "│   ",
-        "    ",
+        "│ ",
+        "  ",
         "├─ ",
-        "├─ ... ",
+        "├─ + ",
         "╰─ ",
-        "╰─ ... ",
+        "╰─ + ",
         "╎ ",
     };
-    static const int NORMAL_PREFIX_SIZES[] = {0, 4, 4, 4, 3, 7, 3, 7, 2};
+    static const int NORMAL_PREFIX_SIZES[] = {0, 4, 2, 2, 3, 5, 3, 5, 2};
     static const char *NARROW_PREFIXES[] = {
         "",
         "+ ",
-        "│ ",
-        "  ",
+        "│",
+        " ",
         "├ ",
         "├ + ",
         "╰ ",
         "╰ + ",
         "╎ ",
     };
-    static const int NARROW_PREFIX_SIZES[] = {0, 2, 2, 2, 2, 4, 2, 4, 2};
+    static const int NARROW_PREFIX_SIZES[] = {0, 2, 1, 1, 2, 4, 2, 4, 2};
     bool narrow = false;
     Config_Read_Value *v = NULL;
     if ((v = ConfigGet("proc", "narrow-trees"))) {

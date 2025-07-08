@@ -46,7 +46,7 @@ enum {
  *        '- baz
  *     2>     '- baz1
  *              ...
- *               |- at_max_level
+ *               '- at_max_level
  *                7> :  after_max_level
  *                   :  after_max_level
  *        bar
